@@ -1,16 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getHealth } from "@/lib/health";
 
 export default function Home() {
-  const [apiStatus, setApiStatus] = useState<string>("checking...");
+  const { data, isPending, isError } = useQuery({
+    queryKey: ["health"],
+    queryFn: getHealth,
+  });
 
-  useEffect(() => {
-    fetch("http://localhost:8000/api/health")
-      .then((res) => res.json())
-      .then((data) => setApiStatus(data.status))
-      .catch(() => setApiStatus("unreachable"));
-  }, []);
+  const apiStatus = isPending
+    ? "checking..."
+    : isError
+      ? "unreachable"
+      : data.status;
+  const dbStatus = isPending ? "checking..." : isError ? "unknown" : data.database;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black">
@@ -18,16 +22,20 @@ export default function Home() {
         <h1 className="text-4xl font-bold tracking-tight text-black dark:text-white">
           Offroute
         </h1>
-        <p className="text-lg text-zinc-600 dark:text-zinc-400">
-          API status:{" "}
-          <span
-            className={
-              apiStatus === "ok" ? "text-green-500" : "text-yellow-500"
-            }
-          >
-            {apiStatus}
-          </span>
-        </p>
+        <div className="flex flex-col gap-2 text-lg text-zinc-600 dark:text-zinc-400">
+          <p>
+            API:{" "}
+            <span className={apiStatus === "ok" ? "text-green-500" : "text-yellow-500"}>
+              {apiStatus}
+            </span>
+          </p>
+          <p>
+            Database:{" "}
+            <span className={dbStatus === "ok" ? "text-green-500" : "text-yellow-500"}>
+              {dbStatus}
+            </span>
+          </p>
+        </div>
       </main>
     </div>
   );
