@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     env: str = "development"
     database_url: str = ""
     database_url_sync: str = ""
+    supabase_url: str = ""
     cors_origins: str = "http://localhost:3000"
 
     @property
