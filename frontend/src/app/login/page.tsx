@@ -48,22 +48,22 @@ function PasswordInput({
           placeholder={placeholder}
           autoComplete={autoComplete}
           {...registration}
-          className={`w-full rounded-xl bg-white px-4 py-4 pr-12 text-base text-black outline-none ring-1 ${
+          className={`w-full rounded-xl bg-white/[0.08] px-4 py-4 pr-12 text-base text-white placeholder-zinc-500 outline-none ring-1 ${
             error
-              ? "ring-red-400 focus:ring-red-500"
-              : "ring-zinc-200 focus:ring-2 focus:ring-zinc-400"
-          } dark:bg-zinc-900 dark:text-white dark:ring-zinc-800`}
+              ? "ring-red-500/60 focus:ring-red-500"
+              : "ring-white/[0.12] focus:ring-blue-500/60"
+          }`}
         />
         <button
           type="button"
           onClick={() => setVisible(!visible)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-zinc-400 active:text-zinc-600"
+          className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-zinc-500 active:text-zinc-300"
           aria-label={visible ? "Hide password" : "Show password"}
         >
           {visible ? <EyeOff size={20} /> : <Eye size={20} />}
         </button>
       </div>
-      {error && <p className="mt-1.5 text-sm text-red-500">{error}</p>}
+      {error && <p className="mt-1.5 text-sm text-red-400">{error}</p>}
     </div>
   );
 }
@@ -101,12 +101,8 @@ function LoginForm({
 
   return (
     <>
-      <h2 className="mb-2 text-2xl font-bold text-black dark:text-white">
-        Welcome back
-      </h2>
-      <p className="mb-8 text-sm text-zinc-500">
-        Log in to continue to Offroute
-      </p>
+      <h2 className="mb-2 text-2xl font-bold text-white">Welcome back</h2>
+      <p className="mb-8 text-sm text-zinc-400">Log in to continue to Offroute</p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         <div>
@@ -118,14 +114,14 @@ function LoginForm({
               required: "Email is required",
               pattern: { value: EMAIL_REGEX, message: "Enter a valid email" },
             })}
-            className={`w-full rounded-xl bg-white px-4 py-4 text-base text-black outline-none ring-1 ${
+            className={`w-full rounded-xl bg-white/[0.08] px-4 py-4 text-base text-white placeholder-zinc-500 outline-none ring-1 ${
               errors.email
-                ? "ring-red-400 focus:ring-red-500"
-                : "ring-zinc-200 focus:ring-2 focus:ring-zinc-400"
-            } dark:bg-zinc-900 dark:text-white dark:ring-zinc-800`}
+                ? "ring-red-500/60 focus:ring-red-500"
+                : "ring-white/[0.12] focus:ring-blue-500/60"
+            }`}
           />
           {errors.email && (
-            <p className="mt-1.5 text-sm text-red-500">{errors.email.message}</p>
+            <p className="mt-1.5 text-sm text-red-400">{errors.email.message}</p>
           )}
         </div>
 
@@ -142,7 +138,7 @@ function LoginForm({
         <button
           type="button"
           onClick={onForgot}
-          className="self-end text-sm font-medium text-zinc-500 active:text-zinc-700"
+          className="self-end text-sm font-medium text-zinc-400 active:text-zinc-200"
         >
           Forgot password?
         </button>
@@ -150,30 +146,30 @@ function LoginForm({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="mt-2 rounded-xl bg-black py-4 text-base font-semibold text-white active:bg-zinc-800 disabled:opacity-50 dark:bg-white dark:text-black dark:active:bg-zinc-200"
+          className="mt-2 rounded-xl bg-blue-500 py-4 text-base font-semibold text-white active:bg-blue-600 disabled:opacity-50"
         >
           {isSubmitting ? "Logging in…" : "Log in"}
         </button>
       </form>
 
       <div className="my-6 flex items-center gap-3">
-        <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
-        <span className="text-xs text-zinc-400">or</span>
-        <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
+        <div className="h-px flex-1 bg-white/[0.1]" />
+        <span className="text-xs text-zinc-500">or</span>
+        <div className="h-px flex-1 bg-white/[0.1]" />
       </div>
 
       <button
         onClick={signInWithGoogle}
-        className="w-full rounded-xl bg-white py-4 text-base font-medium text-black ring-1 ring-zinc-200 active:bg-zinc-50 dark:bg-zinc-900 dark:text-white dark:ring-zinc-800"
+        className="w-full rounded-xl bg-white/[0.08] py-4 text-base font-medium text-white ring-1 ring-white/[0.12] active:bg-white/[0.12]"
       >
         Continue with Google
       </button>
 
-      <p className="mt-8 text-center text-sm text-zinc-500">
+      <p className="mt-8 text-center text-sm text-zinc-400">
         Don&apos;t have an account?{" "}
         <button
           onClick={onSwitch}
-          className="font-semibold text-black active:text-zinc-700 dark:text-white"
+          className="font-semibold text-blue-400 active:text-blue-300"
         >
           Sign up
         </button>
@@ -213,12 +209,8 @@ function SignupForm({ onSwitch }: { onSwitch: () => void }) {
 
   return (
     <>
-      <h2 className="mb-2 text-2xl font-bold text-black dark:text-white">
-        Create your account
-      </h2>
-      <p className="mb-8 text-sm text-zinc-500">
-        Start logging your travels on Offroute
-      </p>
+      <h2 className="mb-2 text-2xl font-bold text-white">Create your account</h2>
+      <p className="mb-8 text-sm text-zinc-400">Start logging your travels on Offroute</p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         <div>
@@ -231,14 +223,14 @@ function SignupForm({ onSwitch }: { onSwitch: () => void }) {
               minLength: { value: 2, message: "At least 2 characters" },
               maxLength: { value: 50, message: "50 characters max" },
             })}
-            className={`w-full rounded-xl bg-white px-4 py-4 text-base text-black outline-none ring-1 ${
+            className={`w-full rounded-xl bg-white/[0.08] px-4 py-4 text-base text-white placeholder-zinc-500 outline-none ring-1 ${
               errors.display_name
-                ? "ring-red-400 focus:ring-red-500"
-                : "ring-zinc-200 focus:ring-2 focus:ring-zinc-400"
-            } dark:bg-zinc-900 dark:text-white dark:ring-zinc-800`}
+                ? "ring-red-500/60 focus:ring-red-500"
+                : "ring-white/[0.12] focus:ring-blue-500/60"
+            }`}
           />
           {errors.display_name && (
-            <p className="mt-1.5 text-sm text-red-500">{errors.display_name.message}</p>
+            <p className="mt-1.5 text-sm text-red-400">{errors.display_name.message}</p>
           )}
         </div>
 
@@ -251,14 +243,14 @@ function SignupForm({ onSwitch }: { onSwitch: () => void }) {
               required: "Email is required",
               pattern: { value: EMAIL_REGEX, message: "Enter a valid email" },
             })}
-            className={`w-full rounded-xl bg-white px-4 py-4 text-base text-black outline-none ring-1 ${
+            className={`w-full rounded-xl bg-white/[0.08] px-4 py-4 text-base text-white placeholder-zinc-500 outline-none ring-1 ${
               errors.email
-                ? "ring-red-400 focus:ring-red-500"
-                : "ring-zinc-200 focus:ring-2 focus:ring-zinc-400"
-            } dark:bg-zinc-900 dark:text-white dark:ring-zinc-800`}
+                ? "ring-red-500/60 focus:ring-red-500"
+                : "ring-white/[0.12] focus:ring-blue-500/60"
+            }`}
           />
           {errors.email && (
-            <p className="mt-1.5 text-sm text-red-500">{errors.email.message}</p>
+            <p className="mt-1.5 text-sm text-red-400">{errors.email.message}</p>
           )}
         </div>
 
@@ -273,7 +265,7 @@ function SignupForm({ onSwitch }: { onSwitch: () => void }) {
               pattern: { value: PASSWORD_REGEX, message: PASSWORD_HINT },
             })}
           />
-          <p className="mt-1.5 text-xs text-zinc-400">{PASSWORD_HINT}</p>
+          <p className="mt-1.5 text-xs text-zinc-500">{PASSWORD_HINT}</p>
         </div>
 
         <PasswordInput
@@ -290,17 +282,17 @@ function SignupForm({ onSwitch }: { onSwitch: () => void }) {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="mt-2 rounded-xl bg-black py-4 text-base font-semibold text-white active:bg-zinc-800 disabled:opacity-50 dark:bg-white dark:text-black dark:active:bg-zinc-200"
+          className="mt-2 rounded-xl bg-blue-500 py-4 text-base font-semibold text-white active:bg-blue-600 disabled:opacity-50"
         >
           {isSubmitting ? "Creating account…" : "Create account"}
         </button>
       </form>
 
-      <p className="mt-8 text-center text-sm text-zinc-500">
+      <p className="mt-8 text-center text-sm text-zinc-400">
         Already have an account?{" "}
         <button
           onClick={onSwitch}
-          className="font-semibold text-black active:text-zinc-700 dark:text-white"
+          className="font-semibold text-blue-400 active:text-blue-300"
         >
           Log in
         </button>
@@ -330,10 +322,8 @@ function ForgotPasswordForm({ onBack }: { onBack: () => void }) {
 
   return (
     <>
-      <h2 className="mb-2 text-2xl font-bold text-black dark:text-white">
-        Reset password
-      </h2>
-      <p className="mb-8 text-sm text-zinc-500">
+      <h2 className="mb-2 text-2xl font-bold text-white">Reset password</h2>
+      <p className="mb-8 text-sm text-zinc-400">
         {sent
           ? "Check your inbox for a reset link."
           : "Enter your email and we'll send you a reset link."}
@@ -350,21 +340,21 @@ function ForgotPasswordForm({ onBack }: { onBack: () => void }) {
                 required: "Email is required",
                 pattern: { value: EMAIL_REGEX, message: "Enter a valid email" },
               })}
-              className={`w-full rounded-xl bg-white px-4 py-4 text-base text-black outline-none ring-1 ${
+              className={`w-full rounded-xl bg-white/[0.08] px-4 py-4 text-base text-white placeholder-zinc-500 outline-none ring-1 ${
                 errors.email
-                  ? "ring-red-400 focus:ring-red-500"
-                  : "ring-zinc-200 focus:ring-2 focus:ring-zinc-400"
-              } dark:bg-zinc-900 dark:text-white dark:ring-zinc-800`}
+                  ? "ring-red-500/60 focus:ring-red-500"
+                  : "ring-white/[0.12] focus:ring-blue-500/60"
+              }`}
             />
             {errors.email && (
-              <p className="mt-1.5 text-sm text-red-500">{errors.email.message}</p>
-              )}
+              <p className="mt-1.5 text-sm text-red-400">{errors.email.message}</p>
+            )}
           </div>
 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="mt-2 rounded-xl bg-black py-4 text-base font-semibold text-white active:bg-zinc-800 disabled:opacity-50 dark:bg-white dark:text-black dark:active:bg-zinc-200"
+            className="mt-2 rounded-xl bg-blue-500 py-4 text-base font-semibold text-white active:bg-blue-600 disabled:opacity-50"
           >
             {isSubmitting ? "Sending…" : "Send reset link"}
           </button>
@@ -373,7 +363,7 @@ function ForgotPasswordForm({ onBack }: { onBack: () => void }) {
 
       <button
         onClick={onBack}
-        className="mt-6 w-full text-center text-sm font-semibold text-black active:text-zinc-700 dark:text-white"
+        className="mt-6 w-full text-center text-sm font-semibold text-blue-400 active:text-blue-300"
       >
         Back to log in
       </button>
@@ -392,9 +382,9 @@ export default function LoginPage() {
   }, [router]);
 
   return (
-    <div className="flex min-h-[100dvh] flex-col justify-end bg-zinc-50 dark:bg-black sm:items-center sm:justify-center">
-      <div className="px-6 pb-10 pt-16 sm:w-full sm:max-w-md sm:px-8">
-        <h1 className="mb-10 text-center text-4xl font-bold tracking-tight text-black dark:text-white">
+    <div className="flex min-h-[100dvh] flex-col justify-end bg-[#0b1120]">
+      <div className="px-6 pb-10 pt-16">
+        <h1 className="mb-10 text-center text-4xl font-bold tracking-tight text-white">
           Offroute
         </h1>
 

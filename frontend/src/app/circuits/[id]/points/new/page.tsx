@@ -92,23 +92,11 @@ function AddPoint() {
     : [];
 
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-zinc-50 dark:bg-black">
-      <header className="sticky top-0 z-10 flex items-center gap-3 bg-zinc-50/80 px-5 pb-3 pt-[max(env(safe-area-inset-top),1rem)] backdrop-blur-md dark:bg-black/80">
-        <Link
-          href={`/circuits/${circuitId}`}
-          className="flex h-10 w-10 items-center justify-center rounded-full active:bg-zinc-200 dark:active:bg-zinc-800"
-          aria-label="Back"
-        >
-          <ArrowLeft size={22} className="text-zinc-600 dark:text-zinc-400" />
-        </Link>
-        <h1 className="text-xl font-bold tracking-tight text-black dark:text-white">
-          Add Point
-        </h1>
-      </header>
-
+    <div className="flex min-h-[100dvh] flex-col bg-[#0b1120]">
+      {/* Map with back button overlay */}
       <div className="relative">
         <MapDynamic
-          className="h-48 w-full"
+          className="h-52 w-full"
           markers={mapMarkers}
           center={location ? [location.lng, location.lat] : undefined}
           zoom={location ? 15 : 12}
@@ -116,25 +104,36 @@ function AddPoint() {
           key={location ? `${location.lat},${location.lng}` : "empty"}
         />
         {!location && (
-          <div className="absolute inset-0 flex items-center justify-center bg-zinc-100/80 dark:bg-zinc-900/80">
+          <div className="absolute inset-0 flex items-center justify-center bg-[#111a2e]/80">
             <p className="text-sm text-zinc-500">Tap the map or use GPS below</p>
           </div>
         )}
+
+        <div className="absolute left-4 top-[max(env(safe-area-inset-top),0.75rem)]">
+          <Link
+            href={`/circuits/${circuitId}`}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-black/50 backdrop-blur-md active:bg-black/70"
+            aria-label="Back"
+          >
+            <ArrowLeft size={20} className="text-white" />
+          </Link>
+        </div>
       </div>
 
       <main className="flex-1 px-5 pb-10 pt-4">
+        {/* GPS button + coordinates */}
         <div className="mb-5 flex gap-3">
           <button
             type="button"
             onClick={useCurrentLocation}
             disabled={locatingGps}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-black py-3 text-sm font-semibold text-white active:bg-zinc-800 disabled:opacity-50 dark:bg-white dark:text-black dark:active:bg-zinc-200"
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-500 py-3.5 text-sm font-semibold text-white active:bg-blue-600 disabled:opacity-50"
           >
             <Crosshair size={18} />
             {locatingGps ? "Locating…" : "Use GPS"}
           </button>
           {location && (
-            <div className="flex items-center gap-1.5 rounded-xl bg-green-50 px-3 text-xs text-green-700 dark:bg-green-900/30 dark:text-green-400">
+            <div className="flex items-center gap-1.5 rounded-xl bg-emerald-500/10 px-3 text-xs text-emerald-400 ring-1 ring-emerald-500/20">
               <MapPin size={14} />
               {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
             </div>
@@ -154,14 +153,14 @@ function AddPoint() {
                 required: "Give this point a name",
                 maxLength: { value: 200, message: "200 characters max" },
               })}
-              className={`w-full rounded-xl bg-white px-4 py-4 text-base text-black outline-none ring-1 ${
+              className={`w-full rounded-xl bg-white/[0.08] px-4 py-4 text-base text-white placeholder-zinc-500 outline-none ring-1 ${
                 errors.title
-                  ? "ring-red-400 focus:ring-red-500"
-                  : "ring-zinc-200 focus:ring-2 focus:ring-zinc-400"
-              } dark:bg-zinc-900 dark:text-white dark:ring-zinc-800`}
+                  ? "ring-red-500/60 focus:ring-red-500"
+                  : "ring-white/[0.12] focus:ring-blue-500/60"
+              }`}
             />
             {errors.title && (
-              <p className="mt-1.5 text-sm text-red-500">{errors.title.message}</p>
+              <p className="mt-1.5 text-sm text-red-400">{errors.title.message}</p>
             )}
           </div>
 
@@ -169,16 +168,16 @@ function AddPoint() {
             placeholder="Notes (optional)"
             rows={2}
             {...register("notes")}
-            className="w-full resize-none rounded-xl bg-white px-4 py-4 text-base text-black outline-none ring-1 ring-zinc-200 focus:ring-2 focus:ring-zinc-400 dark:bg-zinc-900 dark:text-white dark:ring-zinc-800"
+            className="w-full resize-none rounded-xl bg-white/[0.08] px-4 py-4 text-base text-white placeholder-zinc-500 outline-none ring-1 ring-white/[0.12] focus:ring-blue-500/60"
           />
 
           <select
             {...register("category")}
-            className="w-full appearance-none rounded-xl bg-white px-4 py-4 text-base text-black outline-none ring-1 ring-zinc-200 focus:ring-2 focus:ring-zinc-400 dark:bg-zinc-900 dark:text-white dark:ring-zinc-800"
+            className="w-full appearance-none rounded-xl bg-white/[0.08] px-4 py-4 text-base text-white outline-none ring-1 ring-white/[0.12] focus:ring-blue-500/60"
           >
-            <option value="">Category (optional)</option>
+            <option value="" className="bg-[#1a2435]">Category (optional)</option>
             {CATEGORIES.map((c) => (
-              <option key={c.value} value={c.value}>
+              <option key={c.value} value={c.value} className="bg-[#1a2435]">
                 {c.label}
               </option>
             ))}
@@ -187,11 +186,11 @@ function AddPoint() {
           <div className="flex gap-3">
             <select
               {...register("rating")}
-              className="flex-1 appearance-none rounded-xl bg-white px-4 py-4 text-base text-black outline-none ring-1 ring-zinc-200 focus:ring-2 focus:ring-zinc-400 dark:bg-zinc-900 dark:text-white dark:ring-zinc-800"
+              className="flex-1 appearance-none rounded-xl bg-white/[0.08] px-4 py-4 text-base text-white outline-none ring-1 ring-white/[0.12] focus:ring-blue-500/60"
             >
-              <option value="">Rating</option>
+              <option value="" className="bg-[#1a2435]">Rating</option>
               {[1, 2, 3, 4, 5].map((n) => (
-                <option key={n} value={n}>
+                <option key={n} value={n} className="bg-[#1a2435]">
                   {"★".repeat(n)}
                 </option>
               ))}
@@ -200,14 +199,14 @@ function AddPoint() {
             <input
               type="date"
               {...register("visited_at")}
-              className="flex-1 rounded-xl bg-white px-4 py-4 text-base text-black outline-none ring-1 ring-zinc-200 focus:ring-2 focus:ring-zinc-400 dark:bg-zinc-900 dark:text-white dark:ring-zinc-800"
+              className="flex-1 rounded-xl bg-white/[0.08] px-4 py-4 text-base text-white outline-none ring-1 ring-white/[0.12] focus:ring-blue-500/60"
             />
           </div>
 
           <button
             type="submit"
             disabled={mutation.isPending || !location}
-            className="mt-4 rounded-xl bg-black py-4 text-base font-semibold text-white active:bg-zinc-800 disabled:opacity-50 dark:bg-white dark:text-black dark:active:bg-zinc-200"
+            className="mt-4 rounded-xl bg-blue-500 py-4 text-base font-semibold text-white active:bg-blue-600 disabled:opacity-50"
           >
             {mutation.isPending ? "Saving…" : "Save point"}
           </button>

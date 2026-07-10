@@ -28,11 +28,17 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col bg-[#0b1120] text-white">
         <Providers>{children}</Providers>
-        <Toaster richColors position="top-center" />
+        <Toaster
+          richColors
+          position="top-center"
+          toastOptions={{
+            style: { background: "#1a2435", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" },
+          }}
+        />
       </body>
     </html>
   );
