@@ -5,8 +5,7 @@ import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 const MAP_STYLE =
-  process.env.NEXT_PUBLIC_MAP_STYLE ??
-  "https://tiles.stadiamaps.com/styles/alidade_smooth.json";
+  process.env.NEXT_PUBLIC_MAP_STYLE ?? "/map-style-satellite.json";
 
 export interface MapMarker {
   id: string;
@@ -23,6 +22,7 @@ export interface MapProps {
   markers?: MapMarker[];
   drawRoute?: boolean;
   interactive?: boolean;
+  userLocation?: { lng: number; lat: number };
   onMapClick?: (lngLat: { lng: number; lat: number }) => void;
   onMarkerDragEnd?: (id: string, lngLat: { lng: number; lat: number }) => void;
 }
@@ -34,6 +34,7 @@ export default function Map({
   markers = [],
   drawRoute = false,
   interactive = true,
+  userLocation,
   onMapClick,
   onMarkerDragEnd,
 }: MapProps) {
@@ -59,28 +60,39 @@ export default function Map({
       "bottom-left"
     );
 
-    if (interactive) {
-      map.addControl(
-        new maplibregl.GeolocateControl({
-          positionOptions: { enableHighAccuracy: true },
-          trackUserLocation: false,
-        }),
-        "bottom-right"
-      );
-    }
-
     if (onMapClick) {
-      map.on("click", (e) => onMapClick({ lng: e.lngLat.lng, lat: e.lngLat.lat }));
+      map.on("click", (e) =>
+        onMapClick({ lng: e.lngLat.lng, lat: e.lngLat.lat })
+      );
     }
 
     mapRef.current = map;
 
     map.on("load", () => {
+      // User location pulsing dot
+      if (userLocation) {
+        const dot = document.createElement("div");
+        dot.style.cssText =
+          "position:relative;width:22px;height:22px;cursor:default";
+        const pulse = document.createElement("div");
+        pulse.style.cssText =
+          "position:absolute;inset:-9px;border-radius:50%;background:rgba(66,133,244,0.18);animation:loc-pulse 2s ease-out infinite";
+        const core = document.createElement("div");
+        core.style.cssText =
+          "position:absolute;inset:0;border-radius:50%;background:#4285f4;border:2.5px solid #fff;box-shadow:0 0 6px rgba(66,133,244,0.5)";
+        dot.appendChild(pulse);
+        dot.appendChild(core);
+        new maplibregl.Marker({ element: dot })
+          .setLngLat([userLocation.lng, userLocation.lat])
+          .addTo(map);
+      }
+
+      // Circuit/point markers
       markers.forEach((m) => {
         const el = document.createElement("div");
         el.style.cssText = m.draggable
-          ? "width:32px;height:32px;border-radius:50%;background:#000;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.4);cursor:grab;border:2px solid #fff"
-          : "width:28px;height:28px;border-radius:50%;background:#000;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.3)";
+          ? "width:32px;height:32px;border-radius:50%;background:#3b82f6;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;box-shadow:0 2px 12px rgba(59,130,246,.5);cursor:grab;border:2px solid rgba(255,255,255,.8)"
+          : "width:28px;height:28px;border-radius:50%;background:#3b82f6;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;box-shadow:0 2px 8px rgba(59,130,246,.4);border:2px solid rgba(255,255,255,.6)";
         el.textContent = m.label ?? "";
         const marker = new maplibregl.Marker({
           element: el,
@@ -112,7 +124,7 @@ export default function Map({
           type: "line",
           source: "route",
           paint: {
-            "line-color": "#000",
+            "line-color": "#3b82f6",
             "line-width": 2.5,
             "line-dasharray": [2, 2],
           },
