@@ -83,10 +83,17 @@ Before building any page, drop the relevant reference screenshot(s) into a `/des
 - Aggregate view, timeline mode: the same rollup of all points laid out chronologically (map mode ships in POC)
 - Travel Profile: opt-in curated public page (bio, cover photo, featured public circuits) built on top of your public circuits
 
+### Phase 2 additions (decided during design review, 2026-07-10)
+- **Share circuit button** — uses the Web Share API (`navigator.share()`) to trigger the native share sheet (iOS/Android) from the circuit detail page. Falls back to copy-link on unsupported browsers. Screenshot detection is not possible in PWAs, so the share button is the path.
+- **Map style switcher** — MapLibre GL supports `map.setStyle()` to swap tile sources at runtime. Offer 3–4 styles (e.g. clean/streets, dark, terrain/outdoors, satellite via MapTiler free tier). UI: bottom-sheet selector like Polarsteps/Life360. Stadia Maps provides clean/dark/outdoors/terrain styles for free; satellite requires MapTiler free tier (100K tiles/month).
+- **Location permission guidance screen** — before the first `navigator.geolocation.getCurrentPosition()` call in add-point, show a soft-ask modal explaining why location is needed and what to do if blocked. Browser handles the actual permission prompt; the guidance screen just primes the user to tap "Allow."
+- **PWA push notifications** — parked, no use case in Phase 2. Revisit in Phase 5 when social features (clone/star notifications) land. In-app notification inbox is the primary surface per spec §13.
+
 ### Explicitly out of scope for now
 - Live GPS trip tracking (that's Polarsteps' job, not this app's)
 - Public social feed / discovery algorithm
 - Native mobile app (revisit after PWA is solid)
+- Screenshot detection for sharing (not possible in web/PWA — share button covers this)
 
 ## 6. System architecture
 
