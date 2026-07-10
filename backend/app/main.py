@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
-from app.routers import health, me
+from app.routers import circuits, health, me, points
 
 app = FastAPI(title="Offroute API")
 
@@ -16,3 +16,5 @@ app.add_middleware(
 
 app.include_router(health.router)
 app.include_router(me.router)
+app.include_router(circuits.router)
+app.include_router(points.router)
