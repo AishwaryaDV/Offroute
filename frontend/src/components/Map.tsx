@@ -13,6 +13,7 @@ export interface MapMarker {
   lng: number;
   lat: number;
   label?: string;
+  draggable?: boolean;
 }
 
 export interface MapProps {
@@ -23,6 +24,7 @@ export interface MapProps {
   drawRoute?: boolean;
   interactive?: boolean;
   onMapClick?: (lngLat: { lng: number; lat: number }) => void;
+  onMarkerDragEnd?: (id: string, lngLat: { lng: number; lat: number }) => void;
 }
 
 export default function Map({
@@ -33,6 +35,7 @@ export default function Map({
   drawRoute = false,
   interactive = true,
   onMapClick,
+  onMarkerDragEnd,
 }: MapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -75,12 +78,23 @@ export default function Map({
     map.on("load", () => {
       markers.forEach((m) => {
         const el = document.createElement("div");
-        el.style.cssText =
-          "width:28px;height:28px;border-radius:50%;background:#000;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.3)";
+        el.style.cssText = m.draggable
+          ? "width:32px;height:32px;border-radius:50%;background:#000;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.4);cursor:grab;border:2px solid #fff"
+          : "width:28px;height:28px;border-radius:50%;background:#000;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.3)";
         el.textContent = m.label ?? "";
-        new maplibregl.Marker({ element: el })
+        const marker = new maplibregl.Marker({
+          element: el,
+          draggable: m.draggable ?? false,
+        })
           .setLngLat([m.lng, m.lat])
           .addTo(map);
+
+        if (m.draggable && onMarkerDragEnd) {
+          marker.on("dragend", () => {
+            const pos = marker.getLngLat();
+            onMarkerDragEnd(m.id, { lng: pos.lng, lat: pos.lat });
+          });
+        }
       });
 
       if (drawRoute && markers.length > 1) {
