@@ -132,8 +132,10 @@ function Settings() {
   /* ---------- Menu (Settings root) ---------- */
   if (view === "menu") {
     return (
-      <div className="min-h-[100dvh] bg-[#f5f6f8]">
-        <div className="flex justify-end px-5 pt-[max(env(safe-area-inset-top),1.25rem)]">
+      <div className="flex min-h-[100dvh] flex-col bg-[#0b1120]">
+        <div className="h-[max(env(safe-area-inset-top),2.75rem)] shrink-0" />
+        <div className="sheet-up sheet-light flex-1 overflow-hidden rounded-t-[28px] bg-[#f5f6f8]">
+        <div className="flex justify-end px-5 pt-5">
           <button
             onClick={() => router.push("/dashboard")}
             className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-sm active:bg-gray-100"
@@ -186,6 +188,7 @@ function Settings() {
             </span>
           </button>
         </div>
+        </div>
       </div>
     );
   }
@@ -193,8 +196,10 @@ function Settings() {
   /* ---------- Profile edit ---------- */
   if (view === "profile") {
     return (
-      <div className="min-h-[100dvh] bg-white">
-        <div className="flex items-center justify-between px-5 pt-[max(env(safe-area-inset-top),1.25rem)]">
+      <div className="flex min-h-[100dvh] flex-col bg-[#0b1120]">
+        <div className="h-[max(env(safe-area-inset-top),2.75rem)] shrink-0" />
+        <div className="sheet-up sheet-light flex-1 overflow-hidden rounded-t-[28px] bg-white">
+        <div className="flex items-center justify-between px-5 pt-5">
           <button
             onClick={() => setView("menu")}
             className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f5f6f8] active:bg-gray-200"
@@ -285,14 +290,17 @@ function Settings() {
           </div>
           <div className="mx-5 h-px bg-gray-200" />
         </div>
+        </div>
       </div>
     );
   }
 
   /* ---------- Account ---------- */
   return (
-    <div className="min-h-[100dvh] bg-[#f5f6f8]">
-      <div className="flex items-center justify-between bg-white px-5 pb-2 pt-[max(env(safe-area-inset-top),1.25rem)]">
+    <div className="flex min-h-[100dvh] flex-col bg-[#0b1120]">
+      <div className="h-[max(env(safe-area-inset-top),2.75rem)] shrink-0" />
+      <div className="sheet-up sheet-light flex-1 overflow-hidden rounded-t-[28px] bg-[#f5f6f8]">
+      <div className="flex items-center justify-between rounded-t-[28px] bg-white px-5 pb-2 pt-5">
         <button
           onClick={() => setView("menu")}
           className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f5f6f8] active:bg-gray-200"
@@ -422,6 +430,7 @@ function Settings() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

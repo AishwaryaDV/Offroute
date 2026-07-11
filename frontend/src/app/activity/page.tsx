@@ -8,8 +8,10 @@ function Activity() {
   const router = useRouter();
 
   return (
-    <div className="min-h-[100dvh] bg-white">
-      <header className="flex items-start justify-between px-5 pt-[max(env(safe-area-inset-top),1.25rem)]">
+    <div className="flex min-h-[100dvh] flex-col bg-[#0b1120]">
+      <div className="h-[max(env(safe-area-inset-top),2.75rem)] shrink-0" />
+      <div className="sheet-up sheet-light flex-1 overflow-hidden rounded-t-[28px] bg-white">
+      <header className="flex items-start justify-between px-5 pt-5">
         <h1 className="text-4xl font-bold tracking-tight text-[#0f1d32]">
           Activity
         </h1>
@@ -33,6 +35,7 @@ function Activity() {
           Your travel timeline will appear here
         </p>
       </main>
+      </div>
     </div>
   );
 }

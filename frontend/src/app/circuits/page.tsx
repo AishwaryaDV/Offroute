@@ -31,8 +31,10 @@ function CircuitsList() {
   });
 
   return (
-    <div className="min-h-[100dvh] bg-white">
-      <header className="sticky top-0 z-10 bg-white px-5 pb-4 pt-[max(env(safe-area-inset-top),1.25rem)]">
+    <div className="flex min-h-[100dvh] flex-col bg-[#0b1120]">
+      <div className="h-[max(env(safe-area-inset-top),2.75rem)] shrink-0" />
+      <div className="sheet-up sheet-light flex-1 overflow-hidden rounded-t-[28px] bg-white">
+      <header className="sticky top-0 z-10 rounded-t-[28px] bg-white px-5 pb-4 pt-5">
         <div className="flex items-start justify-between">
           <h1 className="text-4xl font-bold tracking-tight text-[#0f1d32]">
             Circuits
@@ -110,6 +112,7 @@ function CircuitsList() {
           </div>
         )}
       </main>
+      </div>
     </div>
   );
 }

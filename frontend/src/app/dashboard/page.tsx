@@ -130,90 +130,117 @@ function Dashboard() {
         </Link>
       </header>
 
-      {/* Me overlay — profile info */}
-      {me && (
-        <div className="absolute inset-x-0 top-20 z-10 flex flex-col items-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/20 text-2xl font-bold text-white backdrop-blur-md [text-shadow:0_1px_4px_rgba(0,0,0,.4)]">
-            {(me.display_name?.[0] ?? me.email[0]).toUpperCase()}
-          </div>
-          <p className="mt-2 text-base font-semibold text-white [text-shadow:0_1px_4px_rgba(0,0,0,.5)]">
-            {me.display_name ?? "Traveler"}
-            {me.nationality && (
-              <span className="ml-2 font-normal text-white/60">
-                {me.nationality}
-              </span>
-            )}
-          </p>
-          <p className="text-sm text-white/60 [text-shadow:0_1px_3px_rgba(0,0,0,.4)]">
-            {me.email}
-          </p>
+      {/* Me sheet — white, curved top, pulled up over the map (Polarsteps home) */}
+      <div className="sheet-up sheet-light absolute inset-x-0 bottom-0 z-10 rounded-t-[28px] bg-white pb-28 shadow-[0_-10px_40px_rgba(0,0,0,0.35)]">
+        <div className="flex justify-center pt-3">
+          <div className="h-1 w-10 rounded-full bg-gray-300" />
         </div>
-      )}
 
-      {/* Bottom section */}
-      <div className="absolute inset-x-0 bottom-0 z-10">
-        {/* Circuit cards (empty state lives on the circuits page) */}
-        <div className="px-5 pb-3">
-          {circuits && circuits.length > 0 && (
-            <div className="-mx-5 flex gap-3 overflow-x-auto px-5 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {circuits.map((circuit) => (
-                <Link
-                  key={circuit.id}
-                  href={`/circuits/${circuit.id}`}
-                  className="min-w-[220px] shrink-0 rounded-2xl bg-black/30 p-4 ring-1 ring-white/[0.1] backdrop-blur-md active:bg-black/40"
-                >
-                  <p className="font-semibold text-white">{circuit.title}</p>
-                  {circuit.description && (
-                    <p className="mt-1 line-clamp-1 text-sm text-white/50">
-                      {circuit.description}
-                    </p>
-                  )}
-                  <div className="mt-2 flex items-center gap-1.5 text-xs text-white/35">
-                    <MapPin size={12} />
-                    <span>
-                      {circuit.point_count}{" "}
-                      {circuit.point_count === 1 ? "point" : "points"}
-                    </span>
-                  </div>
-                </Link>
-              ))}
+        {me && (
+          <div className="flex items-center gap-4 px-6 pt-3">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#0f1d32]/10 text-2xl font-bold text-[#0f1d32]">
+              {(me.display_name?.[0] ?? me.email[0]).toUpperCase()}
             </div>
+            <div className="min-w-0">
+              <p className="truncate text-2xl font-bold text-[#0f1d32]">
+                {me.display_name ?? "Traveler"}
+              </p>
+              <p className="truncate text-base text-gray-500">
+                {me.nationality ?? me.email}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Stats row */}
+        <div className="mt-5 flex px-6">
+          <div className="flex-1 border-r border-gray-200">
+            <p className="text-2xl font-bold text-[#0f1d32]">
+              {circuits?.length ?? 0}
+            </p>
+            <p className="text-base text-gray-500">Circuits</p>
+          </div>
+          <div className="flex-1 pl-6">
+            <p className="text-2xl font-bold text-[#0f1d32]">
+              {circuits?.reduce((sum, c) => sum + c.point_count, 0) ?? 0}
+            </p>
+            <p className="text-base text-gray-500">Points</p>
+          </div>
+        </div>
+
+        {/* CTA */}
+        <div className="px-6 pt-6">
+          <button
+            onClick={() => setShowNewCircuit(true)}
+            className="flex w-full items-center justify-center gap-2 rounded-full bg-[#0f1d32] py-4 text-base font-semibold text-white active:bg-[#162a46]"
+          >
+            <Plus size={20} strokeWidth={2.5} />
+            New circuit
+          </button>
+          {(!circuits || circuits.length === 0) && (
+            <p className="mt-4 text-center text-base text-gray-500">
+              Kick things off by logging your first circuit.
+            </p>
           )}
         </div>
 
-        {/* Floating bottom nav */}
-        <div className="px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-          <nav className="flex items-center justify-around rounded-full bg-[#f5f0e8]/75 px-3 py-2.5 shadow-lg backdrop-blur-xl">
-            <button className="flex flex-col items-center gap-1 px-3 py-1 text-[#0f1d32]">
-              <Compass size={26} strokeWidth={2.2} />
-              <span className="text-xs font-semibold">Me</span>
-            </button>
+        {/* Recent circuits strip */}
+        {circuits && circuits.length > 0 && (
+          <div className="flex gap-3 overflow-x-auto px-6 pt-5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {circuits.map((circuit) => (
+              <Link
+                key={circuit.id}
+                href={`/circuits/${circuit.id}`}
+                className="min-w-[200px] shrink-0 rounded-2xl bg-[#f5f6f8] p-4 active:bg-gray-100"
+              >
+                <p className="truncate font-semibold text-[#0f1d32]">
+                  {circuit.title}
+                </p>
+                <div className="mt-1.5 flex items-center gap-1.5 text-sm text-gray-500">
+                  <MapPin size={13} />
+                  <span>
+                    {circuit.point_count}{" "}
+                    {circuit.point_count === 1 ? "point" : "points"}
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
 
-            <Link
-              href="/circuits"
-              className="flex flex-col items-center gap-1 px-3 py-1 text-[#0f1d32]/50"
-            >
-              <List size={26} strokeWidth={2.2} />
-              <span className="text-xs font-semibold">Circuits</span>
-            </Link>
+      {/* Floating bottom nav — above the sheet */}
+      <div className="absolute inset-x-0 bottom-0 z-20 px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <nav className="flex items-center justify-around rounded-full bg-[#f5f0e8]/90 px-3 py-2.5 shadow-lg backdrop-blur-xl">
+          <button className="flex flex-col items-center gap-1 px-3 py-1 text-[#0f1d32]">
+            <Compass size={26} strokeWidth={2.2} />
+            <span className="text-xs font-semibold">Me</span>
+          </button>
 
-            <button
-              onClick={() => setShowNewCircuit(true)}
-              className="flex flex-col items-center gap-1 px-3 py-1 text-[#0f1d32]/50 active:text-[#0f1d32]"
-            >
-              <Plus size={26} strokeWidth={2.2} />
-              <span className="text-xs font-semibold">Add</span>
-            </button>
+          <Link
+            href="/circuits"
+            className="flex flex-col items-center gap-1 px-3 py-1 text-[#0f1d32]/50"
+          >
+            <List size={26} strokeWidth={2.2} />
+            <span className="text-xs font-semibold">Circuits</span>
+          </Link>
 
-            <Link
-              href="/activity"
-              className="flex flex-col items-center gap-1 px-3 py-1 text-[#0f1d32]/50"
-            >
-              <Timer size={26} strokeWidth={2.2} />
-              <span className="text-xs font-semibold">Activity</span>
-            </Link>
-          </nav>
-        </div>
+          <button
+            onClick={() => setShowNewCircuit(true)}
+            className="flex flex-col items-center gap-1 px-3 py-1 text-[#0f1d32]/50 active:text-[#0f1d32]"
+          >
+            <Plus size={26} strokeWidth={2.2} />
+            <span className="text-xs font-semibold">Add</span>
+          </button>
+
+          <Link
+            href="/activity"
+            className="flex flex-col items-center gap-1 px-3 py-1 text-[#0f1d32]/50"
+          >
+            <Timer size={26} strokeWidth={2.2} />
+            <span className="text-xs font-semibold">Activity</span>
+          </Link>
+        </nav>
       </div>
 
       {/* New Circuit bottom sheet */}
