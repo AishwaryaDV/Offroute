@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -9,6 +9,8 @@ class CircuitCreate(BaseModel):
     description: str | None = None
     visibility: str = "private"
     tags: list[str] | None = None
+    start_date: date | None = None
+    end_date: date | None = None
 
 
 class CircuitUpdate(BaseModel):
@@ -16,6 +18,8 @@ class CircuitUpdate(BaseModel):
     description: str | None = None
     visibility: str | None = None
     tags: list[str] | None = None
+    start_date: date | None = None
+    end_date: date | None = None
 
 
 class CircuitResponse(BaseModel):
@@ -28,6 +32,8 @@ class CircuitResponse(BaseModel):
     cover_media_id: uuid.UUID | None
     visibility: str
     tags: list[str] | None
+    start_date: date | None
+    end_date: date | None
     created_at: datetime
     updated_at: datetime
     point_count: int = 0

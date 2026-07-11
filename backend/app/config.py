@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     database_url: str = ""
     database_url_sync: str = ""
     supabase_url: str = ""
+    supabase_service_role_key: str = ""
     cors_origins: str = "http://localhost:3000"
 
     @property
