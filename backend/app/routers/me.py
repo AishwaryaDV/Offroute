@@ -24,3 +24,11 @@ async def patch_me(
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> User:
     return await users_service.update_user(db, user, data)
+
+
+@router.delete("/me", status_code=204)
+async def delete_me(
+    user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> None:
+    await users_service.delete_user(db, user)

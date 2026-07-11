@@ -7,6 +7,7 @@ export interface User {
   id: string;
   email: string;
   display_name: string | null;
+  nationality: string | null;
   avatar_url: string | null;
   profile_enabled: boolean;
   profile_bio: string | null;
@@ -15,6 +16,7 @@ export interface User {
 
 export interface UserUpdate {
   display_name?: string;
+  nationality?: string;
   avatar_url?: string;
   profile_enabled?: boolean;
   profile_bio?: string;
@@ -30,6 +32,8 @@ export interface Circuit {
   cover_media_id: string | null;
   visibility: "private" | "shared" | "public";
   tags: string[] | null;
+  start_date: string | null;
+  end_date: string | null;
   created_at: string;
   updated_at: string;
   point_count: number;
@@ -40,6 +44,8 @@ export interface CircuitCreate {
   description?: string;
   visibility?: "private" | "shared" | "public";
   tags?: string[];
+  start_date?: string;
+  end_date?: string;
 }
 
 export interface CircuitUpdate {
@@ -47,6 +53,8 @@ export interface CircuitUpdate {
   description?: string;
   visibility?: "private" | "shared" | "public";
   tags?: string[];
+  start_date?: string;
+  end_date?: string;
 }
 
 // --- Points ---

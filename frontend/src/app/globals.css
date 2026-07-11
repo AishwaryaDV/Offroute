@@ -43,3 +43,19 @@ select {
   0% { transform: scale(0.6); opacity: 1; }
   100% { transform: scale(2); opacity: 0; }
 }
+
+@keyframes sheet-up {
+  from { transform: translateY(40px); opacity: 0.4; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.sheet-up {
+  animation: sheet-up 0.3s ease-out;
+}
+
+/* Light-themed pages/sheets: native controls should render light */
+.sheet-light input,
+.sheet-light textarea,
+.sheet-light select {
+  color-scheme: light;
+}
