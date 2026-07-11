@@ -1,6 +1,15 @@
 "use client";
 
-import { Compass, MapPin, Plus, Settings, X } from "lucide-react";
+import {
+  Compass,
+  List,
+  MapPin,
+  Plus,
+  Settings,
+  X,
+  Calendar,
+  Eye,
+} from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -15,6 +24,9 @@ import { getCircuits, createCircuit } from "@/lib/circuits";
 interface NewCircuitValues {
   title: string;
   description: string;
+  start_date: string;
+  end_date: string;
+  visibility: string;
 }
 
 function Dashboard() {
@@ -27,11 +39,11 @@ function Dashboard() {
   });
 
   const [showNewCircuit, setShowNewCircuit] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
   const [userLoc, setUserLoc] = useState<{ lng: number; lat: number } | null>(
     null
   );
 
-  // Get user location passively (no fly-to, just the dot)
   useEffect(() => {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
@@ -46,14 +58,21 @@ function Dashboard() {
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
-  } = useForm<NewCircuitValues>();
+  } = useForm<NewCircuitValues>({
+    defaultValues: { visibility: "private" },
+  });
+
+  const descValue = watch("description") ?? "";
 
   const createMutation = useMutation({
     mutationFn: (data: NewCircuitValues) =>
       createCircuit({
         title: data.title,
         description: data.description || undefined,
+        visibility:
+          (data.visibility as "private" | "shared" | "public") || undefined,
       }),
     onSuccess: (circuit) => {
       queryClient.invalidateQueries({ queryKey: ["circuits"] });
@@ -71,10 +90,21 @@ function Dashboard() {
       <MapDynamic
         className="absolute inset-0 h-full w-full"
         center={[78.9629, 20.5937]}
-        zoom={3.5}
+        zoom={3.6}
         interactive
         userLocation={userLoc ?? undefined}
+        onReady={() => setMapReady(true)}
       />
+
+      {/* Loading overlay — compass + spinner while tiles load */}
+      {!mapReady && (
+        <div className="absolute inset-0 z-30 flex items-center justify-center bg-[#0b1120]/90">
+          <div className="flex flex-col items-center gap-4">
+            <Compass size={48} className="text-white/20" />
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+          </div>
+        </div>
+      )}
 
       {/* Header overlay */}
       <header className="absolute inset-x-0 top-0 z-10 px-5 pt-[max(env(safe-area-inset-top),1.25rem)]">
@@ -88,28 +118,27 @@ function Dashboard() {
 
       {/* Bottom section: cards + nav */}
       <div className="absolute inset-x-0 bottom-0 z-10">
-        {/* Gradient fade */}
-        <div className="pointer-events-none h-32 bg-gradient-to-t from-[#0b1120]/90 to-transparent" />
+        <div className="pointer-events-none h-28 bg-gradient-to-t from-[#0b1120] to-transparent" />
 
         {/* Circuit cards or empty state */}
-        <div className="bg-[#0b1120]/80 px-5 pb-2 pt-1 backdrop-blur-lg">
+        <div className="bg-[#0b1120] px-5 pb-2 pt-1">
           {isLoading ? (
-            <div className="h-24 animate-pulse rounded-2xl bg-white/[0.08]" />
+            <div className="h-20 animate-pulse rounded-2xl bg-white/[0.08]" />
           ) : circuits && circuits.length > 0 ? (
             <div className="-mx-5 flex gap-3 overflow-x-auto px-5 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {circuits.map((circuit) => (
                 <Link
                   key={circuit.id}
                   href={`/circuits/${circuit.id}`}
-                  className="min-w-[220px] shrink-0 rounded-2xl bg-white/[0.08] p-4 ring-1 ring-white/[0.12] active:bg-white/[0.14]"
+                  className="min-w-[220px] shrink-0 rounded-2xl bg-white/[0.06] p-4 ring-1 ring-white/[0.1] active:bg-white/[0.1]"
                 >
                   <p className="font-semibold text-white">{circuit.title}</p>
                   {circuit.description && (
-                    <p className="mt-1 line-clamp-1 text-sm text-white/60">
+                    <p className="mt-1 line-clamp-1 text-sm text-white/50">
                       {circuit.description}
                     </p>
                   )}
-                  <div className="mt-2 flex items-center gap-1.5 text-xs text-white/40">
+                  <div className="mt-2 flex items-center gap-1.5 text-xs text-white/35">
                     <MapPin size={12} />
                     <span>
                       {circuit.point_count}{" "}
@@ -120,42 +149,47 @@ function Dashboard() {
               ))}
             </div>
           ) : (
-            <div className="rounded-2xl bg-white/[0.08] px-6 py-6 text-center ring-1 ring-white/[0.1]">
-              <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-blue-500/20">
-                <MapPin size={20} className="text-blue-400" />
-              </div>
-              <p className="text-sm font-medium text-white">No circuits yet</p>
-              <p className="mt-0.5 text-xs text-white/50">
+            <div className="rounded-2xl bg-white/[0.06] px-6 py-5 text-center ring-1 ring-white/[0.08]">
+              <p className="text-sm font-medium text-white/70">
+                No circuits yet
+              </p>
+              <p className="mt-0.5 text-xs text-white/40">
                 Tap + to start your first one
               </p>
             </div>
           )}
         </div>
 
-        {/* Floating bottom nav bar */}
-        <div className="px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
-          <nav className="flex items-center justify-around rounded-2xl bg-[#0b1120]/80 px-6 py-2.5 ring-1 ring-white/[0.1] backdrop-blur-xl">
-            <button className="flex flex-col items-center gap-1 text-blue-400">
-              <Compass size={22} />
-              <span className="text-[10px] font-medium">Map</span>
-            </button>
+        {/* Bottom nav bar */}
+        <nav className="flex items-end justify-around bg-[#0b1120] px-4 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1.5">
+          <button className="flex flex-col items-center gap-0.5 py-1 text-white">
+            <Compass size={22} />
+            <span className="text-[10px] font-medium">Map</span>
+          </button>
 
-            <button
-              onClick={() => setShowNewCircuit(true)}
-              className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-500 shadow-lg shadow-blue-500/30 active:bg-blue-600"
-            >
-              <Plus size={24} className="text-white" />
-            </button>
+          <Link
+            href="/circuits"
+            className="flex flex-col items-center gap-0.5 py-1 text-white/40"
+          >
+            <List size={22} />
+            <span className="text-[10px] font-medium">Circuits</span>
+          </Link>
 
-            <Link
-              href="/settings"
-              className="flex flex-col items-center gap-1 text-zinc-500"
-            >
-              <Settings size={22} />
-              <span className="text-[10px] font-medium">Settings</span>
-            </Link>
-          </nav>
-        </div>
+          <button
+            onClick={() => setShowNewCircuit(true)}
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-[#162033] ring-1 ring-white/[0.15] active:bg-[#1e2d45]"
+          >
+            <Plus size={22} className="text-white" />
+          </button>
+
+          <Link
+            href="/settings"
+            className="flex flex-col items-center gap-0.5 py-1 text-white/40"
+          >
+            <Settings size={22} />
+            <span className="text-[10px] font-medium">Settings</span>
+          </Link>
+        </nav>
       </div>
 
       {/* New Circuit bottom sheet */}
@@ -169,14 +203,12 @@ function Dashboard() {
             }
           }}
         >
-          <div className="w-full rounded-t-3xl bg-white pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-            {/* Drag handle */}
+          <div className="max-h-[85dvh] w-full overflow-y-auto rounded-t-3xl bg-white pb-[max(1.5rem,env(safe-area-inset-bottom))]">
             <div className="flex justify-center pt-3 pb-1">
               <div className="h-1 w-10 rounded-full bg-gray-300" />
             </div>
 
-            {/* Header */}
-            <div className="flex items-center justify-between px-5 pb-4 pt-2">
+            <div className="flex items-center justify-between px-5 pb-3 pt-2">
               <button
                 onClick={() => {
                   setShowNewCircuit(false);
@@ -190,7 +222,6 @@ function Dashboard() {
               <div className="w-9" />
             </div>
 
-            {/* Form */}
             <form
               onSubmit={handleSubmit((data) => createMutation.mutate(data))}
               className="flex flex-col gap-4 px-5"
@@ -205,7 +236,7 @@ function Dashboard() {
                     required: "Give your circuit a name",
                     maxLength: { value: 200, message: "200 characters max" },
                   })}
-                  className={`w-full rounded-xl bg-gray-50 px-4 py-4 text-base text-gray-900 placeholder-gray-400 outline-none ring-1 ${
+                  className={`w-full rounded-xl bg-gray-50 px-4 py-3.5 text-base text-gray-900 placeholder-gray-400 outline-none ring-1 ${
                     errors.title
                       ? "ring-red-400 focus:ring-red-500"
                       : "ring-gray-200 focus:ring-blue-500"
@@ -218,17 +249,89 @@ function Dashboard() {
                 )}
               </div>
 
-              <textarea
-                placeholder="Description (optional)"
-                rows={3}
-                {...register("description")}
-                className="w-full resize-none rounded-xl bg-gray-50 px-4 py-4 text-base text-gray-900 placeholder-gray-400 outline-none ring-1 ring-gray-200 focus:ring-blue-500"
-              />
+              <div>
+                <textarea
+                  placeholder="Description (optional)"
+                  rows={2}
+                  maxLength={200}
+                  {...register("description", {
+                    maxLength: { value: 200, message: "200 characters max" },
+                  })}
+                  className="w-full resize-none rounded-xl bg-gray-50 px-4 py-3.5 text-base text-gray-900 placeholder-gray-400 outline-none ring-1 ring-gray-200 focus:ring-blue-500"
+                />
+                <p className="mt-1 text-right text-xs text-gray-400">
+                  {descValue.length}/200
+                </p>
+              </div>
+
+              {/* Dates */}
+              <div className="rounded-xl bg-gray-50 p-4 ring-1 ring-gray-200">
+                <div className="mb-3 flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <Calendar size={16} />
+                  <span>Trip dates</span>
+                </div>
+                <div className="flex gap-3">
+                  <div className="flex-1">
+                    <label className="mb-1 block text-xs text-gray-500">
+                      Start date
+                    </label>
+                    <input
+                      type="date"
+                      {...register("start_date")}
+                      className="w-full rounded-lg bg-white px-3 py-2.5 text-sm text-gray-900 outline-none ring-1 ring-gray-200 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="mb-1 block text-xs text-gray-500">
+                      End date
+                    </label>
+                    <input
+                      type="date"
+                      {...register("end_date")}
+                      className="w-full rounded-lg bg-white px-3 py-2.5 text-sm text-gray-900 outline-none ring-1 ring-gray-200 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Visibility */}
+              <div className="rounded-xl bg-gray-50 p-4 ring-1 ring-gray-200">
+                <div className="mb-3 flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <Eye size={16} />
+                  <span>Who can see this?</span>
+                </div>
+                <div className="flex gap-2">
+                  {(
+                    [
+                      { value: "private", label: "Only me" },
+                      { value: "shared", label: "Friends" },
+                      { value: "public", label: "Everyone" },
+                    ] as const
+                  ).map((opt) => (
+                    <label
+                      key={opt.value}
+                      className={`flex flex-1 cursor-pointer items-center justify-center rounded-lg px-3 py-2.5 text-sm font-medium ring-1 transition-colors ${
+                        watch("visibility") === opt.value
+                          ? "bg-[#0f1d32] text-white ring-[#0f1d32]"
+                          : "bg-white text-gray-600 ring-gray-200"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        value={opt.value}
+                        {...register("visibility")}
+                        className="sr-only"
+                      />
+                      {opt.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
 
               <button
                 type="submit"
                 disabled={createMutation.isPending}
-                className="mt-2 rounded-xl bg-blue-500 py-4 text-base font-semibold text-white active:bg-blue-600 disabled:opacity-50"
+                className="mt-1 rounded-xl bg-[#0f1d32] py-4 text-base font-semibold text-white active:bg-[#162a46] disabled:opacity-50"
               >
                 {createMutation.isPending ? "Creating…" : "Create circuit"}
               </button>

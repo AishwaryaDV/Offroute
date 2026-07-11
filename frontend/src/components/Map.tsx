@@ -23,6 +23,7 @@ export interface MapProps {
   drawRoute?: boolean;
   interactive?: boolean;
   userLocation?: { lng: number; lat: number };
+  onReady?: () => void;
   onMapClick?: (lngLat: { lng: number; lat: number }) => void;
   onMarkerDragEnd?: (id: string, lngLat: { lng: number; lat: number }) => void;
 }
@@ -35,6 +36,7 @@ export default function Map({
   drawRoute = false,
   interactive = true,
   userLocation,
+  onReady,
   onMapClick,
   onMarkerDragEnd,
 }: MapProps) {
@@ -148,6 +150,10 @@ export default function Map({
         }
       }
     });
+
+    if (onReady) {
+      map.once("idle", onReady);
+    }
 
     return () => {
       mapRef.current = null;
