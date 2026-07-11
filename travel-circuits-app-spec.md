@@ -29,7 +29,8 @@ There is no designer on this project. All UI is built by referencing real apps a
 
 Each screen in Offroute has a real-world reference app to mirror for layout and interaction patterns. When building a page, pull up the reference on your phone and match its structure — don't invent layouts from scratch.
 
-- **`/dashboard` (My Circuits)** — reference **Wanderlog's trip dashboard**: a card grid, each card showing cover photo, title, and metadata. Simple, scannable, one clear "create new" action.
+- **`/dashboard` (Me — default landing)** — reference **Polarsteps' home screen**: full-screen satellite map as the permanent background, profile ("Me") overlay on top (avatar, name + nationality, email), horizontally scrollable circuit cards above a **floating beige translucent bottom nav** (Me · Circuits · New · Activity, deep-blue icons with labels). "New" opens a white bottom sheet (name, description capped at 200 chars, trip dates, visibility). Settings is a gear icon in the header, not a nav tab. A translucent loading overlay with a spinning compass covers the map until tiles finish rendering (MapLibre `idle` event), then fades out. *(Superseded the original Wanderlog card-grid dashboard during the Phase 2 build, 2026-07-11.)*
+- **`/circuits` (circuit log)** — the full aggregated list of circuits (the original Wanderlog-style scannable list lives here): each row shows title, description, point count, visibility, date, plus the empty state when there are no circuits yet.
 - **`/circuits/[id]` (circuit detail)** — reference **Google Maps saved lists**: map fills the top half, scrollable list of points below; tapping a pin on the map scrolls the list to that point and vice versa. Also look at **Polarsteps' trip detail** for how they draw the route path between steps with photos alongside.
 - **`/points/[id]` (point detail)** — reference **Polarsteps' step detail card**: photo carousel at the top, title + notes below, location info + action button (Directions) at the bottom.
 - **`/world` (aggregate map)** — reference **Polarsteps' world map**: dark or muted map, colored pins/paths grouped by circuit, zoomable from globe to street level. Also reference **Stampie's filled-countries effect** for visual satisfaction at the global zoom level.
@@ -110,7 +111,7 @@ Classic two-tier design: the frontend talks only to the FastAPI backend over a R
 
   Structure: `app/` (routes) · `components/` · `lib/` (API client layer — one folder of typed functions like `getCircuits()`, `createPoint()`; components never construct raw fetch calls) · `hooks/` · `types/`.
 
-  Routes (App Router): `/` landing · `/login` · `/dashboard` (My Circuits, default home) · `/circuits/new` · `/circuits/[id]` (detail, map+list toggle) · `/circuits/[id]/points/new` · `/points/[id]` (detail + Directions) · `/world` (aggregate map) · `/s/[token]` (public shared circuit — server-rendered with full Open Graph tags: cover photo, title, point count, so links unfurl richly in WhatsApp/iMessage; no separate backend OG endpoint needed) · `/u/[username]` (Travel Profile, server-rendered with OG tags, phase 2) · `/settings` · `/notifications` (phase 2).
+  Routes (App Router): `/` landing · `/login` · `/dashboard` (Me over full-screen map, default home) · `/circuits` (circuit log list) · `/activity` (timeline placeholder, fleshed out with aggregate timeline mode in a later phase) · `/circuits/new` · `/circuits/[id]` (detail, map+list toggle) · `/circuits/[id]/points/new` · `/points/[id]` (detail + Directions) · `/world` (aggregate map) · `/s/[token]` (public shared circuit — server-rendered with full Open Graph tags: cover photo, title, point count, so links unfurl richly in WhatsApp/iMessage; no separate backend OG endpoint needed) · `/u/[username]` (Travel Profile, server-rendered with OG tags, phase 2) · `/settings` · `/notifications` (phase 2).
 
   Rendering split: public pages (`/s/[token]`, `/u/[username]`, landing) are server-rendered for previews/SEO; the authenticated app (dashboard, circuit editing, maps) is client components throughout — interactivity lives client-side, data flows through TanStack Query against the FastAPI REST API below.
 
@@ -134,6 +135,7 @@ users
   id (uuid, pk)
   email
   display_name
+  nationality (text, nullable)   -- collected in settings via searchable country picker, shown next to name
   avatar_url
   created_at
   profile_enabled (bool, default false)
@@ -156,6 +158,8 @@ circuits
   cover_media_id (fk -> media.id, nullable)
   visibility (enum: private | shared | public)
   tags (text[], nullable)
+  start_date (date, nullable)   -- trip dates, collected in the create-circuit sheet
+  end_date (date, nullable)
   created_at
   updated_at
 
@@ -223,7 +227,8 @@ profile_featured_circuits  -- phase 2
 ## 8. API surface (FastAPI — all endpoints hand-written)
 
 Auth (sign-up/login/refresh handled by Supabase Auth from the frontend; FastAPI only verifies tokens):
-- `GET /me` — current user profile (auto-provisions local `users` row on first call); `PATCH /me` — update display name, avatar, profile fields
+- `GET /me` — current user profile (auto-provisions local `users` row on first call); `PATCH /me` — update display name, nationality, avatar, profile fields
+- `DELETE /me` — delete account: removes the local user row (cascades circuits/points/media via FKs), then deletes the Supabase Auth identity via the admin API (requires `SUPABASE_SERVICE_ROLE_KEY` in backend env; if unset, app data is still deleted and the orphaned identity is logged). Frontend gates this behind a type-DELETE-to-confirm danger modal in settings. Password change goes through `supabase.auth.updateUser()` client-side — no backend endpoint needed.
 
 Circuits:
 - `GET /circuits` — list circuits owned by or shared with the current user
@@ -275,7 +280,7 @@ Visibility levels:
 - **Personal aggregate view** — a rollup of every point across every circuit the logged-in owner has, shown two ways: **map mode** (all points on a world map, colored/grouped by circuit) and **timeline mode** (the same points laid out chronologically across the owner's whole travel history, regardless of geography — ordered by `visited_at`, falling back to `created_at` when unset). Always shows everything the owner has, since only the owner sees it — no visibility filtering needed on their own view.
 - **Public aggregate** — when anyone other than the owner views a user's world, it's the same aggregate computed live, filtered to that user's `public` circuits only. Not a separate copy of data — toggling a circuit's visibility just changes what appears, automatically.
 - **Travel Profile** — an opt-in curated public page (`users.profile_enabled`) built on top of the public aggregate: bio, cover photo, and a manually ordered list of *featured* circuits (`profile_featured_circuits`). A circuit can only be featured if it's already `public` — enforced at the database level, so a private circuit can never accidentally surface there.
-- **Default app view for the owner is "My Circuits,"** not the aggregate — that's the working surface for actually logging things. The aggregate/world view is a secondary tab for reflection, not the landing screen.
+- **Default app view for the owner is the "Me" map landing** (`/dashboard`): full-screen map with profile overlay, recent circuits, and the floating nav — the working surface for actually logging things. The full circuit log lives one tab over at `/circuits`; the aggregate/world view stays a secondary surface for reflection, not the landing screen. *(Updated 2026-07-11: originally this read "My Circuits" as the default view.)*
 
 ## 11. Offline strategy (phase 2, "nice to have")
 - New points/media created offline get written to a local IndexedDB queue with a temporary client-generated ID.
@@ -333,9 +338,10 @@ Each phase ends with a working, deployed increment and a clear exit test. Do not
 - On clone: increment the source circuit's `fork_count`, record the row in `circuit_clones` (so the owner can see a "forked by" list, GitHub-style), and write a `notifications` row so the original owner is notified.
 - Starring works the same way: toggles a `circuit_stars` row, increments/decrements `star_count`, and notifies the owner on a new star.
 
-### My Circuits dashboard
-- Home screen for a logged-in user: a grid/list of every circuit they own, each card showing cover photo, title, point count, visibility, and star/fork counts.
-- Persistent "new circuit" action. No limit on number of circuits per user — this is inherent to the data model (each circuit just has an `owner_id`), not a separate feature to build.
+### Home (Me) & the circuit log
+- Home screen for a logged-in user is the **Me map landing**: full-screen satellite map, profile overlay, a horizontal strip of recent circuit cards, and the floating bottom nav with a persistent "New" (create circuit) action.
+- The **circuit log** (`/circuits`, "Circuits" tab) lists every circuit they own — title, point count, visibility, date, and (phase 5) star/fork counts. No limit on number of circuits per user — this is inherent to the data model (each circuit just has an `owner_id`), not a separate feature to build.
+- **Settings** (gear icon on the home header): edit profile (display name, nationality via searchable country picker), change password, log out, and delete account behind a type-DELETE-to-confirm danger modal.
 
 ### Installing the app (another person making it their own)
 - **Platform priority: iOS first** — the owner and most expected users are on iPhone, so iOS Safari is the primary test/polish target for every feature; Android Chrome must also be verified working, but iOS quirks are never acceptable to punt on.
