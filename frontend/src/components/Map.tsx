@@ -60,6 +60,30 @@ const CATEGORY_COLORS: Record<string, string> = {
   other: "#3b82f6",
 };
 
+function bezierRoute(pts: [number, number][]): [number, number][] {
+  if (pts.length < 2) return pts;
+  const out: [number, number][] = [pts[0]];
+  for (let i = 0; i < pts.length - 1; i++) {
+    const [x1, y1] = pts[i];
+    const [x2, y2] = pts[i + 1];
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const len = Math.sqrt(dx * dx + dy * dy);
+    if (len === 0) continue;
+    const off = len * 0.15;
+    const sign = i % 2 === 0 ? 1 : -1;
+    const cx = (x1 + x2) / 2 + sign * (-dy / len) * off;
+    const cy = (y1 + y2) / 2 + sign * (dx / len) * off;
+    const steps = 24;
+    for (let t = 1; t <= steps; t++) {
+      const s = t / steps;
+      const u = 1 - s;
+      out.push([u * u * x1 + 2 * u * s * cx + s * s * x2, u * u * y1 + 2 * u * s * cy + s * s * y2]);
+    }
+  }
+  return out;
+}
+
 function createPinElement(m: MapMarker, active = false): HTMLElement {
   const cat = m.category ?? "other";
   const color = CATEGORY_COLORS[cat] ?? CATEGORY_COLORS.other;
@@ -207,7 +231,8 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
       });
 
       if (drawRoute && markers.length > 1) {
-        const coords = markers.map((m) => [m.lng, m.lat]);
+        const raw = markers.map((m) => [m.lng, m.lat] as [number, number]);
+        const coords = bezierRoute(raw);
         map.addSource("route", {
           type: "geojson",
           data: {
@@ -217,14 +242,23 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
           },
         });
         map.addLayer({
+          id: "route-outline",
+          type: "line",
+          source: "route",
+          paint: {
+            "line-color": "#000000",
+            "line-width": 5,
+            "line-opacity": 0.25,
+          },
+        });
+        map.addLayer({
           id: "route-line",
           type: "line",
           source: "route",
           paint: {
             "line-color": "#ffffff",
-            "line-width": 2,
-            "line-dasharray": [2, 2],
-            "line-opacity": 0.6,
+            "line-width": 2.5,
+            "line-opacity": 0.85,
           },
         });
       }
