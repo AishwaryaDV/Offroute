@@ -16,7 +16,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AuthGuard } from "@/components/AuthGuard";
-import { getMe, updateMe } from "@/lib/me";
+import { deleteMe, getMe, updateMe } from "@/lib/me";
 import { supabase } from "@/lib/supabase";
 
 interface ProfileValues {
@@ -73,7 +73,7 @@ function Settings() {
   const profileForm = useForm<ProfileValues>({
     values: {
       display_name: me?.display_name ?? "",
-      nationality: "",
+      nationality: me?.nationality ?? "",
     },
   });
 
@@ -110,13 +110,16 @@ function Settings() {
     router.replace("/login");
   }
 
-  async function deleteAccount() {
-    toast.error(
-      "Account deletion requires backend admin endpoint — contact support"
-    );
-    setShowDeleteModal(false);
-    setDeleteConfirm("");
-  }
+  const deleteMutation = useMutation({
+    mutationFn: deleteMe,
+    onSuccess: async () => {
+      await supabase.auth.signOut();
+      queryClient.clear();
+      toast.success("Account deleted");
+      router.replace("/login");
+    },
+    onError: () => toast.error("Could not delete account — try again"),
+  });
 
   const filteredCountries = natSearch
     ? COUNTRIES.filter((c) =>
@@ -149,6 +152,11 @@ function Settings() {
             <div className="min-w-0 flex-1">
               <p className="font-semibold text-white">
                 {me.display_name ?? "No name set"}
+                {me.nationality && (
+                  <span className="ml-2 text-sm font-normal text-zinc-400">
+                    {me.nationality}
+                  </span>
+                )}
               </p>
               <p className="text-sm text-zinc-400">{me.email}</p>
             </div>
@@ -192,6 +200,7 @@ function Settings() {
             onSubmit={profileForm.handleSubmit((data) =>
               profileMutation.mutate({
                 display_name: data.display_name || undefined,
+                nationality: data.nationality || undefined,
               })
             )}
             className="mt-4 flex flex-col gap-4 rounded-2xl bg-white/[0.04] p-4 ring-1 ring-white/[0.06]"
@@ -373,11 +382,11 @@ function Settings() {
               placeholder="DELETE"
             />
             <button
-              onClick={deleteAccount}
-              disabled={deleteConfirm !== "DELETE"}
+              onClick={() => deleteMutation.mutate()}
+              disabled={deleteConfirm !== "DELETE" || deleteMutation.isPending}
               className="mt-4 w-full rounded-xl bg-red-600 py-3.5 text-base font-semibold text-white disabled:opacity-30"
             >
-              Permanently delete
+              {deleteMutation.isPending ? "Deleting…" : "Permanently delete"}
             </button>
           </div>
         </div>

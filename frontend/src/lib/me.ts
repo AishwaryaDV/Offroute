@@ -11,3 +11,7 @@ export function updateMe(data: UserUpdate): Promise<User> {
     body: JSON.stringify(data),
   });
 }
+
+export function deleteMe(): Promise<void> {
+  return apiFetch<void>("/me", { method: "DELETE" });
+}
