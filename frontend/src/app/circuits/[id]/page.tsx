@@ -239,8 +239,13 @@ function CircuitDetail() {
 
                 return (
                   <Fragment key={point.id}>
-                    <button
+                    <div
+                      role="button"
+                      tabIndex={0}
                       onClick={() => handleSelectPoint(point)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleSelectPoint(point);
+                      }}
                       className={`min-w-[240px] shrink-0 rounded-2xl p-4 text-left backdrop-blur-xl transition-all ${
                         isActive
                           ? "bg-[#111a2e]/95 ring-2 ring-white/30 scale-[1.02]"
@@ -290,7 +295,7 @@ function CircuitDetail() {
                           {point.notes}
                         </p>
                       )}
-                    </button>
+                    </div>
 
                     <Link
                       href={`/circuits/${id}/points/new`}
