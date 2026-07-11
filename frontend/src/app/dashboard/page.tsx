@@ -99,13 +99,18 @@ function Dashboard() {
         onReady={() => setMapReady(true)}
       />
 
-      {/* Loading overlay — translucent, spinning compass, smooth fade */}
+      {/* Loading overlay — translucent + blurred so tile pop-in never shows,
+          spinning compass, fades out only once every tile has rendered */}
       <div
-        className={`absolute inset-0 z-30 flex items-center justify-center bg-[#0b1120]/60 transition-opacity duration-700 ${
+        className={`absolute inset-0 z-30 flex items-center justify-center bg-[#0b1120]/35 backdrop-blur-lg transition-opacity duration-700 ${
           mapReady ? "pointer-events-none opacity-0" : "opacity-100"
         }`}
       >
-        <Compass size={40} className="animate-spin text-white" />
+        <Compass
+          size={64}
+          strokeWidth={1.6}
+          className="animate-spin text-white [animation-duration:2.5s]"
+        />
       </div>
 
       {/* Header: Offroute branding + settings gear */}
@@ -147,8 +152,6 @@ function Dashboard() {
 
       {/* Bottom section */}
       <div className="absolute inset-x-0 bottom-0 z-10">
-        <div className="pointer-events-none h-24 bg-gradient-to-t from-[#0b1120]/80 to-transparent" />
-
         {/* Circuit cards (empty state lives on the circuits page) */}
         <div className="px-5 pb-3">
           {circuits && circuits.length > 0 && (
@@ -196,10 +199,10 @@ function Dashboard() {
 
             <button
               onClick={() => setShowNewCircuit(true)}
-              className="flex items-center gap-1.5 rounded-full bg-[#0f1d32] px-4 py-3 active:bg-[#162a46]"
+              className="flex flex-col items-center gap-1 px-3 py-1 text-[#0f1d32]/50 active:text-[#0f1d32]"
             >
-              <Plus size={22} className="text-[#f5f0e8]" strokeWidth={2.5} />
-              <span className="text-sm font-semibold text-[#f5f0e8]">New</span>
+              <Plus size={26} strokeWidth={2.2} />
+              <span className="text-xs font-semibold">Add</span>
             </button>
 
             <Link

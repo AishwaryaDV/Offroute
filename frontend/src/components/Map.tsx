@@ -147,7 +147,16 @@ export default function Map({
     });
 
     if (onReady) {
-      map.once("idle", onReady);
+      // `idle` can fire before every visible tile has landed — only signal
+      // ready once the tile set is actually complete, so loaders don't
+      // reveal half-rendered quadrants.
+      const signalReady = () => {
+        if (map.areTilesLoaded()) {
+          map.off("idle", signalReady);
+          onReady();
+        }
+      };
+      map.on("idle", signalReady);
     }
 
     return () => {
