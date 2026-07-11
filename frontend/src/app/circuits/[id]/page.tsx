@@ -1,6 +1,22 @@
 "use client";
 
-import { ArrowLeft, MapPin, Plus, Share2, Trash2 } from "lucide-react";
+import { Fragment } from "react";
+import {
+  ArrowLeft,
+  Gem,
+  Home,
+  Landmark,
+  Leaf,
+  MapPin,
+  MoreVertical,
+  Mountain,
+  Plus,
+  Share2,
+  Trash2,
+  Utensils,
+  Wine,
+  Zap,
+} from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -8,18 +24,51 @@ import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { AuthGuard } from "@/components/AuthGuard";
 import MapDynamic from "@/components/MapDynamic";
-import type { MapMarker } from "@/components/MapDynamic";
+import type { MapMarker, MapHandle } from "@/components/MapDynamic";
 import { getCircuit, deleteCircuit } from "@/lib/circuits";
 import { getPoints, deletePoint } from "@/lib/points";
 import type { Point } from "@/types/api";
+
+type IconComponent = React.ComponentType<{
+  size?: number;
+  className?: string;
+  style?: React.CSSProperties;
+}>;
+
+const CATEGORY_ICONS: Record<string, IconComponent> = {
+  food: Utensils,
+  drink: Wine,
+  stay: Home,
+  viewpoint: Mountain,
+  activity: Zap,
+  nature: Leaf,
+  culture: Landmark,
+  hidden_gem: Gem,
+  other: MapPin,
+};
+
+const CATEGORY_COLORS: Record<string, string> = {
+  food: "#ef4444",
+  drink: "#f59e0b",
+  stay: "#8b5cf6",
+  viewpoint: "#10b981",
+  activity: "#f97316",
+  nature: "#22c55e",
+  culture: "#6366f1",
+  hidden_gem: "#ec4899",
+  other: "#3b82f6",
+};
 
 function CircuitDetail() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
-  const [sheetExpanded, setSheetExpanded] = useState(false);
-  const sheetRef = useRef<HTMLDivElement>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(
+    null,
+  );
+  const [showMenu, setShowMenu] = useState(false);
+  const [activePointId, setActivePointId] = useState<string | null>(null);
+  const mapHandleRef = useRef<MapHandle | null>(null);
 
   const { data: circuit } = useQuery({
     queryKey: ["circuit", id],
@@ -40,7 +89,7 @@ function CircuitDetail() {
         label: String(i + 1),
         category: p.category ?? undefined,
       })),
-    [points]
+    [points],
   );
 
   const deleteCircuitMutation = useMutation({
@@ -64,8 +113,14 @@ function CircuitDetail() {
     onError: () => toast.error("Could not delete point"),
   });
 
+  function handleSelectPoint(point: Point) {
+    setActivePointId(point.id);
+    mapHandleRef.current?.flyTo(point.longitude, point.latitude, 14);
+  }
+
   async function handleShare() {
     const url = window.location.href;
+    setShowMenu(false);
     if (navigator.share) {
       try {
         await navigator.share({
@@ -74,7 +129,7 @@ function CircuitDetail() {
           url,
         });
       } catch {
-        // user cancelled
+        /* user cancelled */
       }
     } else {
       await navigator.clipboard.writeText(url);
@@ -89,7 +144,16 @@ function CircuitDetail() {
         <MapDynamic
           className="absolute inset-0 h-full w-full"
           markers={mapMarkers}
+          activeMarkerId={activePointId ?? undefined}
           drawRoute
+          interactive
+          onMarkerClick={(markerId) => {
+            const pt = points?.find((p) => p.id === markerId);
+            if (pt) handleSelectPoint(pt);
+          }}
+          onMapInit={(handle) => {
+            mapHandleRef.current = handle;
+          }}
           key={mapMarkers.length}
         />
       ) : (
@@ -101,7 +165,7 @@ function CircuitDetail() {
         />
       )}
 
-      {/* Top bar overlay */}
+      {/* Top bar */}
       <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-4 pt-[max(env(safe-area-inset-top),0.75rem)]">
         <Link
           href="/dashboard"
@@ -115,68 +179,103 @@ function CircuitDetail() {
           <p className="truncate text-sm font-semibold text-white [text-shadow:0_1px_4px_rgba(0,0,0,.6)]">
             {circuit?.title ?? ""}
           </p>
+          {circuit?.description && (
+            <p className="truncate text-xs text-white/60">
+              {circuit.description}
+            </p>
+          )}
         </div>
 
         <button
-          onClick={handleShare}
+          onClick={() => setShowMenu(!showMenu)}
           className="flex h-10 w-10 items-center justify-center rounded-full bg-black/50 backdrop-blur-md active:bg-black/70"
-          aria-label="Share"
+          aria-label="Menu"
         >
-          <Share2 size={18} className="text-white" />
+          <MoreVertical size={18} className="text-white" />
         </button>
       </div>
 
-      {/* Bottom sheet */}
-      <div
-        ref={sheetRef}
-        className={`absolute inset-x-0 bottom-0 z-10 transition-[max-height] duration-300 ease-out ${
-          sheetExpanded ? "max-h-[70dvh]" : "max-h-[40dvh]"
-        }`}
-      >
-        <div className="pointer-events-none h-16 bg-gradient-to-t from-black/70 to-transparent" />
-
-        <div className="overflow-y-auto rounded-t-3xl bg-[#111a2e]/95 backdrop-blur-xl [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {/* Drag handle */}
-          <button
-            className="flex w-full items-center justify-center py-3"
-            onClick={() => setSheetExpanded(!sheetExpanded)}
-            aria-label={sheetExpanded ? "Collapse" : "Expand"}
-          >
-            <div className="h-1 w-10 rounded-full bg-zinc-600" />
-          </button>
-
-          {/* Circuit title & description */}
-          <div className="px-5 pb-3">
-            <h1 className="text-xl font-bold text-white">
-              {circuit?.title ?? "..."}
-            </h1>
-            {circuit?.description && (
-              <p className="mt-1 text-sm text-zinc-400">{circuit.description}</p>
-            )}
+      {/* Actions menu dropdown */}
+      {showMenu && (
+        <>
+          <div
+            className="fixed inset-0 z-20"
+            onClick={() => setShowMenu(false)}
+          />
+          <div className="absolute right-4 top-[calc(max(env(safe-area-inset-top),0.75rem)+3rem)] z-30 w-48 rounded-2xl bg-[#1a2435]/95 p-1.5 shadow-xl backdrop-blur-xl ring-1 ring-white/10">
+            <button
+              onClick={handleShare}
+              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-white active:bg-white/10"
+            >
+              <Share2 size={16} className="text-zinc-400" />
+              Share circuit
+            </button>
+            <button
+              onClick={() => {
+                setShowMenu(false);
+                setShowDeleteConfirm("circuit");
+              }}
+              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-red-400 active:bg-white/10"
+            >
+              <Trash2 size={16} />
+              Delete circuit
+            </button>
           </div>
+        </>
+      )}
 
-          {/* Points list */}
-          <div className="px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-            {points && points.length > 0 ? (
-              <div className="space-y-2">
-                {points.map((point: Point, i: number) => (
-                  <div
-                    key={point.id}
-                    className="flex items-start gap-3 rounded-2xl bg-white/[0.06] p-4 ring-1 ring-white/[0.08]"
-                  >
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-500 text-xs font-bold text-white">
-                      {i + 1}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-white">{point.title}</p>
-                      {point.notes && (
-                        <p className="mt-0.5 line-clamp-2 text-sm text-zinc-400">
-                          {point.notes}
-                        </p>
-                      )}
-                      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
+      {/* Bottom carousel */}
+      <div className="absolute inset-x-0 bottom-0 z-10">
+        <div className="pointer-events-none h-24 bg-gradient-to-t from-black/50 to-transparent" />
+
+        <div className="bg-gradient-to-t from-black/30 to-transparent pb-[max(1rem,env(safe-area-inset-bottom))]">
+          {points && points.length > 0 ? (
+            <div className="flex items-stretch gap-3 overflow-x-auto px-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {points.map((point: Point, i: number) => {
+                const cat = point.category ?? "other";
+                const Icon = CATEGORY_ICONS[cat] ?? MapPin;
+                const color = CATEGORY_COLORS[cat] ?? "#3b82f6";
+                const isActive = activePointId === point.id;
+
+                return (
+                  <Fragment key={point.id}>
+                    <button
+                      onClick={() => handleSelectPoint(point)}
+                      className={`min-w-[240px] shrink-0 rounded-2xl p-4 text-left backdrop-blur-xl transition-all ${
+                        isActive
+                          ? "bg-[#111a2e]/95 ring-2 ring-white/30 scale-[1.02]"
+                          : "bg-[#111a2e]/80 ring-1 ring-white/10"
+                      }`}
+                    >
+                      <div className="mb-2 flex items-center justify-between">
+                        <div
+                          className="flex h-9 w-9 items-center justify-center rounded-xl"
+                          style={{ background: `${color}20` }}
+                        >
+                          <Icon size={18} style={{ color }} />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-white/40">
+                            {i + 1}
+                          </span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShowDeleteConfirm(point.id);
+                            }}
+                            className="p-1 text-zinc-600 active:text-red-400"
+                            aria-label="Delete point"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                      <p className="truncate text-base font-bold text-white">
+                        {point.title}
+                      </p>
+                      <div className="mt-1 flex items-center gap-2 text-sm text-zinc-400">
                         {point.category && (
-                          <span className="rounded-full bg-white/[0.06] px-2.5 py-0.5 capitalize ring-1 ring-white/[0.08]">
+                          <span className="capitalize">
                             {point.category.replace("_", " ")}
                           </span>
                         )}
@@ -185,51 +284,50 @@ function CircuitDetail() {
                             {"★".repeat(point.rating)}
                           </span>
                         )}
-                        {point.visited_at && <span>{point.visited_at}</span>}
                       </div>
-                    </div>
-                    <button
-                      onClick={() => setShowDeleteConfirm(point.id)}
-                      className="shrink-0 p-2 text-zinc-600 active:text-red-400"
-                      aria-label="Delete point"
-                    >
-                      <Trash2 size={16} />
+                      {point.notes && (
+                        <p className="mt-1.5 line-clamp-1 text-sm text-zinc-500">
+                          {point.notes}
+                        </p>
+                      )}
                     </button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-2xl bg-white/[0.04] p-8 text-center ring-1 ring-white/[0.06]">
-                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-500/10">
-                  <MapPin size={22} className="text-blue-400" />
-                </div>
-                <p className="text-base font-medium text-zinc-300">
-                  Add your first stop
-                </p>
-                <p className="mt-1 text-sm text-zinc-500">Tap + to drop a pin</p>
-              </div>
-            )}
 
-            <button
-              onClick={() => setShowDeleteConfirm("circuit")}
-              className="mt-8 w-full rounded-xl py-4 text-base font-semibold text-red-400 ring-1 ring-white/[0.08] active:bg-white/[0.04]"
-            >
-              Delete circuit
-            </button>
-          </div>
+                    <Link
+                      href={`/circuits/${id}/points/new`}
+                      className="flex shrink-0 items-center"
+                    >
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 backdrop-blur-md active:bg-white/25">
+                        <Plus size={18} className="text-white" />
+                      </div>
+                    </Link>
+                  </Fragment>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="px-5">
+              <Link
+                href={`/circuits/${id}/points/new`}
+                className="flex items-center gap-4 rounded-2xl bg-[#111a2e]/90 p-5 ring-1 ring-white/10 backdrop-blur-xl active:bg-[#111a2e]"
+              >
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-500/15">
+                  <Plus size={24} className="text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-base font-bold text-white">
+                    Drop your first pin
+                  </p>
+                  <p className="mt-0.5 text-sm text-zinc-400">
+                    Tap to add a point to this circuit
+                  </p>
+                </div>
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* FAB */}
-      <Link
-        href={`/circuits/${id}/points/new`}
-        className="fixed bottom-[max(calc(env(safe-area-inset-bottom)+10.5rem),12rem)] right-5 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-blue-500 shadow-lg shadow-blue-500/25 active:bg-blue-600"
-        aria-label="Add point"
-      >
-        <Plus size={26} className="text-white" />
-      </Link>
-
-      {/* Delete confirmation bottom sheet */}
+      {/* Delete confirmation */}
       {showDeleteConfirm && (
         <div
           className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm"

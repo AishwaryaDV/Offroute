@@ -33,6 +33,7 @@ export interface MapProps {
   onMapClick?: (lngLat: { lng: number; lat: number }) => void;
   onMarkerDragEnd?: (id: string, lngLat: { lng: number; lat: number }) => void;
   onMarkerClick?: (id: string) => void;
+  onMapInit?: (handle: MapHandle) => void;
 }
 
 const CATEGORY_ICON_SVG: Record<string, string> = {
@@ -105,6 +106,7 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
     onMapClick,
     onMarkerDragEnd,
     onMarkerClick,
+    onMapInit,
   },
   ref,
 ) {
@@ -150,6 +152,14 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
     }
 
     mapRef.current = map;
+
+    if (onMapInit) {
+      onMapInit({
+        flyTo: (lng: number, lat: number, z?: number) => {
+          map.flyTo({ center: [lng, lat], zoom: z ?? 14, duration: 800 });
+        },
+      });
+    }
 
     map.on("load", () => {
       if (userLocation) {
