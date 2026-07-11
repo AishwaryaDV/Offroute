@@ -34,7 +34,7 @@ function Dashboard() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { data: me } = useQuery({ queryKey: ["me"], queryFn: getMe });
-  const { data: circuits, isLoading } = useQuery({
+  const { data: circuits } = useQuery({
     queryKey: ["circuits"],
     queryFn: getCircuits,
   });
@@ -74,6 +74,8 @@ function Dashboard() {
         description: data.description || undefined,
         visibility:
           (data.visibility as "private" | "shared" | "public") || undefined,
+        start_date: data.start_date || undefined,
+        end_date: data.end_date || undefined,
       }),
     onSuccess: (circuit) => {
       queryClient.invalidateQueries({ queryKey: ["circuits"] });
@@ -131,6 +133,11 @@ function Dashboard() {
           </div>
           <p className="mt-2 text-base font-semibold text-white [text-shadow:0_1px_4px_rgba(0,0,0,.5)]">
             {me.display_name ?? "Traveler"}
+            {me.nationality && (
+              <span className="ml-2 font-normal text-white/60">
+                {me.nationality}
+              </span>
+            )}
           </p>
           <p className="text-sm text-white/60 [text-shadow:0_1px_3px_rgba(0,0,0,.4)]">
             {me.email}
@@ -142,11 +149,9 @@ function Dashboard() {
       <div className="absolute inset-x-0 bottom-0 z-10">
         <div className="pointer-events-none h-24 bg-gradient-to-t from-[#0b1120]/80 to-transparent" />
 
-        {/* Circuit cards or empty state (no box) */}
+        {/* Circuit cards (empty state lives on the circuits page) */}
         <div className="px-5 pb-3">
-          {isLoading ? (
-            <div className="h-20 animate-pulse rounded-2xl bg-white/[0.08]" />
-          ) : circuits && circuits.length > 0 ? (
+          {circuits && circuits.length > 0 && (
             <div className="-mx-5 flex gap-3 overflow-x-auto px-5 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {circuits.map((circuit) => (
                 <Link
@@ -170,42 +175,39 @@ function Dashboard() {
                 </Link>
               ))}
             </div>
-          ) : (
-            <p className="text-center text-sm text-white/40 [text-shadow:0_1px_3px_rgba(0,0,0,.4)]">
-              No circuits yet — tap + to start
-            </p>
           )}
         </div>
 
         {/* Floating bottom nav */}
         <div className="px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-          <nav className="flex items-center justify-around rounded-full bg-[#f5f0e8]/75 px-2 py-2 shadow-lg backdrop-blur-xl">
-            <button className="flex flex-col items-center gap-0.5 px-3 py-1 text-[#0f1d32]">
-              <Compass size={20} strokeWidth={2.2} />
-              <span className="text-[10px] font-semibold">Me</span>
+          <nav className="flex items-center justify-around rounded-full bg-[#f5f0e8]/75 px-3 py-2.5 shadow-lg backdrop-blur-xl">
+            <button className="flex flex-col items-center gap-1 px-3 py-1 text-[#0f1d32]">
+              <Compass size={26} strokeWidth={2.2} />
+              <span className="text-xs font-semibold">Me</span>
             </button>
 
             <Link
               href="/circuits"
-              className="flex flex-col items-center gap-0.5 px-3 py-1 text-[#0f1d32]/50"
+              className="flex flex-col items-center gap-1 px-3 py-1 text-[#0f1d32]/50"
             >
-              <List size={20} strokeWidth={2.2} />
-              <span className="text-[10px] font-semibold">Circuits</span>
+              <List size={26} strokeWidth={2.2} />
+              <span className="text-xs font-semibold">Circuits</span>
             </Link>
 
             <button
               onClick={() => setShowNewCircuit(true)}
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-[#0f1d32] active:bg-[#162a46]"
+              className="flex items-center gap-1.5 rounded-full bg-[#0f1d32] px-4 py-3 active:bg-[#162a46]"
             >
-              <Plus size={22} className="text-[#f5f0e8]" />
+              <Plus size={22} className="text-[#f5f0e8]" strokeWidth={2.5} />
+              <span className="text-sm font-semibold text-[#f5f0e8]">New</span>
             </button>
 
             <Link
               href="/activity"
-              className="flex flex-col items-center gap-0.5 px-3 py-1 text-[#0f1d32]/50"
+              className="flex flex-col items-center gap-1 px-3 py-1 text-[#0f1d32]/50"
             >
-              <Timer size={20} strokeWidth={2.2} />
-              <span className="text-[10px] font-semibold">Activity</span>
+              <Timer size={26} strokeWidth={2.2} />
+              <span className="text-xs font-semibold">Activity</span>
             </Link>
           </nav>
         </div>

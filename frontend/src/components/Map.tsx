@@ -57,11 +57,6 @@ export default function Map({
       touchPitch: false,
     });
 
-    map.addControl(
-      new maplibregl.AttributionControl({ compact: true }),
-      "bottom-left"
-    );
-
     if (onMapClick) {
       map.on("click", (e) =>
         onMapClick({ lng: e.lngLat.lng, lat: e.lngLat.lat })
