@@ -49,7 +49,15 @@ const COUNTRIES = [
   "Zimbabwe",
 ];
 
-type View = "menu" | "profile" | "account";
+const MAP_STYLE_KEY = "offroute-map-style";
+const MAP_STYLES = [
+  { id: "satellite", url: "/map-style-satellite.json", label: "Satellite", color: "#2d5a27" },
+  { id: "streets", url: "/map-style-streets.json", label: "Streets", color: "#e2d8c3" },
+  { id: "dark", url: "/map-style-dark.json", label: "Dark", color: "#1a1a2e" },
+  { id: "terrain", url: "/map-style-terrain.json", label: "Terrain", color: "#7a9e6b" },
+];
+
+type View = "menu" | "profile" | "account" | "mapstyle";
 
 function Settings() {
   const router = useRouter();
@@ -61,6 +69,11 @@ function Settings() {
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [natSearch, setNatSearch] = useState("");
   const [natOpen, setNatOpen] = useState(false);
+  const [mapStyle, setMapStyle] = useState(() =>
+    typeof window !== "undefined"
+      ? localStorage.getItem(MAP_STYLE_KEY) ?? "/map-style-satellite.json"
+      : "/map-style-satellite.json"
+  );
 
   const profileForm = useForm<ProfileValues>({
     values: {
@@ -168,6 +181,21 @@ function Settings() {
               Account
             </span>
             <ChevronRight size={20} className="text-blue-500" />
+          </button>
+          <div className="mx-5 h-px bg-gray-200" />
+          <button
+            onClick={() => setView("mapstyle")}
+            className="flex w-full items-center justify-between px-5 py-5 active:bg-gray-50"
+          >
+            <span className="text-lg font-semibold text-[#0f1d32]">
+              Map style
+            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-400">
+                {MAP_STYLES.find((s) => s.url === mapStyle)?.label ?? "Satellite"}
+              </span>
+              <ChevronRight size={20} className="text-blue-500" />
+            </div>
           </button>
           <div className="mx-5 h-px bg-gray-200" />
           <div className="flex w-full items-center justify-between px-5 py-5 opacity-40">
@@ -290,6 +318,71 @@ function Settings() {
           </div>
           <div className="mx-5 h-px bg-gray-200" />
         </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ---------- Map style ---------- */
+  if (view === "mapstyle") {
+    return (
+      <div className="flex min-h-[100dvh] flex-col bg-[#0b1120]">
+        <div className="h-[max(env(safe-area-inset-top),2.75rem)] shrink-0" />
+        <div className="sheet-up sheet-light flex-1 overflow-hidden rounded-t-[28px] bg-white">
+          <div className="flex items-center justify-between px-5 pt-5">
+            <button
+              onClick={() => setView("menu")}
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f5f6f8] active:bg-gray-200"
+              aria-label="Back"
+            >
+              <X size={22} className="text-[#0f1d32]" strokeWidth={2.5} />
+            </button>
+          </div>
+
+          <h1 className="px-5 pb-2 pt-4 text-4xl font-bold tracking-tight text-[#0f1d32]">
+            Map style
+          </h1>
+          <p className="px-5 pb-6 text-base text-gray-400">
+            Choose your preferred map look across the app.
+          </p>
+
+          <div className="grid grid-cols-2 gap-4 px-5">
+            {MAP_STYLES.map((s) => {
+              const isActive = mapStyle === s.url;
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => {
+                    setMapStyle(s.url);
+                    localStorage.setItem(MAP_STYLE_KEY, s.url);
+                    toast.success(`Map style set to ${s.label}`);
+                  }}
+                  className={`flex flex-col items-center gap-2 rounded-2xl p-3 transition-all ${
+                    isActive
+                      ? "bg-blue-50 ring-2 ring-blue-500"
+                      : "bg-[#f5f6f8] ring-1 ring-gray-200 active:bg-gray-100"
+                  }`}
+                >
+                  <div
+                    className="h-20 w-full rounded-xl"
+                    style={{ backgroundColor: s.color }}
+                  />
+                  <span
+                    className={`text-sm font-semibold ${
+                      isActive ? "text-blue-600" : "text-[#0f1d32]"
+                    }`}
+                  >
+                    {s.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <p className="px-5 pt-6 text-center text-xs text-gray-400">
+            Takes effect next time a map loads.
+          </p>
         </div>
       </div>
     );

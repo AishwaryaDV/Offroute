@@ -4,8 +4,10 @@ import { useEffect, useRef, useImperativeHandle, forwardRef } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
-const MAP_STYLE =
+const DEFAULT_STYLE =
   process.env.NEXT_PUBLIC_MAP_STYLE ?? "/map-style-satellite.json";
+
+const STYLE_KEY = "offroute-map-style";
 
 export interface MapMarker {
   id: string;
@@ -137,6 +139,7 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markerEls = useRef<globalThis.Map<string, HTMLElement>>(new globalThis.Map());
+  const routeDataRef = useRef<[number, number][] | null>(null);
 
   useImperativeHandle(ref, () => ({
     flyTo: (lng: number, lat: number, z?: number) => {
@@ -155,12 +158,45 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
     });
   }, [activeMarkerId]);
 
+  function addRouteToMap(map: maplibregl.Map, coords: [number, number][]) {
+    if (map.getSource("route")) {
+      (map.getSource("route") as maplibregl.GeoJSONSource).setData({
+        type: "Feature",
+        properties: {},
+        geometry: { type: "LineString", coordinates: coords },
+      });
+      return;
+    }
+    map.addSource("route", {
+      type: "geojson",
+      data: {
+        type: "Feature",
+        properties: {},
+        geometry: { type: "LineString", coordinates: coords },
+      },
+    });
+    map.addLayer({
+      id: "route-outline",
+      type: "line",
+      source: "route",
+      paint: { "line-color": "#000000", "line-width": 5, "line-opacity": 0.25 },
+    });
+    map.addLayer({
+      id: "route-line",
+      type: "line",
+      source: "route",
+      paint: { "line-color": "#ffffff", "line-width": 2.5, "line-opacity": 0.85 },
+    });
+  }
+
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
+    const savedStyle = localStorage.getItem(STYLE_KEY) ?? DEFAULT_STYLE;
+
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: MAP_STYLE,
+      style: savedStyle,
       center,
       zoom,
       interactive,
@@ -233,34 +269,8 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
       if (drawRoute && markers.length > 1) {
         const raw = markers.map((m) => [m.lng, m.lat] as [number, number]);
         const coords = bezierRoute(raw);
-        map.addSource("route", {
-          type: "geojson",
-          data: {
-            type: "Feature",
-            properties: {},
-            geometry: { type: "LineString", coordinates: coords },
-          },
-        });
-        map.addLayer({
-          id: "route-outline",
-          type: "line",
-          source: "route",
-          paint: {
-            "line-color": "#000000",
-            "line-width": 5,
-            "line-opacity": 0.25,
-          },
-        });
-        map.addLayer({
-          id: "route-line",
-          type: "line",
-          source: "route",
-          paint: {
-            "line-color": "#ffffff",
-            "line-width": 2.5,
-            "line-opacity": 0.85,
-          },
-        });
+        routeDataRef.current = coords;
+        addRouteToMap(map, coords);
       }
 
       if (markers.length > 0) {
