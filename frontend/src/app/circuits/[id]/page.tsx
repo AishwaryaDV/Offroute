@@ -246,10 +246,10 @@ function CircuitDetail() {
                       onKeyDown={(e) => {
                         if (e.key === "Enter") handleSelectPoint(point);
                       }}
-                      className={`min-w-[240px] shrink-0 rounded-2xl p-4 text-left backdrop-blur-xl transition-all ${
+                      className={`min-w-[200px] shrink-0 rounded-2xl p-3.5 text-left backdrop-blur-xl transition-all ${
                         isActive
-                          ? "bg-[#111a2e]/95 ring-2 ring-white/30 scale-[1.02]"
-                          : "bg-[#111a2e]/80 ring-1 ring-white/10"
+                          ? "bg-white/15 ring-2 ring-white/30 scale-[1.02]"
+                          : "bg-white/10 ring-1 ring-white/10"
                       }`}
                     >
                       <div className="mb-2 flex items-center justify-between">
