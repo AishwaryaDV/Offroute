@@ -1,16 +1,7 @@
 "use client";
 
-import {
-  ArrowLeft,
-  ChevronRight,
-  KeyRound,
-  LogOut,
-  Trash2,
-  User,
-  X,
-} from "lucide-react";
+import { Check, ChevronRight, X } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -58,13 +49,14 @@ const COUNTRIES = [
   "Zimbabwe",
 ];
 
+type View = "menu" | "profile" | "account";
+
 function Settings() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { data: me } = useQuery({ queryKey: ["me"], queryFn: getMe });
 
-  const [showProfile, setShowProfile] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const [view, setView] = useState<View>("menu");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [natSearch, setNatSearch] = useState("");
@@ -84,7 +76,7 @@ function Settings() {
     onSuccess: (updated) => {
       queryClient.setQueryData(["me"], updated);
       toast.success("Profile saved");
-      setShowProfile(false);
+      setView("menu");
     },
     onError: () => toast.error("Could not save — try again"),
   });
@@ -98,17 +90,12 @@ function Settings() {
     },
     onSuccess: () => {
       toast.success("Password updated");
-      setShowPassword(false);
       pwForm.reset();
+      setView("menu");
     },
     onError: (err: Error) =>
       toast.error(err.message || "Could not update password"),
   });
-
-  async function logout() {
-    await supabase.auth.signOut();
-    router.replace("/login");
-  }
 
   const deleteMutation = useMutation({
     mutationFn: deleteMe,
@@ -121,228 +108,275 @@ function Settings() {
     onError: () => toast.error("Could not delete account — try again"),
   });
 
+  async function logout() {
+    await supabase.auth.signOut();
+    router.replace("/login");
+  }
+
+  function saveAccount() {
+    const password = pwForm.getValues("password");
+    if (!password) {
+      // Leave blank if you don't want to change it
+      setView("menu");
+      return;
+    }
+    pwForm.handleSubmit((data) => pwMutation.mutate(data))();
+  }
+
   const filteredCountries = natSearch
     ? COUNTRIES.filter((c) =>
         c.toLowerCase().includes(natSearch.toLowerCase())
       )
     : COUNTRIES;
 
-  return (
-    <div className="min-h-[100dvh] bg-[#0b1120]">
-      <header className="sticky top-0 z-10 flex items-center gap-3 bg-[#0b1120]/80 px-5 pb-3 pt-[max(env(safe-area-inset-top),1rem)] backdrop-blur-xl">
-        <Link
-          href="/dashboard"
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.06] active:bg-white/[0.12]"
-          aria-label="Back"
-        >
-          <ArrowLeft size={20} className="text-zinc-400" />
-        </Link>
-        <h1 className="text-xl font-bold tracking-tight text-white">
-          Settings
-        </h1>
-      </header>
-
-      <main className="px-5 pb-10">
-        {/* Profile card */}
-        {me && (
-          <div className="mb-6 flex items-center gap-4 rounded-2xl bg-white/[0.06] p-4 ring-1 ring-white/[0.08]">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-500/20 text-xl font-bold text-blue-400">
-              {(me.display_name?.[0] ?? me.email[0]).toUpperCase()}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="font-semibold text-white">
-                {me.display_name ?? "No name set"}
-                {me.nationality && (
-                  <span className="ml-2 text-sm font-normal text-zinc-400">
-                    {me.nationality}
-                  </span>
-                )}
-              </p>
-              <p className="text-sm text-zinc-400">{me.email}</p>
-            </div>
-          </div>
-        )}
-
-        {/* Menu sections */}
-        <div className="space-y-2">
+  /* ---------- Menu (Settings root) ---------- */
+  if (view === "menu") {
+    return (
+      <div className="min-h-[100dvh] bg-[#f5f6f8]">
+        <div className="flex justify-end px-5 pt-[max(env(safe-area-inset-top),1.25rem)]">
           <button
-            onClick={() => {
-              setShowProfile(!showProfile);
-              setShowPassword(false);
-            }}
-            className="flex w-full items-center gap-3 rounded-xl bg-white/[0.06] px-4 py-4 ring-1 ring-white/[0.08] active:bg-white/[0.1]"
+            onClick={() => router.push("/dashboard")}
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-sm active:bg-gray-100"
+            aria-label="Close"
           >
-            <User size={20} className="text-zinc-400" />
-            <span className="flex-1 text-left text-base text-white">
-              Edit profile
-            </span>
-            <ChevronRight size={18} className="text-zinc-600" />
-          </button>
-
-          <button
-            onClick={() => {
-              setShowPassword(!showPassword);
-              setShowProfile(false);
-            }}
-            className="flex w-full items-center gap-3 rounded-xl bg-white/[0.06] px-4 py-4 ring-1 ring-white/[0.08] active:bg-white/[0.1]"
-          >
-            <KeyRound size={20} className="text-zinc-400" />
-            <span className="flex-1 text-left text-base text-white">
-              Change password
-            </span>
-            <ChevronRight size={18} className="text-zinc-600" />
+            <X size={22} className="text-[#0f1d32]" strokeWidth={2.5} />
           </button>
         </div>
 
-        {/* Profile edit (expandable) */}
-        {showProfile && (
-          <form
-            onSubmit={profileForm.handleSubmit((data) =>
+        <h1 className="px-5 pb-6 pt-2 text-4xl font-bold tracking-tight text-[#0f1d32]">
+          Settings
+        </h1>
+
+        <div className="bg-white">
+          <button
+            onClick={() => setView("profile")}
+            className="flex w-full items-center justify-between px-5 py-5 active:bg-gray-50"
+          >
+            <span className="text-lg font-semibold text-[#0f1d32]">
+              Profile
+            </span>
+            <ChevronRight size={20} className="text-blue-500" />
+          </button>
+          <div className="mx-5 h-px bg-gray-200" />
+          <button
+            onClick={() => setView("account")}
+            className="flex w-full items-center justify-between px-5 py-5 active:bg-gray-50"
+          >
+            <span className="text-lg font-semibold text-[#0f1d32]">
+              Account
+            </span>
+            <ChevronRight size={20} className="text-blue-500" />
+          </button>
+          <div className="mx-5 h-px bg-gray-200" />
+          <div className="flex w-full items-center justify-between px-5 py-5 opacity-40">
+            <span className="text-lg font-semibold text-[#0f1d32]">
+              Notifications
+            </span>
+            <span className="text-sm text-gray-500">Coming soon</span>
+          </div>
+        </div>
+
+        <div className="mt-6 bg-white">
+          <button
+            onClick={logout}
+            className="flex w-full items-center px-5 py-5 active:bg-gray-50"
+          >
+            <span className="text-lg font-semibold text-[#0f1d32]">
+              Log out
+            </span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  /* ---------- Profile edit ---------- */
+  if (view === "profile") {
+    return (
+      <div className="min-h-[100dvh] bg-white">
+        <div className="flex items-center justify-between px-5 pt-[max(env(safe-area-inset-top),1.25rem)]">
+          <button
+            onClick={() => setView("menu")}
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f5f6f8] active:bg-gray-200"
+            aria-label="Back"
+          >
+            <X size={22} className="text-[#0f1d32]" strokeWidth={2.5} />
+          </button>
+          <button
+            onClick={profileForm.handleSubmit((data) =>
               profileMutation.mutate({
                 display_name: data.display_name || undefined,
                 nationality: data.nationality || undefined,
               })
             )}
-            className="mt-4 flex flex-col gap-4 rounded-2xl bg-white/[0.04] p-4 ring-1 ring-white/[0.06]"
+            disabled={profileMutation.isPending}
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-[#0f1d32] active:bg-[#162a46] disabled:opacity-50"
+            aria-label="Save"
           >
-            <div>
-              <label
-                className="mb-1.5 block text-sm font-medium text-zinc-400"
-                htmlFor="display_name"
-              >
-                Display name
-              </label>
-              <input
-                id="display_name"
-                placeholder="How you appear to others"
-                {...profileForm.register("display_name")}
-                className="w-full rounded-xl bg-white/[0.08] px-4 py-3.5 text-base text-white placeholder-zinc-500 outline-none ring-1 ring-white/[0.12] focus:ring-blue-500/60"
-              />
-            </div>
+            <Check size={22} className="text-white" strokeWidth={2.5} />
+          </button>
+        </div>
 
-            <div className="relative">
-              <label className="mb-1.5 block text-sm font-medium text-zinc-400">
-                Nationality
-              </label>
-              <input
-                type="text"
-                placeholder="Search country…"
-                value={natSearch || profileForm.watch("nationality")}
-                onChange={(e) => {
-                  setNatSearch(e.target.value);
-                  setNatOpen(true);
-                }}
-                onFocus={() => setNatOpen(true)}
-                className="w-full rounded-xl bg-white/[0.08] px-4 py-3.5 text-base text-white placeholder-zinc-500 outline-none ring-1 ring-white/[0.12] focus:ring-blue-500/60"
-              />
-              {natOpen && filteredCountries.length > 0 && (
-                <div className="absolute inset-x-0 top-full z-20 mt-1 max-h-48 overflow-y-auto rounded-xl bg-[#111a2e] ring-1 ring-white/[0.12]">
-                  {filteredCountries.slice(0, 30).map((country) => (
-                    <button
-                      type="button"
-                      key={country}
-                      onClick={() => {
-                        profileForm.setValue("nationality", country);
-                        setNatSearch("");
-                        setNatOpen(false);
-                      }}
-                      className="w-full px-4 py-2.5 text-left text-sm text-white hover:bg-white/[0.06] active:bg-white/[0.1]"
-                    >
-                      {country}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+        <h1 className="px-5 pb-6 pt-4 text-4xl font-bold tracking-tight text-[#0f1d32]">
+          Profile
+        </h1>
 
-            <button
-              type="submit"
-              disabled={profileMutation.isPending}
-              className="rounded-xl bg-[#0f1d32] py-3.5 text-base font-semibold text-white active:bg-[#162a46] disabled:opacity-50"
+        <div className="flex items-center gap-5 px-5 pb-6">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#0f1d32]/10 text-2xl font-bold text-[#0f1d32]">
+            {(me?.display_name?.[0] ?? me?.email[0] ?? "?").toUpperCase()}
+          </div>
+          <p className="text-lg font-semibold text-gray-400">
+            Profile photos coming soon
+          </p>
+        </div>
+
+        <div className="border-t border-gray-200">
+          <div className="flex items-center gap-4 px-5 py-4">
+            <label
+              htmlFor="display_name"
+              className="w-28 shrink-0 text-base text-gray-400"
             >
-              {profileMutation.isPending ? "Saving…" : "Save"}
-            </button>
-          </form>
-        )}
+              Name
+            </label>
+            <input
+              id="display_name"
+              placeholder="Your name"
+              {...profileForm.register("display_name")}
+              className="flex-1 bg-transparent text-lg font-medium text-[#0f1d32] placeholder-gray-300 outline-none"
+            />
+          </div>
+          <div className="mx-5 h-px bg-gray-200" />
+          <div className="relative flex items-center gap-4 px-5 py-4">
+            <label className="w-28 shrink-0 text-base text-gray-400">
+              Nationality
+            </label>
+            <input
+              type="text"
+              placeholder="Search country"
+              value={natOpen ? natSearch : profileForm.watch("nationality")}
+              onChange={(e) => {
+                setNatSearch(e.target.value);
+                setNatOpen(true);
+              }}
+              onFocus={() => {
+                setNatSearch("");
+                setNatOpen(true);
+              }}
+              className="flex-1 bg-transparent text-lg font-medium text-[#0f1d32] placeholder-gray-300 outline-none"
+            />
+            {natOpen && filteredCountries.length > 0 && (
+              <div className="absolute inset-x-5 top-full z-20 max-h-56 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg">
+                {filteredCountries.slice(0, 30).map((country) => (
+                  <button
+                    type="button"
+                    key={country}
+                    onClick={() => {
+                      profileForm.setValue("nationality", country);
+                      setNatSearch("");
+                      setNatOpen(false);
+                    }}
+                    className="w-full px-4 py-3 text-left text-base text-[#0f1d32] active:bg-gray-50"
+                  >
+                    {country}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="mx-5 h-px bg-gray-200" />
+        </div>
+      </div>
+    );
+  }
 
-        {/* Password change (expandable) */}
-        {showPassword && (
-          <form
-            onSubmit={pwForm.handleSubmit((data) => pwMutation.mutate(data))}
-            className="mt-4 flex flex-col gap-4 rounded-2xl bg-white/[0.04] p-4 ring-1 ring-white/[0.06]"
-          >
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-zinc-400">
-                New password
-              </label>
-              <input
-                type="password"
-                placeholder="Min. 6 characters"
-                {...pwForm.register("password", {
-                  required: "Required",
-                  minLength: { value: 6, message: "At least 6 characters" },
-                })}
-                className="w-full rounded-xl bg-white/[0.08] px-4 py-3.5 text-base text-white placeholder-zinc-500 outline-none ring-1 ring-white/[0.12] focus:ring-blue-500/60"
-              />
-              {pwForm.formState.errors.password && (
-                <p className="mt-1 text-sm text-red-400">
-                  {pwForm.formState.errors.password.message}
-                </p>
-              )}
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-zinc-400">
-                Confirm password
-              </label>
-              <input
-                type="password"
-                placeholder="Re-enter password"
-                {...pwForm.register("confirm", {
-                  required: "Required",
-                  validate: (val) =>
-                    val === pwForm.watch("password") || "Passwords don't match",
-                })}
-                className="w-full rounded-xl bg-white/[0.08] px-4 py-3.5 text-base text-white placeholder-zinc-500 outline-none ring-1 ring-white/[0.12] focus:ring-blue-500/60"
-              />
-              {pwForm.formState.errors.confirm && (
-                <p className="mt-1 text-sm text-red-400">
-                  {pwForm.formState.errors.confirm.message}
-                </p>
-              )}
-            </div>
-            <button
-              type="submit"
-              disabled={pwMutation.isPending}
-              className="rounded-xl bg-[#0f1d32] py-3.5 text-base font-semibold text-white active:bg-[#162a46] disabled:opacity-50"
-            >
-              {pwMutation.isPending ? "Updating…" : "Update password"}
-            </button>
-          </form>
-        )}
-
-        {/* Logout */}
+  /* ---------- Account ---------- */
+  return (
+    <div className="min-h-[100dvh] bg-[#f5f6f8]">
+      <div className="flex items-center justify-between bg-white px-5 pb-2 pt-[max(env(safe-area-inset-top),1.25rem)]">
         <button
-          onClick={logout}
-          className="mt-10 flex w-full items-center justify-center gap-2 rounded-xl py-4 text-base font-semibold text-red-400 ring-1 ring-white/[0.08] active:bg-white/[0.04]"
+          onClick={() => setView("menu")}
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f5f6f8] active:bg-gray-200"
+          aria-label="Back"
         >
-          <LogOut size={18} />
-          Log out
+          <X size={22} className="text-[#0f1d32]" strokeWidth={2.5} />
         </button>
+        <h1 className="text-xl font-bold text-[#0f1d32]">Account</h1>
+        <button
+          onClick={saveAccount}
+          disabled={pwMutation.isPending}
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-[#0f1d32] active:bg-[#162a46] disabled:opacity-50"
+          aria-label="Save"
+        >
+          <Check size={22} className="text-white" strokeWidth={2.5} />
+        </button>
+      </div>
 
-        {/* Delete account */}
+      <div className="bg-white">
+        <div className="flex items-center gap-4 px-5 py-4">
+          <span className="w-28 shrink-0 text-base text-gray-400">Email</span>
+          <span className="flex-1 truncate text-lg font-medium text-[#0f1d32]">
+            {me?.email}
+          </span>
+        </div>
+      </div>
+
+      <div className="px-5 pb-2 pt-8">
+        <p className="text-base font-semibold text-gray-500">
+          Change password
+        </p>
+        <p className="text-sm text-gray-400">
+          (Leave blank if you don&apos;t want to change it)
+        </p>
+      </div>
+
+      <div className="bg-white">
+        <div className="px-5 py-4">
+          <input
+            type="password"
+            placeholder="New password"
+            {...pwForm.register("password", {
+              minLength: { value: 6, message: "At least 6 characters" },
+            })}
+            className="w-full bg-transparent text-lg font-medium text-[#0f1d32] placeholder-gray-300 outline-none"
+          />
+          {pwForm.formState.errors.password && (
+            <p className="mt-1 text-sm text-red-500">
+              {pwForm.formState.errors.password.message}
+            </p>
+          )}
+        </div>
+        <div className="mx-5 h-px bg-gray-200" />
+        <div className="px-5 py-4">
+          <input
+            type="password"
+            placeholder="New password (again)"
+            {...pwForm.register("confirm", {
+              validate: (val) =>
+                val === pwForm.watch("password") || "Passwords don't match",
+            })}
+            className="w-full bg-transparent text-lg font-medium text-[#0f1d32] placeholder-gray-300 outline-none"
+          />
+          {pwForm.formState.errors.confirm && (
+            <p className="mt-1 text-sm text-red-500">
+              {pwForm.formState.errors.confirm.message}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-16 flex justify-center pb-[max(2rem,env(safe-area-inset-bottom))]">
         <button
           onClick={() => setShowDeleteModal(true)}
-          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl py-4 text-base font-semibold text-red-500 ring-1 ring-red-500/20 active:bg-red-500/[0.06]"
+          className="rounded-full border border-gray-300 bg-white px-8 py-3 text-base font-semibold text-[#0f1d32] active:bg-gray-50"
         >
-          <Trash2 size={18} />
-          Delete account
+          Delete my account
         </button>
-      </main>
+      </div>
 
       {/* Delete confirmation modal */}
       {showDeleteModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setShowDeleteModal(false);
@@ -350,43 +384,40 @@ function Settings() {
             }
           }}
         >
-          <div className="mx-5 w-full max-w-sm rounded-2xl bg-[#111a2e] p-6 ring-1 ring-white/[0.1]">
-            <div className="mb-4 flex items-start justify-between">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500/20">
-                <Trash2 size={20} className="text-red-400" />
-              </div>
-              <button
-                onClick={() => {
-                  setShowDeleteModal(false);
-                  setDeleteConfirm("");
-                }}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.06] active:bg-white/[0.1]"
-              >
-                <X size={16} className="text-zinc-400" />
-              </button>
-            </div>
-            <h3 className="text-lg font-bold text-white">Delete account?</h3>
-            <p className="mt-2 text-sm text-zinc-400">
+          <div className="mx-5 w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+            <h3 className="text-xl font-bold text-[#0f1d32]">
+              Delete account?
+            </h3>
+            <p className="mt-2 text-base text-gray-500">
               This permanently deletes your account and all circuits. This
               action cannot be undone.
             </p>
-            <label className="mb-1 mt-4 block text-sm text-zinc-500">
-              Type <span className="font-mono text-red-400">DELETE</span> to
-              confirm
+            <label className="mb-1 mt-5 block text-sm text-gray-500">
+              Type <span className="font-mono font-bold text-red-500">DELETE</span>{" "}
+              to confirm
             </label>
             <input
               type="text"
               value={deleteConfirm}
               onChange={(e) => setDeleteConfirm(e.target.value)}
-              className="w-full rounded-xl bg-white/[0.08] px-4 py-3 text-base text-white placeholder-zinc-500 outline-none ring-1 ring-white/[0.12] focus:ring-red-500/60"
+              className="w-full rounded-xl border border-gray-200 bg-[#f5f6f8] px-4 py-3 text-base text-[#0f1d32] outline-none focus:border-red-400"
               placeholder="DELETE"
             />
             <button
               onClick={() => deleteMutation.mutate()}
               disabled={deleteConfirm !== "DELETE" || deleteMutation.isPending}
-              className="mt-4 w-full rounded-xl bg-red-600 py-3.5 text-base font-semibold text-white disabled:opacity-30"
+              className="mt-4 w-full rounded-full bg-red-600 py-3.5 text-base font-semibold text-white disabled:opacity-30"
             >
               {deleteMutation.isPending ? "Deleting…" : "Permanently delete"}
+            </button>
+            <button
+              onClick={() => {
+                setShowDeleteModal(false);
+                setDeleteConfirm("");
+              }}
+              className="mt-2 w-full rounded-full py-3 text-base font-semibold text-gray-500 active:bg-gray-50"
+            >
+              Cancel
             </button>
           </div>
         </div>
