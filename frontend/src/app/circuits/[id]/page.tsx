@@ -311,22 +311,25 @@ function CircuitDetail() {
             </div>
           ) : (
             <div className="px-5">
-              <Link
-                href={`/circuits/${id}/points/new`}
-                className="flex items-center gap-4 rounded-2xl bg-[#111a2e]/90 p-5 ring-1 ring-white/10 backdrop-blur-xl active:bg-[#111a2e]"
-              >
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-500/15">
-                  <Plus size={24} className="text-blue-400" />
+              <div className="rounded-2xl bg-white/10 p-6 text-center ring-1 ring-white/10 backdrop-blur-xl">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-rose-500 shadow-lg shadow-pink-500/25">
+                  <Plus size={32} strokeWidth={2.5} className="text-white" />
                 </div>
-                <div>
-                  <p className="text-base font-bold text-white">
-                    Drop your first pin
-                  </p>
-                  <p className="mt-0.5 text-sm text-zinc-400">
-                    Tap to add a point to this circuit
-                  </p>
-                </div>
-              </Link>
+                <p className="text-lg font-bold text-white">
+                  Add your first point
+                </p>
+                <p className="mx-auto mt-2 max-w-[240px] text-sm text-zinc-400">
+                  Mark a location on the map and bring it to life with notes and
+                  details.
+                </p>
+                <Link
+                  href={`/circuits/${id}/points/new`}
+                  className="mt-5 inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#0f1d32] active:bg-zinc-200"
+                >
+                  <Plus size={18} strokeWidth={2.5} />
+                  Add
+                </Link>
+              </div>
             </div>
           )}
         </div>
