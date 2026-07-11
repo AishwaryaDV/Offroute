@@ -38,6 +38,7 @@ function CircuitDetail() {
         lng: p.longitude,
         lat: p.latitude,
         label: String(i + 1),
+        category: p.category ?? undefined,
       })),
     [points]
   );

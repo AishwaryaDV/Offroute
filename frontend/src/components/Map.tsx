@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useImperativeHandle, forwardRef } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -12,7 +12,12 @@ export interface MapMarker {
   lng: number;
   lat: number;
   label?: string;
+  category?: string;
   draggable?: boolean;
+}
+
+export interface MapHandle {
+  flyTo: (lng: number, lat: number, zoom?: number) => void;
 }
 
 export interface MapProps {
@@ -20,28 +25,109 @@ export interface MapProps {
   center?: [number, number];
   zoom?: number;
   markers?: MapMarker[];
+  activeMarkerId?: string;
   drawRoute?: boolean;
   interactive?: boolean;
   userLocation?: { lng: number; lat: number };
   onReady?: () => void;
   onMapClick?: (lngLat: { lng: number; lat: number }) => void;
   onMarkerDragEnd?: (id: string, lngLat: { lng: number; lat: number }) => void;
+  onMarkerClick?: (id: string) => void;
 }
 
-export default function Map({
-  className = "h-64 w-full",
-  center = [72.8777, 19.076],
-  zoom = 12,
-  markers = [],
-  drawRoute = false,
-  interactive = true,
-  userLocation,
-  onReady,
-  onMapClick,
-  onMarkerDragEnd,
-}: MapProps) {
+const CATEGORY_ICON_SVG: Record<string, string> = {
+  food: '<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>',
+  drink: '<path d="M8 22h8"/><path d="M12 11v11"/><path d="m19 3-7 8-7-8Z"/>',
+  stay: '<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/>',
+  viewpoint: '<path d="m8 3 4 8 5-5 5 15H2L8 3z"/>',
+  activity: '<path d="M13 2 3 14h9l-1 8 10-12h-9z"/>',
+  nature: '<path d="M11 20A7 7 0 0 1 9.8 6.9C15.5 4.9 17 3.5 19 2c1 2 2 4.5 2 8 0 5.5-4.5 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>',
+  culture: '<path d="M3 22h18"/><path d="M6 18v-7"/><path d="M10 18v-7"/><path d="M14 18v-7"/><path d="M18 18v-7"/><path d="m12 2-8 5h16z"/>',
+  hidden_gem: '<path d="M6 3h12l4 6-10 13L2 9z"/>',
+  other: '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/>',
+};
+
+const CATEGORY_COLORS: Record<string, string> = {
+  food: "#ef4444",
+  drink: "#f59e0b",
+  stay: "#8b5cf6",
+  viewpoint: "#10b981",
+  activity: "#f97316",
+  nature: "#22c55e",
+  culture: "#6366f1",
+  hidden_gem: "#ec4899",
+  other: "#3b82f6",
+};
+
+function createPinElement(m: MapMarker, active = false): HTMLElement {
+  const cat = m.category ?? "other";
+  const color = CATEGORY_COLORS[cat] ?? CATEGORY_COLORS.other;
+  const iconPaths = CATEGORY_ICON_SVG[cat] ?? CATEGORY_ICON_SVG.other;
+  const size = active ? 48 : 42;
+  const iconSize = active ? 22 : 18;
+
+  const wrapper = document.createElement("div");
+  wrapper.style.cssText =
+    "display:flex;flex-direction:column;align-items:center;cursor:pointer;transition:transform 0.2s";
+
+  const circle = document.createElement("div");
+  circle.style.cssText = `width:${size}px;height:${size}px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,0.35);border:2.5px solid ${color};transition:all 0.2s`;
+  circle.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${iconPaths}</svg>`;
+  wrapper.appendChild(circle);
+
+  const tail = document.createElement("div");
+  tail.style.cssText = `width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:9px solid ${color};margin-top:-2px`;
+  wrapper.appendChild(tail);
+
+  if (m.label) {
+    const badge = document.createElement("div");
+    badge.style.cssText =
+      "position:absolute;top:-5px;right:-5px;min-width:20px;height:20px;border-radius:10px;background:#0f1d32;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 5px;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.3)";
+    badge.textContent = m.label;
+    wrapper.appendChild(badge);
+  }
+
+  wrapper.style.position = "relative";
+  return wrapper;
+}
+
+const Map = forwardRef<MapHandle, MapProps>(function Map(
+  {
+    className = "h-64 w-full",
+    center = [72.8777, 19.076],
+    zoom = 12,
+    markers = [],
+    activeMarkerId,
+    drawRoute = false,
+    interactive = true,
+    userLocation,
+    onReady,
+    onMapClick,
+    onMarkerDragEnd,
+    onMarkerClick,
+  },
+  ref,
+) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
+  const markerEls = useRef<globalThis.Map<string, HTMLElement>>(new globalThis.Map());
+
+  useImperativeHandle(ref, () => ({
+    flyTo: (lng: number, lat: number, z?: number) => {
+      mapRef.current?.flyTo({ center: [lng, lat], zoom: z ?? 14, duration: 800 });
+    },
+  }));
+
+  useEffect(() => {
+    markerEls.current.forEach((el, id) => {
+      const isActive = id === activeMarkerId;
+      el.style.transform = isActive ? "scale(1.15)" : "scale(1)";
+      el.style.zIndex = isActive ? "10" : "1";
+      el.style.filter = isActive
+        ? "drop-shadow(0 0 6px rgba(255,255,255,0.5))"
+        : "none";
+    });
+  }, [activeMarkerId]);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -66,7 +152,6 @@ export default function Map({
     mapRef.current = map;
 
     map.on("load", () => {
-      // User location pulsing dot
       if (userLocation) {
         const dot = document.createElement("div");
         dot.style.cssText =
@@ -84,16 +169,21 @@ export default function Map({
           .addTo(map);
       }
 
-      // Circuit/point markers
       markers.forEach((m) => {
-        const el = document.createElement("div");
-        el.style.cssText = m.draggable
-          ? "width:32px;height:32px;border-radius:50%;background:#3b82f6;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;box-shadow:0 2px 12px rgba(59,130,246,.5);cursor:grab;border:2px solid rgba(255,255,255,.8)"
-          : "width:28px;height:28px;border-radius:50%;background:#3b82f6;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;box-shadow:0 2px 8px rgba(59,130,246,.4);border:2px solid rgba(255,255,255,.6)";
-        el.textContent = m.label ?? "";
+        const el = createPinElement(m);
+        markerEls.current.set(m.id, el);
+
+        if (onMarkerClick) {
+          el.addEventListener("click", (e) => {
+            e.stopPropagation();
+            onMarkerClick(m.id);
+          });
+        }
+
         const marker = new maplibregl.Marker({
           element: el,
           draggable: m.draggable ?? false,
+          anchor: "bottom",
         })
           .setLngLat([m.lng, m.lat])
           .addTo(map);
@@ -121,9 +211,10 @@ export default function Map({
           type: "line",
           source: "route",
           paint: {
-            "line-color": "#3b82f6",
-            "line-width": 2.5,
+            "line-color": "#ffffff",
+            "line-width": 2,
             "line-dasharray": [2, 2],
+            "line-opacity": 0.6,
           },
         });
       }
@@ -140,16 +231,13 @@ export default function Map({
               [Math.min(...lngs), Math.min(...lats)],
               [Math.max(...lngs), Math.max(...lats)],
             ],
-            { padding: 60, maxZoom: 15 }
+            { padding: 80, maxZoom: 15 }
           );
         }
       }
     });
 
     if (onReady) {
-      // `idle` can fire before every visible tile has landed — only signal
-      // ready once the tile set is actually complete, so loaders don't
-      // reveal half-rendered quadrants.
       const signalReady = () => {
         if (map.areTilesLoaded()) {
           map.off("idle", signalReady);
@@ -160,6 +248,7 @@ export default function Map({
     }
 
     return () => {
+      markerEls.current.clear();
       mapRef.current = null;
       map.remove();
     };
@@ -167,4 +256,6 @@ export default function Map({
   }, []);
 
   return <div ref={containerRef} className={className} />;
-}
+});
+
+export default Map;
