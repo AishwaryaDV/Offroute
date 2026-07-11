@@ -57,38 +57,43 @@ Before building any page, drop the relevant reference screenshot(s) into a `/des
 
 ## 5. Feature scope
 
-### POC (build first)
-- Auth: sign up / log in / log out
-- Create, edit, delete a circuit (name, description, cover image, visibility: private / shared / public)
-- Add, edit, delete, reorder points within a circuit (title, exact lat/lng via map pin drop or device geolocation, notes)
-- Upload photos to a point
-- Map view: zoom from world → country → city, circuits rendered as connected paths, points as pins
-- View a circuit as a list (chronological) and on the map
-- Share a circuit via link (read-only)
-- Aggregate world map (map mode only): every point from all of the owner's circuits on one map, colored by circuit — reuses the same map component as circuit view
-- Basic responsive PWA shell (installable on iOS and Android, works on mobile browser and desktop)
+### Phase 1 — Auth & identity (complete)
+- Auth: sign up / log in / log out (Supabase Auth)
+- JWT verification, auto-provisioned `users` table, protected routes
+- Settings: display name, nationality, change password, delete account
 
-### Phase 2
+### Phase 2 — Circuits, points & POC core (in progress)
+- Create, edit, delete a circuit (name, description, cover image, visibility, trip dates)
+- Add, edit, delete, reorder points within a circuit (title, lat/lng via map pin drop or GPS, notes, category, rating)
+- Map view: category-icon pin markers with order badges, smooth bezier route lines, horizontal points carousel with map fly-to
+- Upload photos to a point (pre-signed S3 uploads via Supabase Storage, point photo carousel, pin thumbnails)
+- Share a circuit via link (`/s/[token]` read-only public view with OG tags for WhatsApp/iMessage previews)
+- Aggregate world map (`/world`): every point from all circuits on one map, colored by circuit
+- PWA shell: manifest + service worker, installable on iOS and Android
+- Map style switcher: swap between satellite/streets/dark/terrain at runtime (Stadia Maps free tier)
+- Location permission guidance screen before first GPS call in add-point
+- Share circuit button: Web Share API with copy-link fallback (done)
+
+### Phase 3 — Social & sharing
 - Clone a circuit into your own account and track completion per point
 - Collaborator invites (edit access) for a circuit
+- Star/fork counts on circuits, notifications when someone clones/stars yours
+- Tags on circuits (e.g. "off-grid," "food crawl," "day trip") for browsability
+
+### Phase 4 — Media & AI
 - Video and file attachments (not just photos) on points
 - AI: auto-caption generation for a point from its photos + short note
 - AI: OCR text extraction from attachment images (tickets, receipts)
 - AI: route reorder suggestions for a circuit ("optimize this loop")
-- Offline logging: queue new points/media locally when offline, sync on reconnect
-- Stats dashboard: countries visited, points logged, distance traveled
 - Export a circuit as a printable PDF/photo book
-- GitHub-style social layer: star a circuit, see fork count and who forked it, notifications when someone clones/stars your circuit
-- Tags on circuits (e.g. "off-grid," "food crawl," "day trip") for browsability of public circuits
-- Trip grouping: bundle several circuits from one longer journey under an optional parent Trip
-- Aggregate view, timeline mode: the same rollup of all points laid out chronologically (map mode ships in POC)
-- Travel Profile: opt-in curated public page (bio, cover photo, featured public circuits) built on top of your public circuits
+- Offline logging: queue new points/media locally when offline, sync on reconnect
 
-### Phase 2 additions (decided during design review, 2026-07-10)
-- **Share circuit button** — uses the Web Share API (`navigator.share()`) to trigger the native share sheet (iOS/Android) from the circuit detail page. Falls back to copy-link on unsupported browsers. Screenshot detection is not possible in PWAs, so the share button is the path.
-- **Map style switcher** — MapLibre GL supports `map.setStyle()` to swap tile sources at runtime. Offer 3–4 styles (e.g. clean/streets, dark, terrain/outdoors, satellite via MapTiler free tier). UI: bottom-sheet selector like Polarsteps/Life360. Stadia Maps provides clean/dark/outdoors/terrain styles for free; satellite requires MapTiler free tier (100K tiles/month).
-- **Location permission guidance screen** — before the first `navigator.geolocation.getCurrentPosition()` call in add-point, show a soft-ask modal explaining why location is needed and what to do if blocked. Browser handles the actual permission prompt; the guidance screen just primes the user to tap "Allow."
-- **PWA push notifications** — parked, no use case in Phase 2. Revisit in Phase 5 when social features (clone/star notifications) land. In-app notification inbox is the primary surface per spec §13.
+### Phase 5 — Profile & timeline
+- Travel Profile: opt-in curated public page (`/u/[username]` — bio, cover photo, featured public circuits)
+- Aggregate view, timeline mode: Activity page with all points laid out chronologically
+- Stats dashboard: countries visited, points logged, distance traveled
+- Trip grouping: bundle several circuits from one longer journey under an optional parent Trip
+- PWA push notifications (revisit when social features from Phase 3 land)
 
 ### Explicitly out of scope for now
 - Live GPS trip tracking (that's Polarsteps' job, not this app's)

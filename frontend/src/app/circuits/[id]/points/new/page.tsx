@@ -1,16 +1,18 @@
 "use client";
 
-import { ArrowLeft, Crosshair, MapPin } from "lucide-react";
+import { ArrowLeft, Crosshair, MapPin, Navigation, Settings, X } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AuthGuard } from "@/components/AuthGuard";
 import MapDynamic from "@/components/MapDynamic";
 import { createPoint } from "@/lib/points";
 import type { PointCategory } from "@/types/api";
+
+const LOCATION_SEEN_KEY = "offroute-location-seen";
 
 const CATEGORIES: { value: PointCategory; label: string }[] = [
   { value: "food", label: "Food" },
@@ -39,6 +41,8 @@ function AddPoint() {
 
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locatingGps, setLocatingGps] = useState(false);
+  const [showGuidance, setShowGuidance] = useState(false);
+  const [showDenied, setShowDenied] = useState(false);
 
   const {
     register,
@@ -68,23 +72,39 @@ function AddPoint() {
     onError: () => toast.error("Could not add point — try again"),
   });
 
-  function useCurrentLocation() {
-    if (!navigator.geolocation) {
-      toast.error("Geolocation not supported on this device");
-      return;
-    }
+  const requestLocation = useCallback(() => {
+    localStorage.setItem(LOCATION_SEEN_KEY, "1");
+    setShowGuidance(false);
+    setShowDenied(false);
     setLocatingGps(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         setLocatingGps(false);
       },
-      () => {
-        toast.error("Could not get your location — check permissions");
+      (err) => {
         setLocatingGps(false);
+        if (err.code === err.PERMISSION_DENIED) {
+          setShowDenied(true);
+        } else {
+          toast.error("Could not get your location — try again");
+        }
       },
-      { enableHighAccuracy: true, timeout: 10000 }
+      { enableHighAccuracy: true, timeout: 10000 },
     );
+  }, []);
+
+  function handleGpsClick() {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation not supported on this device");
+      return;
+    }
+    const seen = localStorage.getItem(LOCATION_SEEN_KEY);
+    if (!seen) {
+      setShowGuidance(true);
+      return;
+    }
+    requestLocation();
   }
 
   const mapMarkers = location
@@ -125,7 +145,7 @@ function AddPoint() {
         <div className="mb-5 flex gap-3">
           <button
             type="button"
-            onClick={useCurrentLocation}
+            onClick={handleGpsClick}
             disabled={locatingGps}
             className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-500 py-3.5 text-sm font-semibold text-white active:bg-blue-600 disabled:opacity-50"
           >
@@ -212,6 +232,131 @@ function AddPoint() {
           </button>
         </form>
       </main>
+
+      {/* Location guidance bottom sheet — first time only */}
+      {showGuidance && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm"
+          onClick={() => setShowGuidance(false)}
+        >
+          <div
+            className="w-full max-w-lg animate-slide-up rounded-t-3xl bg-[#111a2e] px-6 pb-10 pt-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setShowGuidance(false)}
+              className="absolute right-5 top-5 flex h-8 w-8 items-center justify-center rounded-full bg-white/10"
+              aria-label="Close"
+            >
+              <X size={16} className="text-zinc-400" />
+            </button>
+
+            <div className="mb-5 flex justify-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-500/15">
+                <Navigation size={28} className="text-blue-400" />
+              </div>
+            </div>
+
+            <h2 className="mb-2 text-center text-xl font-bold text-white">
+              Pin your exact spot
+            </h2>
+            <p className="mb-8 text-center text-sm leading-relaxed text-zinc-400">
+              Offroute uses your location to place points precisely on your
+              circuit map. We only check when you tap &ldquo;Use GPS&rdquo;
+              &mdash; never in the background.
+            </p>
+
+            <button
+              type="button"
+              onClick={requestLocation}
+              className="w-full rounded-xl bg-blue-500 py-4 text-base font-semibold text-white active:bg-blue-600"
+            >
+              Allow Location
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowGuidance(false)}
+              className="mt-3 w-full py-2 text-center text-sm text-zinc-500 active:text-zinc-400"
+            >
+              Not now
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Permission denied sheet — shown when browser blocked location */}
+      {showDenied && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm"
+          onClick={() => setShowDenied(false)}
+        >
+          <div
+            className="w-full max-w-lg animate-slide-up rounded-t-3xl bg-[#111a2e] px-6 pb-10 pt-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setShowDenied(false)}
+              className="absolute right-5 top-5 flex h-8 w-8 items-center justify-center rounded-full bg-white/10"
+              aria-label="Close"
+            >
+              <X size={16} className="text-zinc-400" />
+            </button>
+
+            <div className="mb-5 flex justify-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-500/15">
+                <Settings size={28} className="text-amber-400" />
+              </div>
+            </div>
+
+            <h2 className="mb-2 text-center text-xl font-bold text-white">
+              Location blocked
+            </h2>
+            <p className="mb-3 text-center text-sm leading-relaxed text-zinc-400">
+              Your browser blocked location access. To use GPS, enable it in
+              your device settings:
+            </p>
+
+            <div className="mb-8 rounded-xl bg-white/5 p-4">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                How to enable
+              </p>
+              <ul className="space-y-2 text-sm text-zinc-300">
+                <li>
+                  <span className="font-medium text-white">iOS Safari:</span>{" "}
+                  Settings &rarr; Safari &rarr; Location &rarr; Allow
+                </li>
+                <li>
+                  <span className="font-medium text-white">Android Chrome:</span>{" "}
+                  Tap the lock icon in the address bar &rarr; Permissions &rarr;
+                  Location &rarr; Allow
+                </li>
+                <li>
+                  <span className="font-medium text-white">Desktop:</span>{" "}
+                  Click the lock icon next to the URL &rarr; Location &rarr;
+                  Allow
+                </li>
+              </ul>
+            </div>
+
+            <button
+              type="button"
+              onClick={requestLocation}
+              className="w-full rounded-xl bg-blue-500 py-4 text-base font-semibold text-white active:bg-blue-600"
+            >
+              Try again
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowDenied(false)}
+              className="mt-3 w-full py-2 text-center text-sm text-zinc-500 active:text-zinc-400"
+            >
+              Use map instead
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

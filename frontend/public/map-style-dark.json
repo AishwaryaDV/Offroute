@@ -1,0 +1,24 @@
+{
+  "version": 8,
+  "name": "Offroute Dark",
+  "sources": {
+    "carto-dark": {
+      "type": "raster",
+      "tiles": [
+        "https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png"
+      ],
+      "tileSize": 256,
+      "maxzoom": 19,
+      "attribution": "&copy; OpenStreetMap contributors, &copy; CARTO"
+    }
+  },
+  "layers": [
+    {
+      "id": "carto-dark",
+      "type": "raster",
+      "source": "carto-dark",
+      "minzoom": 0,
+      "maxzoom": 19
+    }
+  ]
+}
