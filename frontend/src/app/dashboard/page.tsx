@@ -6,6 +6,7 @@ import {
   MapPin,
   Plus,
   Settings,
+  Timer,
   X,
   Calendar,
   Eye,
@@ -96,41 +97,62 @@ function Dashboard() {
         onReady={() => setMapReady(true)}
       />
 
-      {/* Loading overlay — compass + spinner while tiles load */}
-      {!mapReady && (
-        <div className="absolute inset-0 z-30 flex items-center justify-center bg-[#0b1120]/90">
-          <div className="flex flex-col items-center gap-4">
-            <Compass size={48} className="text-white/20" />
-            <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+      {/* Loading overlay — translucent, spinning compass, smooth fade */}
+      <div
+        className={`absolute inset-0 z-30 flex items-center justify-center bg-[#0b1120]/60 transition-opacity duration-700 ${
+          mapReady ? "pointer-events-none opacity-0" : "opacity-100"
+        }`}
+      >
+        <Compass size={40} className="animate-spin text-white" />
+      </div>
+
+      {/* Header: Offroute branding + settings gear */}
+      <header className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-5 pt-[max(env(safe-area-inset-top),1.25rem)]">
+        <div className="flex items-center gap-2">
+          <Compass size={22} className="text-white/80" />
+          <h1 className="text-xl font-bold tracking-tight text-white [text-shadow:0_1px_6px_rgba(0,0,0,.6)]">
+            offroute
+          </h1>
+        </div>
+        <Link
+          href="/settings"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-black/30 backdrop-blur-md active:bg-black/50"
+          aria-label="Settings"
+        >
+          <Settings size={18} className="text-white/80" />
+        </Link>
+      </header>
+
+      {/* Me overlay — profile info */}
+      {me && (
+        <div className="absolute inset-x-0 top-20 z-10 flex flex-col items-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/20 text-2xl font-bold text-white backdrop-blur-md [text-shadow:0_1px_4px_rgba(0,0,0,.4)]">
+            {(me.display_name?.[0] ?? me.email[0]).toUpperCase()}
           </div>
+          <p className="mt-2 text-base font-semibold text-white [text-shadow:0_1px_4px_rgba(0,0,0,.5)]">
+            {me.display_name ?? "Traveler"}
+          </p>
+          <p className="text-sm text-white/60 [text-shadow:0_1px_3px_rgba(0,0,0,.4)]">
+            {me.email}
+          </p>
         </div>
       )}
 
-      {/* Header overlay */}
-      <header className="absolute inset-x-0 top-0 z-10 px-5 pt-[max(env(safe-area-inset-top),1.25rem)]">
-        <p className="text-sm text-white/70 [text-shadow:0_1px_4px_rgba(0,0,0,.6)]">
-          {me?.display_name ? `Hi, ${me.display_name}` : " "}
-        </p>
-        <h1 className="text-2xl font-bold tracking-tight text-white [text-shadow:0_1px_6px_rgba(0,0,0,.6)]">
-          My Circuits
-        </h1>
-      </header>
-
-      {/* Bottom section: cards + nav */}
+      {/* Bottom section */}
       <div className="absolute inset-x-0 bottom-0 z-10">
-        <div className="pointer-events-none h-28 bg-gradient-to-t from-[#0b1120] to-transparent" />
+        <div className="pointer-events-none h-24 bg-gradient-to-t from-[#0b1120]/80 to-transparent" />
 
-        {/* Circuit cards or empty state */}
-        <div className="bg-[#0b1120] px-5 pb-2 pt-1">
+        {/* Circuit cards or empty state (no box) */}
+        <div className="px-5 pb-3">
           {isLoading ? (
             <div className="h-20 animate-pulse rounded-2xl bg-white/[0.08]" />
           ) : circuits && circuits.length > 0 ? (
-            <div className="-mx-5 flex gap-3 overflow-x-auto px-5 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="-mx-5 flex gap-3 overflow-x-auto px-5 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {circuits.map((circuit) => (
                 <Link
                   key={circuit.id}
                   href={`/circuits/${circuit.id}`}
-                  className="min-w-[220px] shrink-0 rounded-2xl bg-white/[0.06] p-4 ring-1 ring-white/[0.1] active:bg-white/[0.1]"
+                  className="min-w-[220px] shrink-0 rounded-2xl bg-black/30 p-4 ring-1 ring-white/[0.1] backdrop-blur-md active:bg-black/40"
                 >
                   <p className="font-semibold text-white">{circuit.title}</p>
                   {circuit.description && (
@@ -149,47 +171,44 @@ function Dashboard() {
               ))}
             </div>
           ) : (
-            <div className="rounded-2xl bg-white/[0.06] px-6 py-5 text-center ring-1 ring-white/[0.08]">
-              <p className="text-sm font-medium text-white/70">
-                No circuits yet
-              </p>
-              <p className="mt-0.5 text-xs text-white/40">
-                Tap + to start your first one
-              </p>
-            </div>
+            <p className="text-center text-sm text-white/40 [text-shadow:0_1px_3px_rgba(0,0,0,.4)]">
+              No circuits yet — tap + to start
+            </p>
           )}
         </div>
 
-        {/* Bottom nav bar */}
-        <nav className="flex items-end justify-around bg-[#0b1120] px-4 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1.5">
-          <button className="flex flex-col items-center gap-0.5 py-1 text-white">
-            <Compass size={22} />
-            <span className="text-[10px] font-medium">Map</span>
-          </button>
+        {/* Floating bottom nav */}
+        <div className="px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <nav className="flex items-center justify-around rounded-full bg-[#f5f0e8]/75 px-2 py-2 shadow-lg backdrop-blur-xl">
+            <button className="flex flex-col items-center gap-0.5 px-3 py-1 text-[#0f1d32]">
+              <Compass size={20} strokeWidth={2.2} />
+              <span className="text-[10px] font-semibold">Me</span>
+            </button>
 
-          <Link
-            href="/circuits"
-            className="flex flex-col items-center gap-0.5 py-1 text-white/40"
-          >
-            <List size={22} />
-            <span className="text-[10px] font-medium">Circuits</span>
-          </Link>
+            <Link
+              href="/circuits"
+              className="flex flex-col items-center gap-0.5 px-3 py-1 text-[#0f1d32]/50"
+            >
+              <List size={20} strokeWidth={2.2} />
+              <span className="text-[10px] font-semibold">Circuits</span>
+            </Link>
 
-          <button
-            onClick={() => setShowNewCircuit(true)}
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-[#162033] ring-1 ring-white/[0.15] active:bg-[#1e2d45]"
-          >
-            <Plus size={22} className="text-white" />
-          </button>
+            <button
+              onClick={() => setShowNewCircuit(true)}
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-[#0f1d32] active:bg-[#162a46]"
+            >
+              <Plus size={22} className="text-[#f5f0e8]" />
+            </button>
 
-          <Link
-            href="/settings"
-            className="flex flex-col items-center gap-0.5 py-1 text-white/40"
-          >
-            <Settings size={22} />
-            <span className="text-[10px] font-medium">Settings</span>
-          </Link>
-        </nav>
+            <Link
+              href="/activity"
+              className="flex flex-col items-center gap-0.5 px-3 py-1 text-[#0f1d32]/50"
+            >
+              <Timer size={20} strokeWidth={2.2} />
+              <span className="text-[10px] font-semibold">Activity</span>
+            </Link>
+          </nav>
+        </div>
       </div>
 
       {/* New Circuit bottom sheet */}
@@ -204,7 +223,7 @@ function Dashboard() {
           }}
         >
           <div className="max-h-[85dvh] w-full overflow-y-auto rounded-t-3xl bg-white pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-            <div className="flex justify-center pt-3 pb-1">
+            <div className="flex justify-center pb-1 pt-3">
               <div className="h-1 w-10 rounded-full bg-gray-300" />
             </div>
 
@@ -264,7 +283,6 @@ function Dashboard() {
                 </p>
               </div>
 
-              {/* Dates */}
               <div className="rounded-xl bg-gray-50 p-4 ring-1 ring-gray-200">
                 <div className="mb-3 flex items-center gap-2 text-sm font-medium text-gray-700">
                   <Calendar size={16} />
@@ -294,7 +312,6 @@ function Dashboard() {
                 </div>
               </div>
 
-              {/* Visibility */}
               <div className="rounded-xl bg-gray-50 p-4 ring-1 ring-gray-200">
                 <div className="mb-3 flex items-center gap-2 text-sm font-medium text-gray-700">
                   <Eye size={16} />
