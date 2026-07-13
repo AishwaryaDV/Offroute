@@ -47,3 +47,7 @@ class PointResponse(BaseModel):
     category: str | None
     rating: int | None
     created_at: datetime
+
+
+class WorldPointResponse(PointResponse):
+    circuit_title: str

@@ -7,11 +7,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.user import User
-from app.schemas.point import PointCreate, PointResponse, PointUpdate, ReorderRequest
+from app.schemas.point import PointCreate, PointResponse, PointUpdate, ReorderRequest, WorldPointResponse
 from app.services import circuits as circuits_service
 from app.services import points as points_service
 
 router = APIRouter(tags=["points"])
+
+
+@router.get("/points/all", response_model=list[WorldPointResponse])
+async def list_all_points(
+    user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    return await points_service.list_all_points(db, user.id)
 
 
 @router.get("/circuits/{circuit_id}/points", response_model=list[PointResponse])
