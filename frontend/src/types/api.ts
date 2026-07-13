@@ -119,6 +119,10 @@ export interface PointCreate {
   rating?: number;
 }
 
+export interface WorldPoint extends Point {
+  circuit_title: string;
+}
+
 export interface PointUpdate {
   title?: string;
   notes?: string;
