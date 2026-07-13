@@ -5,6 +5,10 @@ export function getPoints(circuitId: string): Promise<Point[]> {
   return apiFetch<Point[]>(`/circuits/${circuitId}/points`);
 }
 
+export function getPoint(pointId: string): Promise<Point> {
+  return apiFetch<Point>(`/points/${pointId}`);
+}
+
 export function createPoint(circuitId: string, data: PointCreate): Promise<Point> {
   return apiFetch<Point>(`/circuits/${circuitId}/points`, {
     method: "POST",

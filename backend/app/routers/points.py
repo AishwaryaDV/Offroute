@@ -45,6 +45,18 @@ async def create_point(
     return await points_service.create_point(db, circuit_id, data)
 
 
+@router.get("/points/{point_id}", response_model=PointResponse)
+async def get_point(
+    point_id: uuid.UUID,
+    user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    point = await points_service.get_point(db, point_id)
+    circuit = await circuits_service.get_circuit(db, point.circuit_id)
+    circuits_service.assert_owner(circuit, user.id)
+    return points_service._point_to_dict(point)
+
+
 @router.patch("/points/{point_id}", response_model=PointResponse)
 async def update_point(
     point_id: uuid.UUID,
