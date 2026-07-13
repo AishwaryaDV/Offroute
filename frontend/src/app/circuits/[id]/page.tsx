@@ -114,6 +114,10 @@ function CircuitDetail() {
   });
 
   function handleSelectPoint(point: Point) {
+    if (activePointId === point.id) {
+      router.push(`/circuits/${id}/points/${point.id}`);
+      return;
+    }
     setActivePointId(point.id);
     mapHandleRef.current?.flyTo(point.longitude, point.latitude, 14);
   }
