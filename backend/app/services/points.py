@@ -6,6 +6,7 @@ from shapely.geometry import Point as ShapelyPoint
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.circuit import Circuit
 from app.models.point import Point
 from app.schemas.point import PointCreate, PointUpdate, ReorderRequest
 
@@ -79,6 +80,22 @@ async def update_point(
 async def delete_point(db: AsyncSession, point: Point) -> None:
     await db.delete(point)
     await db.commit()
+
+
+async def list_all_points(db: AsyncSession, owner_id: uuid.UUID) -> list[dict]:
+    stmt = (
+        select(Point, Circuit.title.label("circuit_title"))
+        .join(Circuit, Circuit.id == Point.circuit_id)
+        .where(Circuit.owner_id == owner_id)
+        .order_by(Circuit.updated_at.desc(), Point.order_index)
+    )
+    rows = (await db.execute(stmt)).all()
+    results = []
+    for point, circuit_title in rows:
+        d = _point_to_dict(point)
+        d["circuit_title"] = circuit_title
+        results.append(d)
+    return results
 
 
 async def reorder_points(

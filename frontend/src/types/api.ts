@@ -32,11 +32,36 @@ export interface Circuit {
   cover_media_id: string | null;
   visibility: "private" | "shared" | "public";
   tags: string[] | null;
+  share_token: string | null;
   start_date: string | null;
   end_date: string | null;
   created_at: string;
   updated_at: string;
   point_count: number;
+}
+
+export interface SharedPoint {
+  id: string;
+  order_index: number;
+  title: string;
+  notes: string | null;
+  latitude: number;
+  longitude: number;
+  visited_at: string | null;
+  category: PointCategory | null;
+  rating: number | null;
+}
+
+export interface SharedCircuit {
+  id: string;
+  title: string;
+  description: string | null;
+  owner_name: string | null;
+  point_count: number;
+  start_date: string | null;
+  end_date: string | null;
+  created_at: string;
+  points: SharedPoint[];
 }
 
 export interface CircuitCreate {
@@ -94,6 +119,10 @@ export interface PointCreate {
   rating?: number;
 }
 
+export interface WorldPoint extends Point {
+  circuit_title: string;
+}
+
 export interface PointUpdate {
   title?: string;
   notes?: string;
@@ -107,4 +136,17 @@ export interface PointUpdate {
 export interface ReorderItem {
   id: string;
   order_index: number;
+}
+
+// --- Media ---
+
+export interface Media {
+  id: string;
+  point_id: string | null;
+  circuit_id: string | null;
+  type: "photo" | "video" | "file";
+  storage_path: string;
+  caption: string | null;
+  created_at: string;
+  upload_url: string | null;
 }
