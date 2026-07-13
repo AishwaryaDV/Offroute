@@ -1,11 +1,15 @@
+import secrets
 import uuid
 
 from fastapi import HTTPException, status
+from geoalchemy2.shape import to_shape
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.models.circuit import Circuit
 from app.models.point import Point
+from app.models.user import User
 from app.schemas.circuit import CircuitCreate, CircuitUpdate
 
 
@@ -77,3 +81,49 @@ async def update_circuit(
 async def delete_circuit(db: AsyncSession, circuit: Circuit) -> None:
     await db.delete(circuit)
     await db.commit()
+
+
+async def generate_share_token(db: AsyncSession, circuit: Circuit) -> str:
+    if circuit.share_token:
+        return circuit.share_token
+    token = secrets.token_urlsafe(12)
+    circuit.share_token = token
+    await db.commit()
+    await db.refresh(circuit)
+    return token
+
+
+async def get_circuit_by_token(db: AsyncSession, token: str) -> dict:
+    stmt = (
+        select(Circuit)
+        .options(selectinload(Circuit.points))
+        .where(Circuit.share_token == token)
+    )
+    circuit = (await db.execute(stmt)).scalar_one_or_none()
+    if circuit is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Shared circuit not found")
+    owner = await db.get(User, circuit.owner_id)
+    return {
+        "id": circuit.id,
+        "title": circuit.title,
+        "description": circuit.description,
+        "owner_name": owner.display_name if owner else None,
+        "point_count": len(circuit.points),
+        "start_date": circuit.start_date,
+        "end_date": circuit.end_date,
+        "created_at": circuit.created_at,
+        "points": [
+            {
+                "id": p.id,
+                "order_index": p.order_index,
+                "title": p.title,
+                "notes": p.notes,
+                "latitude": to_shape(p.location).y,
+                "longitude": to_shape(p.location).x,
+                "visited_at": p.visited_at,
+                "category": p.category,
+                "rating": p.rating,
+            }
+            for p in sorted(circuit.points, key=lambda p: p.order_index)
+        ],
+    }

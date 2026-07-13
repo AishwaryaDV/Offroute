@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.user import User
-from app.schemas.circuit import CircuitCreate, CircuitResponse, CircuitUpdate
+from app.schemas.circuit import CircuitCreate, CircuitResponse, CircuitUpdate, SharedCircuitResponse
 from app.services import circuits as circuits_service
 
 router = APIRouter(prefix="/circuits", tags=["circuits"])
@@ -64,3 +64,26 @@ async def delete_circuit(
     circuit = await circuits_service.get_circuit(db, circuit_id)
     circuits_service.assert_owner(circuit, user.id)
     await circuits_service.delete_circuit(db, circuit)
+
+
+@router.post("/{circuit_id}/share")
+async def share_circuit(
+    circuit_id: uuid.UUID,
+    user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    circuit = await circuits_service.get_circuit(db, circuit_id)
+    circuits_service.assert_owner(circuit, user.id)
+    token = await circuits_service.generate_share_token(db, circuit)
+    return {"share_token": token}
+
+
+shared_router = APIRouter(tags=["shared"])
+
+
+@shared_router.get("/shared/{token}", response_model=SharedCircuitResponse)
+async def get_shared_circuit(
+    token: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    return await circuits_service.get_circuit_by_token(db, token)

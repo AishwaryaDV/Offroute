@@ -32,11 +32,36 @@ export interface Circuit {
   cover_media_id: string | null;
   visibility: "private" | "shared" | "public";
   tags: string[] | null;
+  share_token: string | null;
   start_date: string | null;
   end_date: string | null;
   created_at: string;
   updated_at: string;
   point_count: number;
+}
+
+export interface SharedPoint {
+  id: string;
+  order_index: number;
+  title: string;
+  notes: string | null;
+  latitude: number;
+  longitude: number;
+  visited_at: string | null;
+  category: PointCategory | null;
+  rating: number | null;
+}
+
+export interface SharedCircuit {
+  id: string;
+  title: string;
+  description: string | null;
+  owner_name: string | null;
+  point_count: number;
+  start_date: string | null;
+  end_date: string | null;
+  created_at: string;
+  points: SharedPoint[];
 }
 
 export interface CircuitCreate {

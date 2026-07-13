@@ -17,4 +17,5 @@ app.add_middleware(
 app.include_router(health.router)
 app.include_router(me.router)
 app.include_router(circuits.router)
+app.include_router(circuits.shared_router)
 app.include_router(points.router)

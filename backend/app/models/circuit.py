@@ -32,6 +32,7 @@ class Circuit(Base):
         VisibilityEnum, server_default="private", nullable=False
     )
     tags: Mapped[list[str] | None] = mapped_column(ARRAY(Text))
+    share_token: Mapped[str | None] = mapped_column(Text, unique=True)
     start_date: Mapped[date | None] = mapped_column(Date)
     end_date: Mapped[date | None] = mapped_column(Date)
     created_at: Mapped[datetime] = mapped_column(

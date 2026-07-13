@@ -25,7 +25,7 @@ import { toast } from "sonner";
 import { AuthGuard } from "@/components/AuthGuard";
 import MapDynamic from "@/components/MapDynamic";
 import type { MapMarker, MapHandle } from "@/components/MapDynamic";
-import { getCircuit, deleteCircuit } from "@/lib/circuits";
+import { getCircuit, deleteCircuit, shareCircuit } from "@/lib/circuits";
 import { getPoints, deletePoint } from "@/lib/points";
 import type { Point } from "@/types/api";
 
@@ -119,21 +119,26 @@ function CircuitDetail() {
   }
 
   async function handleShare() {
-    const url = window.location.href;
     setShowMenu(false);
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: circuit?.title ?? "Circuit",
-          text: circuit?.description ?? "Check out this circuit on Offroute",
-          url,
-        });
-      } catch {
-        /* user cancelled */
+    try {
+      const { share_token } = await shareCircuit(id);
+      const url = `${window.location.origin}/s/${share_token}`;
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: circuit?.title ?? "Circuit",
+            text: circuit?.description ?? "Check out this circuit on Offroute",
+            url,
+          });
+        } catch {
+          /* user cancelled */
+        }
+      } else {
+        await navigator.clipboard.writeText(url);
+        toast.success("Share link copied");
       }
-    } else {
-      await navigator.clipboard.writeText(url);
-      toast.success("Link copied");
+    } catch {
+      toast.error("Could not generate share link");
     }
   }
 
