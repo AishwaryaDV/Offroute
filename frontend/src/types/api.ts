@@ -137,3 +137,16 @@ export interface ReorderItem {
   id: string;
   order_index: number;
 }
+
+// --- Media ---
+
+export interface Media {
+  id: string;
+  point_id: string | null;
+  circuit_id: string | null;
+  type: "photo" | "video" | "file";
+  storage_path: string;
+  caption: string | null;
+  created_at: string;
+  upload_url: string | null;
+}
