@@ -1,16 +1,23 @@
 "use client";
 
-import { ArrowLeft, Crosshair, MapPin, Navigation, Settings, X } from "lucide-react";
+import { ArrowLeft, Crosshair, MapPin, Navigation, Search, Settings, X } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AuthGuard } from "@/components/AuthGuard";
 import MapDynamic from "@/components/MapDynamic";
 import { createPoint } from "@/lib/points";
 import type { PointCategory } from "@/types/api";
+
+interface NominatimResult {
+  place_id: number;
+  display_name: string;
+  lat: string;
+  lon: string;
+}
 
 const LOCATION_SEEN_KEY = "offroute-location-seen";
 
@@ -43,6 +50,36 @@ function AddPoint() {
   const [locatingGps, setLocatingGps] = useState(false);
   const [showGuidance, setShowGuidance] = useState(false);
   const [showDenied, setShowDenied] = useState(false);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<NominatimResult[]>([]);
+  const [searching, setSearching] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    const q = searchQuery.trim();
+    if (q.length < 3) {
+      setSearchResults([]);
+      setSearching(false);
+      return;
+    }
+    setSearching(true);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(q)}`,
+          { headers: { "User-Agent": "Offroute/1.0" } },
+        );
+        if (res.ok) setSearchResults(await res.json());
+      } catch {
+        /* network error — silently skip */
+      } finally {
+        setSearching(false);
+      }
+    }, 400);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [searchQuery]);
 
   const {
     register,
@@ -162,6 +199,47 @@ function AddPoint() {
               <div className="flex items-center gap-1.5 rounded-xl bg-emerald-50 px-3 text-xs text-emerald-600 ring-1 ring-emerald-200">
                 <MapPin size={14} />
                 {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
+              </div>
+            )}
+          </div>
+
+          {/* Place search */}
+          <div className="relative mb-5">
+            <div className="relative">
+              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search for a place..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full rounded-xl bg-[#f5f6f8] py-3.5 pl-10 pr-4 text-sm text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ring-gray-200 focus:ring-blue-500"
+              />
+              {searching && (
+                <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-200 border-t-blue-500" />
+                </div>
+              )}
+            </div>
+
+            {searchResults.length > 0 && (
+              <div className="absolute inset-x-0 top-full z-20 mt-1 max-h-48 overflow-y-auto rounded-xl bg-white py-1 shadow-xl ring-1 ring-black/5">
+                {searchResults.map((r) => (
+                  <button
+                    key={r.place_id}
+                    type="button"
+                    onClick={() => {
+                      setLocation({ lat: parseFloat(r.lat), lng: parseFloat(r.lon) });
+                      setSearchQuery("");
+                      setSearchResults([]);
+                    }}
+                    className="flex w-full items-start gap-2.5 px-4 py-2.5 text-left active:bg-[#f5f6f8]"
+                  >
+                    <MapPin size={14} className="mt-0.5 shrink-0 text-gray-400" />
+                    <span className="line-clamp-2 text-sm text-gray-700">
+                      {r.display_name}
+                    </span>
+                  </button>
+                ))}
               </div>
             )}
           </div>
