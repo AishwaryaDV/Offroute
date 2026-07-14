@@ -93,17 +93,17 @@ export default function SharedCircuitPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[100dvh] items-center justify-center bg-[#0b1120]">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-700 border-t-blue-500" />
+      <div className="flex min-h-[100dvh] items-center justify-center bg-[#f5f6f8]">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-200 border-t-blue-500" />
       </div>
     );
   }
 
   if (error || !circuit) {
     return (
-      <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-4 bg-[#0b1120] px-6">
-        <p className="text-lg font-semibold text-white">Circuit not found</p>
-        <p className="text-sm text-zinc-400">
+      <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-4 bg-[#f5f6f8] px-6">
+        <p className="text-lg font-semibold text-[#0f1d32]">Circuit not found</p>
+        <p className="text-sm text-gray-500">
           This link may have expired or been removed.
         </p>
         <Link
@@ -137,98 +137,109 @@ export default function SharedCircuitPage() {
         </div>
       </div>
 
-      {/* Circuit info */}
-      <div className="px-5 pb-4 pt-5">
-        <h1 className="text-2xl font-bold text-white">{circuit.title}</h1>
-        {circuit.owner_name && (
-          <p className="mt-1 text-sm text-zinc-400">
-            by {circuit.owner_name}
-          </p>
-        )}
-        {circuit.description && (
-          <p className="mt-2 text-sm leading-relaxed text-zinc-400">
-            {circuit.description}
-          </p>
-        )}
-        <div className="mt-3 flex items-center gap-4 text-xs text-zinc-500">
-          <span>{circuit.point_count} points</span>
-          {circuit.start_date && (
-            <span>
-              {new Date(circuit.start_date).toLocaleDateString("en-US", {
-                month: "short",
-                year: "numeric",
-              })}
-            </span>
+      {/* White sheet */}
+      <div className="relative -mt-6 flex-1 rounded-t-[28px] bg-white">
+        <div className="flex justify-center pt-3">
+          <div className="h-1 w-10 rounded-full bg-gray-300" />
+        </div>
+
+        {/* Circuit info */}
+        <div className="px-5 pb-4 pt-4">
+          <h1 className="text-2xl font-bold text-[#0f1d32]">{circuit.title}</h1>
+          {circuit.owner_name && (
+            <p className="mt-1 text-sm text-gray-500">
+              by {circuit.owner_name}
+            </p>
           )}
+          {circuit.description && (
+            <p className="mt-2 text-sm leading-relaxed text-gray-500">
+              {circuit.description}
+            </p>
+          )}
+          <div className="mt-3 flex items-center gap-4 text-xs text-gray-400">
+            <span>{circuit.point_count} points</span>
+            {circuit.start_date && (
+              <span>
+                {new Date(circuit.start_date).toLocaleDateString("en-US", {
+                  month: "short",
+                  year: "numeric",
+                })}
+              </span>
+            )}
+          </div>
+          <button
+            onClick={handleShare}
+            className="mt-4 flex items-center gap-2 rounded-full bg-[#f5f6f8] px-4 py-2 text-sm font-medium text-[#0f1d32] ring-1 ring-gray-200 active:bg-gray-100"
+          >
+            <Share2 size={14} />
+            Share
+          </button>
         </div>
-        <button
-          onClick={handleShare}
-          className="mt-4 flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white ring-1 ring-white/10 active:bg-white/15"
-        >
-          <Share2 size={14} />
-          Share
-        </button>
-      </div>
 
-      {/* Points list */}
-      <div className="flex-1 border-t border-white/10 px-5 pb-10 pt-4">
-        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
-          Points
-        </h2>
-        <div className="flex flex-col gap-3">
-          {circuit.points.map((point: SharedPoint, i: number) => {
-            const cat = point.category ?? "other";
-            const Icon = CATEGORY_ICONS[cat] ?? MapPin;
-            const color = CATEGORY_COLORS[cat] ?? "#3b82f6";
+        {/* Points list */}
+        <div className="border-t border-gray-100 px-5 pb-10 pt-4">
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
+            Points
+          </h2>
+          <div className="flex flex-col gap-3">
+            {circuit.points.map((point: SharedPoint, i: number) => {
+              const cat = point.category ?? "other";
+              const Icon = CATEGORY_ICONS[cat] ?? MapPin;
+              const color = CATEGORY_COLORS[cat] ?? "#3b82f6";
 
-            return (
-              <div
-                key={point.id}
-                className="flex items-start gap-3 rounded-2xl bg-white/[0.06] p-4 ring-1 ring-white/10"
-              >
+              return (
                 <div
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
-                  style={{ background: `${color}20` }}
+                  key={point.id}
+                  className="flex items-start gap-3 rounded-2xl bg-[#f5f6f8] p-4"
                 >
-                  <Icon size={18} style={{ color }} />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-white/30">
-                      {i + 1}
-                    </span>
-                    <p className="truncate text-sm font-semibold text-white">
-                      {point.title}
-                    </p>
+                  <div
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+                    style={{ background: `${color}15` }}
+                  >
+                    <Icon size={18} style={{ color }} />
                   </div>
-                  {point.notes && (
-                    <p className="mt-1 text-xs leading-relaxed text-zinc-400">
-                      {point.notes}
-                    </p>
-                  )}
-                  <div className="mt-1.5 flex items-center gap-3 text-xs text-zinc-500">
-                    {point.rating && <span>{"★".repeat(point.rating)}</span>}
-                    {point.visited_at && (
-                      <span>
-                        {new Date(point.visited_at).toLocaleDateString()}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-gray-300">
+                        {i + 1}
                       </span>
+                      <p className="truncate text-sm font-semibold text-[#0f1d32]">
+                        {point.title}
+                      </p>
+                    </div>
+                    {point.notes && (
+                      <p className="mt-1 text-xs leading-relaxed text-gray-500">
+                        {point.notes}
+                      </p>
                     )}
+                    <div className="mt-1.5 flex items-center gap-3 text-xs text-gray-400">
+                      {point.rating && (
+                        <span className="text-amber-500">
+                          {"★".repeat(point.rating)}
+                        </span>
+                      )}
+                      {point.visited_at && (
+                        <span>
+                          {new Date(point.visited_at).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-      </div>
 
-      {/* Footer CTA */}
-      <div className="border-t border-white/10 px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-4">
-        <Link
-          href="/login"
-          className="block rounded-xl bg-blue-500 py-3.5 text-center text-sm font-semibold text-white active:bg-blue-600"
-        >
-          Create your own circuits on Offroute
-        </Link>
+        {/* Footer CTA */}
+        <div className="border-t border-gray-100 px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-4">
+          <Link
+            href="/login"
+            className="block rounded-xl bg-blue-500 py-3.5 text-center text-sm font-semibold text-white active:bg-blue-600"
+          >
+            Create your own circuits on Offroute
+          </Link>
+        </div>
       </div>
     </div>
   );

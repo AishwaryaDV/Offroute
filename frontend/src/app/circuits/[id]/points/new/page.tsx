@@ -125,7 +125,7 @@ function AddPoint() {
         />
         {!location && (
           <div className="absolute inset-0 flex items-center justify-center bg-[#111a2e]/80">
-            <p className="text-sm text-zinc-500">Tap the map or use GPS below</p>
+            <p className="text-sm text-gray-400">Tap the map or use GPS below</p>
           </div>
         )}
 
@@ -140,128 +140,135 @@ function AddPoint() {
         </div>
       </div>
 
-      <main className="flex-1 px-5 pb-10 pt-4">
-        {/* GPS button + coordinates */}
-        <div className="mb-5 flex gap-3">
-          <button
-            type="button"
-            onClick={handleGpsClick}
-            disabled={locatingGps}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-500 py-3.5 text-sm font-semibold text-white active:bg-blue-600 disabled:opacity-50"
-          >
-            <Crosshair size={18} />
-            {locatingGps ? "Locating…" : "Use GPS"}
-          </button>
-          {location && (
-            <div className="flex items-center gap-1.5 rounded-xl bg-emerald-500/10 px-3 text-xs text-emerald-400 ring-1 ring-emerald-500/20">
-              <MapPin size={14} />
-              {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
-            </div>
-          )}
+      {/* White sheet content */}
+      <div className="relative -mt-6 flex-1 rounded-t-[28px] bg-white pb-10">
+        <div className="flex justify-center pt-3">
+          <div className="h-1 w-10 rounded-full bg-gray-300" />
         </div>
 
-        <form
-          onSubmit={handleSubmit((data) => mutation.mutate(data))}
-          className="flex flex-col gap-4"
-        >
-          <div>
-            <input
-              type="text"
-              placeholder="Point name"
-              autoComplete="off"
-              {...register("title", {
-                required: "Give this point a name",
-                maxLength: { value: 200, message: "200 characters max" },
-              })}
-              className={`w-full rounded-xl bg-white/[0.08] px-4 py-4 text-base text-white placeholder-zinc-500 outline-none ring-1 ${
-                errors.title
-                  ? "ring-red-500/60 focus:ring-red-500"
-                  : "ring-white/[0.12] focus:ring-blue-500/60"
-              }`}
-            />
-            {errors.title && (
-              <p className="mt-1.5 text-sm text-red-400">{errors.title.message}</p>
+        <main className="px-5 pt-4">
+          {/* GPS button + coordinates */}
+          <div className="mb-5 flex gap-3">
+            <button
+              type="button"
+              onClick={handleGpsClick}
+              disabled={locatingGps}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-500 py-3.5 text-sm font-semibold text-white active:bg-blue-600 disabled:opacity-50"
+            >
+              <Crosshair size={18} />
+              {locatingGps ? "Locating…" : "Use GPS"}
+            </button>
+            {location && (
+              <div className="flex items-center gap-1.5 rounded-xl bg-emerald-50 px-3 text-xs text-emerald-600 ring-1 ring-emerald-200">
+                <MapPin size={14} />
+                {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
+              </div>
             )}
           </div>
 
-          <textarea
-            placeholder="Notes (optional)"
-            rows={2}
-            {...register("notes")}
-            className="w-full resize-none rounded-xl bg-white/[0.08] px-4 py-4 text-base text-white placeholder-zinc-500 outline-none ring-1 ring-white/[0.12] focus:ring-blue-500/60"
-          />
-
-          <select
-            {...register("category")}
-            className="w-full appearance-none rounded-xl bg-white/[0.08] px-4 py-4 text-base text-white outline-none ring-1 ring-white/[0.12] focus:ring-blue-500/60"
+          <form
+            onSubmit={handleSubmit((data) => mutation.mutate(data))}
+            className="flex flex-col gap-4"
           >
-            <option value="" className="bg-[#1a2435]">Category (optional)</option>
-            {CATEGORIES.map((c) => (
-              <option key={c.value} value={c.value} className="bg-[#1a2435]">
-                {c.label}
-              </option>
-            ))}
-          </select>
+            <div>
+              <input
+                type="text"
+                placeholder="Point name"
+                autoComplete="off"
+                {...register("title", {
+                  required: "Give this point a name",
+                  maxLength: { value: 200, message: "200 characters max" },
+                })}
+                className={`w-full rounded-xl bg-[#f5f6f8] px-4 py-3.5 text-base text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ${
+                  errors.title
+                    ? "ring-red-400 focus:ring-red-500"
+                    : "ring-gray-200 focus:ring-blue-500"
+                }`}
+              />
+              {errors.title && (
+                <p className="mt-1.5 text-sm text-red-500">{errors.title.message}</p>
+              )}
+            </div>
 
-          <div className="flex gap-3">
+            <textarea
+              placeholder="Notes (optional)"
+              rows={2}
+              {...register("notes")}
+              className="w-full resize-none rounded-xl bg-[#f5f6f8] px-4 py-3.5 text-base text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ring-gray-200 focus:ring-blue-500"
+            />
+
             <select
-              {...register("rating")}
-              className="flex-1 appearance-none rounded-xl bg-white/[0.08] px-4 py-4 text-base text-white outline-none ring-1 ring-white/[0.12] focus:ring-blue-500/60"
+              {...register("category")}
+              className="w-full appearance-none rounded-xl bg-[#f5f6f8] px-4 py-3.5 text-base text-[#0f1d32] outline-none ring-1 ring-gray-200 focus:ring-blue-500"
             >
-              <option value="" className="bg-[#1a2435]">Rating</option>
-              {[1, 2, 3, 4, 5].map((n) => (
-                <option key={n} value={n} className="bg-[#1a2435]">
-                  {"★".repeat(n)}
+              <option value="">Category (optional)</option>
+              {CATEGORIES.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.label}
                 </option>
               ))}
             </select>
 
-            <input
-              type="date"
-              {...register("visited_at")}
-              className="flex-1 rounded-xl bg-white/[0.08] px-4 py-4 text-base text-white outline-none ring-1 ring-white/[0.12] focus:ring-blue-500/60"
-            />
-          </div>
+            <div className="flex gap-3">
+              <select
+                {...register("rating")}
+                className="flex-1 appearance-none rounded-xl bg-[#f5f6f8] px-4 py-3.5 text-base text-[#0f1d32] outline-none ring-1 ring-gray-200 focus:ring-blue-500"
+              >
+                <option value="">Rating</option>
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <option key={n} value={n}>
+                    {"★".repeat(n)}
+                  </option>
+                ))}
+              </select>
 
-          <button
-            type="submit"
-            disabled={mutation.isPending || !location}
-            className="mt-4 rounded-xl bg-blue-500 py-4 text-base font-semibold text-white active:bg-blue-600 disabled:opacity-50"
-          >
-            {mutation.isPending ? "Saving…" : "Save point"}
-          </button>
-        </form>
-      </main>
+              <input
+                type="date"
+                {...register("visited_at")}
+                className="flex-1 rounded-xl bg-[#f5f6f8] px-4 py-3.5 text-base text-[#0f1d32] outline-none ring-1 ring-gray-200 focus:ring-blue-500"
+              />
+            </div>
 
-      {/* Location guidance bottom sheet — first time only */}
+            <button
+              type="submit"
+              disabled={mutation.isPending || !location}
+              className="mt-4 rounded-xl bg-blue-500 py-4 text-base font-semibold text-white active:bg-blue-600 disabled:opacity-50"
+            >
+              {mutation.isPending ? "Saving…" : "Save point"}
+            </button>
+          </form>
+        </main>
+      </div>
+
+      {/* Location guidance bottom sheet */}
       {showGuidance && (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm"
           onClick={() => setShowGuidance(false)}
         >
           <div
-            className="w-full max-w-lg animate-slide-up rounded-t-3xl bg-[#111a2e] px-6 pb-10 pt-6"
+            className="relative w-full max-w-lg animate-slide-up rounded-t-3xl bg-white px-6 pb-10 pt-6"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               type="button"
               onClick={() => setShowGuidance(false)}
-              className="absolute right-5 top-5 flex h-8 w-8 items-center justify-center rounded-full bg-white/10"
+              className="absolute right-5 top-5 flex h-8 w-8 items-center justify-center rounded-full bg-[#f5f6f8]"
               aria-label="Close"
             >
-              <X size={16} className="text-zinc-400" />
+              <X size={16} className="text-gray-500" />
             </button>
 
             <div className="mb-5 flex justify-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-500/15">
-                <Navigation size={28} className="text-blue-400" />
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-50">
+                <Navigation size={28} className="text-blue-500" />
               </div>
             </div>
 
-            <h2 className="mb-2 text-center text-xl font-bold text-white">
+            <h2 className="mb-2 text-center text-xl font-bold text-[#0f1d32]">
               Pin your exact spot
             </h2>
-            <p className="mb-8 text-center text-sm leading-relaxed text-zinc-400">
+            <p className="mb-8 text-center text-sm leading-relaxed text-gray-500">
               Offroute uses your location to place points precisely on your
               circuit map. We only check when you tap &ldquo;Use GPS&rdquo;
               &mdash; never in the background.
@@ -277,7 +284,7 @@ function AddPoint() {
             <button
               type="button"
               onClick={() => setShowGuidance(false)}
-              className="mt-3 w-full py-2 text-center text-sm text-zinc-500 active:text-zinc-400"
+              className="mt-3 w-full py-2 text-center text-sm text-gray-400 active:text-gray-600"
             >
               Not now
             </button>
@@ -285,55 +292,55 @@ function AddPoint() {
         </div>
       )}
 
-      {/* Permission denied sheet — shown when browser blocked location */}
+      {/* Permission denied sheet */}
       {showDenied && (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm"
           onClick={() => setShowDenied(false)}
         >
           <div
-            className="w-full max-w-lg animate-slide-up rounded-t-3xl bg-[#111a2e] px-6 pb-10 pt-6"
+            className="relative w-full max-w-lg animate-slide-up rounded-t-3xl bg-white px-6 pb-10 pt-6"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               type="button"
               onClick={() => setShowDenied(false)}
-              className="absolute right-5 top-5 flex h-8 w-8 items-center justify-center rounded-full bg-white/10"
+              className="absolute right-5 top-5 flex h-8 w-8 items-center justify-center rounded-full bg-[#f5f6f8]"
               aria-label="Close"
             >
-              <X size={16} className="text-zinc-400" />
+              <X size={16} className="text-gray-500" />
             </button>
 
             <div className="mb-5 flex justify-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-500/15">
-                <Settings size={28} className="text-amber-400" />
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-50">
+                <Settings size={28} className="text-amber-500" />
               </div>
             </div>
 
-            <h2 className="mb-2 text-center text-xl font-bold text-white">
+            <h2 className="mb-2 text-center text-xl font-bold text-[#0f1d32]">
               Location blocked
             </h2>
-            <p className="mb-3 text-center text-sm leading-relaxed text-zinc-400">
+            <p className="mb-3 text-center text-sm leading-relaxed text-gray-500">
               Your browser blocked location access. To use GPS, enable it in
               your device settings:
             </p>
 
-            <div className="mb-8 rounded-xl bg-white/5 p-4">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+            <div className="mb-8 rounded-xl bg-[#f5f6f8] p-4">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
                 How to enable
               </p>
-              <ul className="space-y-2 text-sm text-zinc-300">
+              <ul className="space-y-2 text-sm text-gray-600">
                 <li>
-                  <span className="font-medium text-white">iOS Safari:</span>{" "}
+                  <span className="font-medium text-[#0f1d32]">iOS Safari:</span>{" "}
                   Settings &rarr; Safari &rarr; Location &rarr; Allow
                 </li>
                 <li>
-                  <span className="font-medium text-white">Android Chrome:</span>{" "}
+                  <span className="font-medium text-[#0f1d32]">Android Chrome:</span>{" "}
                   Tap the lock icon in the address bar &rarr; Permissions &rarr;
                   Location &rarr; Allow
                 </li>
                 <li>
-                  <span className="font-medium text-white">Desktop:</span>{" "}
+                  <span className="font-medium text-[#0f1d32]">Desktop:</span>{" "}
                   Click the lock icon next to the URL &rarr; Location &rarr;
                   Allow
                 </li>
@@ -350,7 +357,7 @@ function AddPoint() {
             <button
               type="button"
               onClick={() => setShowDenied(false)}
-              className="mt-3 w-full py-2 text-center text-sm text-zinc-500 active:text-zinc-400"
+              className="mt-3 w-full py-2 text-center text-sm text-gray-400 active:text-gray-600"
             >
               Use map instead
             </button>

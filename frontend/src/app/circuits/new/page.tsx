@@ -36,26 +36,26 @@ function NewCircuit() {
   });
 
   return (
-    <div className="min-h-[100dvh] bg-[#0b1120]">
-      <header className="sticky top-0 z-10 flex items-center gap-3 bg-[#0b1120]/80 px-5 pb-3 pt-[max(env(safe-area-inset-top),1rem)] backdrop-blur-xl">
+    <div className="min-h-[100dvh] bg-[#f5f6f8]">
+      <header className="sticky top-0 z-10 flex items-center gap-3 bg-[#f5f6f8] px-5 pb-3 pt-[max(env(safe-area-inset-top),1rem)]">
         <Link
           href="/dashboard"
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.06] active:bg-white/[0.12]"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm active:bg-gray-100"
           aria-label="Back"
         >
-          <ArrowLeft size={20} className="text-zinc-400" />
+          <ArrowLeft size={20} className="text-[#0f1d32]" />
         </Link>
-        <h1 className="text-xl font-bold tracking-tight text-white">
+        <h1 className="text-xl font-bold tracking-tight text-[#0f1d32]">
           New Circuit
         </h1>
       </header>
 
       <main className="px-5 pb-10">
-        <div className="mb-6 flex h-44 items-center justify-center rounded-2xl bg-white/[0.04] ring-1 ring-white/[0.08]">
+        <div className="mb-6 flex h-44 items-center justify-center rounded-2xl bg-white ring-1 ring-gray-200">
           <div className="text-center">
-            <Camera size={28} className="mx-auto mb-2 text-zinc-600" />
-            <p className="text-sm text-zinc-500">Cover photo</p>
-            <p className="text-xs text-zinc-600">Coming in Phase 3</p>
+            <Camera size={28} className="mx-auto mb-2 text-gray-400" />
+            <p className="text-sm text-gray-500">Cover photo</p>
+            <p className="text-xs text-gray-400">Coming soon</p>
           </div>
         </div>
 
@@ -73,14 +73,14 @@ function NewCircuit() {
                 minLength: { value: 1, message: "Name is required" },
                 maxLength: { value: 200, message: "200 characters max" },
               })}
-              className={`w-full rounded-xl bg-white/[0.08] px-4 py-4 text-base text-white placeholder-zinc-500 outline-none ring-1 ${
+              className={`w-full rounded-xl bg-white px-4 py-3.5 text-base text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ${
                 errors.title
-                  ? "ring-red-500/60 focus:ring-red-500"
-                  : "ring-white/[0.12] focus:ring-blue-500/60"
+                  ? "ring-red-400 focus:ring-red-500"
+                  : "ring-gray-200 focus:ring-blue-500"
               }`}
             />
             {errors.title && (
-              <p className="mt-1.5 text-sm text-red-400">{errors.title.message}</p>
+              <p className="mt-1.5 text-sm text-red-500">{errors.title.message}</p>
             )}
           </div>
 
@@ -88,7 +88,7 @@ function NewCircuit() {
             placeholder="Description (optional)"
             rows={3}
             {...register("description")}
-            className="w-full resize-none rounded-xl bg-white/[0.08] px-4 py-4 text-base text-white placeholder-zinc-500 outline-none ring-1 ring-white/[0.12] focus:ring-blue-500/60"
+            className="w-full resize-none rounded-xl bg-white px-4 py-3.5 text-base text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ring-gray-200 focus:ring-blue-500"
           />
 
           <button
