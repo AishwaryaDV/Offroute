@@ -211,20 +211,21 @@ function CircuitDetail() {
             className="fixed inset-0 z-20"
             onClick={() => setShowMenu(false)}
           />
-          <div className="absolute right-4 top-[calc(max(env(safe-area-inset-top),0.75rem)+3rem)] z-30 w-48 rounded-2xl bg-[#1a2435]/95 p-1.5 shadow-xl backdrop-blur-xl ring-1 ring-white/10">
+          <div className="absolute right-4 top-[calc(max(env(safe-area-inset-top),0.75rem)+3rem)] z-30 w-48 overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5">
             <button
               onClick={handleShare}
-              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-white active:bg-white/10"
+              className="flex w-full items-center gap-3 px-4 py-3.5 text-sm font-medium text-[#0f1d32] active:bg-gray-50"
             >
-              <Share2 size={16} className="text-zinc-400" />
+              <Share2 size={16} className="text-gray-400" />
               Share circuit
             </button>
+            <div className="mx-4 h-px bg-gray-100" />
             <button
               onClick={() => {
                 setShowMenu(false);
                 setShowDeleteConfirm("circuit");
               }}
-              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-red-400 active:bg-white/10"
+              className="flex w-full items-center gap-3 px-4 py-3.5 text-sm font-medium text-red-500 active:bg-gray-50"
             >
               <Trash2 size={16} />
               Delete circuit
@@ -347,25 +348,25 @@ function CircuitDetail() {
       {/* Delete confirmation */}
       {showDeleteConfirm && (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm"
           onClick={(e) => {
             if (e.target === e.currentTarget) setShowDeleteConfirm(null);
           }}
         >
-          <div className="w-full max-w-sm rounded-t-3xl bg-[#1a2435] p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-            <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-zinc-700" />
-            <p className="text-center text-lg font-semibold text-white">
+          <div className="w-full max-w-sm animate-slide-up rounded-t-3xl bg-white p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+            <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-gray-300" />
+            <p className="text-center text-lg font-semibold text-[#0f1d32]">
               {showDeleteConfirm === "circuit"
                 ? "Delete this circuit and all its points?"
                 : "Delete this point?"}
             </p>
-            <p className="mt-2 text-center text-sm text-zinc-400">
+            <p className="mt-2 text-center text-sm text-gray-500">
               This action cannot be undone.
             </p>
             <div className="mt-6 flex gap-3">
               <button
                 onClick={() => setShowDeleteConfirm(null)}
-                className="flex-1 rounded-xl bg-white/[0.08] py-3.5 text-base font-medium text-white active:bg-white/[0.12]"
+                className="flex-1 rounded-xl bg-[#f5f6f8] py-3.5 text-base font-medium text-[#0f1d32] active:bg-gray-200"
               >
                 Cancel
               </button>
@@ -381,7 +382,7 @@ function CircuitDetail() {
                   deleteCircuitMutation.isPending ||
                   deletePointMutation.isPending
                 }
-                className="flex-1 rounded-xl bg-red-500/90 py-3.5 text-base font-medium text-white active:bg-red-600 disabled:opacity-50"
+                className="flex-1 rounded-xl bg-red-500 py-3.5 text-base font-medium text-white active:bg-red-600 disabled:opacity-50"
               >
                 Delete
               </button>
