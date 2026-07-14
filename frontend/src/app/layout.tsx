@@ -50,9 +50,17 @@ export default function RootLayout({
         <ServiceWorkerRegistration />
         <Toaster
           richColors
-          position="top-center"
+          position="top-right"
           toastOptions={{
-            style: { background: "#1a2435", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" },
+            style: {
+              background: "#fff",
+              color: "#0f1d32",
+              border: "1px solid #e5e7eb",
+            },
+            classNames: {
+              error: "!border-red-400 !bg-red-50 !text-red-700",
+              success: "!border-emerald-400 !bg-emerald-50 !text-emerald-700",
+            },
           }}
         />
       </body>
