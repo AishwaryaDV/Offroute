@@ -156,6 +156,7 @@ function CircuitDetail() {
           activeMarkerId={activePointId ?? undefined}
           drawRoute
           interactive
+          showStyleSwitcher
           onMarkerClick={(markerId) => {
             const pt = points?.find((p) => p.id === markerId);
             if (pt) handleSelectPoint(pt);
@@ -171,6 +172,7 @@ function CircuitDetail() {
           center={[78.9629, 20.5937]}
           zoom={4}
           interactive
+          showStyleSwitcher
         />
       )}
 
