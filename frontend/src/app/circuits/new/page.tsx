@@ -1,12 +1,14 @@
 "use client";
 
-import { ArrowLeft, Camera } from "lucide-react";
+import { ArrowLeft, Camera, Tag } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AuthGuard } from "@/components/AuthGuard";
+import { TagInput } from "@/components/TagInput";
 import { createCircuit } from "@/lib/circuits";
 
 interface FormValues {
@@ -16,6 +18,7 @@ interface FormValues {
 
 function NewCircuit() {
   const router = useRouter();
+  const [tags, setTags] = useState<string[]>([]);
   const {
     register,
     handleSubmit,
@@ -27,6 +30,7 @@ function NewCircuit() {
       createCircuit({
         title: data.title,
         description: data.description || undefined,
+        tags: tags.length > 0 ? tags : undefined,
       }),
     onSuccess: (circuit) => {
       toast.success("Circuit created");
@@ -90,6 +94,14 @@ function NewCircuit() {
             {...register("description")}
             className="w-full resize-none rounded-xl bg-white px-4 py-3.5 text-base text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ring-gray-200 focus:ring-blue-500"
           />
+
+          <div>
+            <div className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-500">
+              <Tag size={14} />
+              <span>Tags</span>
+            </div>
+            <TagInput tags={tags} onChange={setTags} />
+          </div>
 
           <button
             type="submit"

@@ -6,6 +6,7 @@ import {
   MapPin,
   Plus,
   Settings,
+  Tag,
   Timer,
   X,
   Calendar,
@@ -19,6 +20,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AuthGuard } from "@/components/AuthGuard";
 import MapDynamic from "@/components/MapDynamic";
+import { TagInput } from "@/components/TagInput";
 import { getMe } from "@/lib/me";
 import { getCircuits, createCircuit } from "@/lib/circuits";
 
@@ -44,6 +46,7 @@ function Dashboard() {
   const [userLoc, setUserLoc] = useState<{ lng: number; lat: number } | null>(
     null
   );
+  const [tags, setTags] = useState<string[]>([]);
 
   useEffect(() => {
     if (!navigator.geolocation) return;
@@ -74,6 +77,7 @@ function Dashboard() {
         description: data.description || undefined,
         visibility:
           (data.visibility as "private" | "shared" | "public") || undefined,
+        tags: tags.length > 0 ? tags : undefined,
         start_date: data.start_date || undefined,
         end_date: data.end_date || undefined,
       }),
@@ -82,6 +86,7 @@ function Dashboard() {
       toast.success("Circuit created");
       setShowNewCircuit(false);
       reset();
+      setTags([]);
       router.push(`/circuits/${circuit.id}`);
     },
     onError: () => toast.error("Could not create circuit — try again"),
@@ -196,6 +201,23 @@ function Dashboard() {
                 <p className="truncate font-semibold text-[#0f1d32]">
                   {circuit.title}
                 </p>
+                {circuit.tags && circuit.tags.length > 0 && (
+                  <div className="mt-1.5 flex flex-wrap gap-1">
+                    {circuit.tags.slice(0, 3).map((tag) => (
+                      <span
+                        key={tag}
+                        className="rounded-full bg-[#0f1d32]/10 px-2 py-0.5 text-[10px] font-medium text-[#0f1d32]/70"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                    {circuit.tags.length > 3 && (
+                      <span className="rounded-full bg-[#0f1d32]/10 px-2 py-0.5 text-[10px] font-medium text-[#0f1d32]/70">
+                        +{circuit.tags.length - 3}
+                      </span>
+                    )}
+                  </div>
+                )}
                 <div className="mt-1.5 flex items-center gap-1.5 text-sm text-gray-500">
                   <MapPin size={13} />
                   <span>
@@ -251,6 +273,7 @@ function Dashboard() {
             if (e.target === e.currentTarget) {
               setShowNewCircuit(false);
               reset();
+              setTags([]);
             }
           }}
         >
@@ -264,6 +287,7 @@ function Dashboard() {
                 onClick={() => {
                   setShowNewCircuit(false);
                   reset();
+                  setTags([]);
                 }}
                 className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 active:bg-gray-200"
               >
@@ -313,6 +337,14 @@ function Dashboard() {
                 <p className="mt-1 text-right text-xs text-gray-400">
                   {descValue.length}/200
                 </p>
+              </div>
+
+              <div className="rounded-xl bg-gray-50 p-4 ring-1 ring-gray-200">
+                <div className="mb-3 flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <Tag size={16} />
+                  <span>Tags</span>
+                </div>
+                <TagInput tags={tags} onChange={setTags} />
               </div>
 
               <div className="rounded-xl bg-gray-50 p-4 ring-1 ring-gray-200">

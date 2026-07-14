@@ -12,6 +12,7 @@ import {
   Mountain,
   Plus,
   Share2,
+  Tag,
   Trash2,
   Utensils,
   Wine,
@@ -25,7 +26,8 @@ import { toast } from "sonner";
 import { AuthGuard } from "@/components/AuthGuard";
 import MapDynamic from "@/components/MapDynamic";
 import type { MapMarker, MapHandle } from "@/components/MapDynamic";
-import { getCircuit, deleteCircuit, shareCircuit } from "@/lib/circuits";
+import { TagInput } from "@/components/TagInput";
+import { getCircuit, deleteCircuit, shareCircuit, updateCircuit } from "@/lib/circuits";
 import { getPoints, deletePoint } from "@/lib/points";
 import type { Point } from "@/types/api";
 
@@ -67,6 +69,8 @@ function CircuitDetail() {
     null,
   );
   const [showMenu, setShowMenu] = useState(false);
+  const [showTagEditor, setShowTagEditor] = useState(false);
+  const [editTags, setEditTags] = useState<string[]>([]);
   const [activePointId, setActivePointId] = useState<string | null>(null);
   const mapHandleRef = useRef<MapHandle | null>(null);
 
@@ -111,6 +115,17 @@ function CircuitDetail() {
       toast.success("Point deleted");
     },
     onError: () => toast.error("Could not delete point"),
+  });
+
+  const updateTagsMutation = useMutation({
+    mutationFn: (tags: string[]) => updateCircuit(id, { tags }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["circuit", id] });
+      queryClient.invalidateQueries({ queryKey: ["circuits"] });
+      setShowTagEditor(false);
+      toast.success("Tags updated");
+    },
+    onError: () => toast.error("Could not update tags"),
   });
 
   function handleSelectPoint(point: Point) {
@@ -193,6 +208,23 @@ function CircuitDetail() {
               {circuit.description}
             </p>
           )}
+          {circuit?.tags && circuit.tags.length > 0 && (
+            <div className="mt-1 flex justify-center gap-1">
+              {circuit.tags.slice(0, 3).map((tag) => (
+                <span
+                  key={tag}
+                  className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-medium text-white/80 backdrop-blur-sm"
+                >
+                  {tag}
+                </span>
+              ))}
+              {circuit.tags.length > 3 && (
+                <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-medium text-white/80 backdrop-blur-sm">
+                  +{circuit.tags.length - 3}
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         <button
@@ -218,6 +250,18 @@ function CircuitDetail() {
             >
               <Share2 size={16} className="text-gray-400" />
               Share circuit
+            </button>
+            <div className="mx-4 h-px bg-gray-100" />
+            <button
+              onClick={() => {
+                setShowMenu(false);
+                setEditTags(circuit?.tags ?? []);
+                setShowTagEditor(true);
+              }}
+              className="flex w-full items-center gap-3 px-4 py-3.5 text-sm font-medium text-[#0f1d32] active:bg-gray-50"
+            >
+              <Tag size={16} className="text-gray-400" />
+              Edit tags
             </button>
             <div className="mx-4 h-px bg-gray-100" />
             <button
@@ -344,6 +388,41 @@ function CircuitDetail() {
           )}
         </div>
       </div>
+
+      {/* Tag editor sheet */}
+      {showTagEditor && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowTagEditor(false);
+          }}
+        >
+          <div className="w-full max-w-sm animate-slide-up rounded-t-3xl bg-white p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+            <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-gray-300" />
+            <p className="text-center text-lg font-semibold text-[#0f1d32]">
+              Edit tags
+            </p>
+            <div className="mt-4">
+              <TagInput tags={editTags} onChange={setEditTags} />
+            </div>
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={() => setShowTagEditor(false)}
+                className="flex-1 rounded-xl bg-[#f5f6f8] py-3.5 text-base font-medium text-[#0f1d32] active:bg-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => updateTagsMutation.mutate(editTags)}
+                disabled={updateTagsMutation.isPending}
+                className="flex-1 rounded-xl bg-blue-500 py-3.5 text-base font-medium text-white active:bg-blue-600 disabled:opacity-50"
+              >
+                {updateTagsMutation.isPending ? "Saving…" : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete confirmation */}
       {showDeleteConfirm && (
