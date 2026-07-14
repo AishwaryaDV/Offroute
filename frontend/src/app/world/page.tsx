@@ -62,7 +62,6 @@ function WorldMap() {
         className="absolute inset-0 h-full w-full"
         markers={mapMarkers}
         interactive
-        showStyleSwitcher
         center={[78.9629, 20.5937]}
         zoom={3}
       />

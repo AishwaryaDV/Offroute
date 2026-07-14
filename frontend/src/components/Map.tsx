@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useImperativeHandle, forwardRef, useState, useCallback } from "react";
+import { useEffect, useRef, useImperativeHandle, forwardRef } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -8,13 +8,6 @@ const DEFAULT_STYLE =
   process.env.NEXT_PUBLIC_MAP_STYLE ?? "/map-style-satellite.json";
 
 const STYLE_KEY = "offroute-map-style";
-
-const MAP_STYLES = [
-  { id: "satellite", url: "/map-style-satellite.json", label: "Satellite", color: "#2d5a27" },
-  { id: "streets", url: "/map-style-streets.json", label: "Streets", color: "#e2d8c3" },
-  { id: "dark", url: "/map-style-dark.json", label: "Dark", color: "#1a1a2e" },
-  { id: "terrain", url: "/map-style-terrain.json", label: "Terrain", color: "#7a9e6b" },
-];
 
 export interface MapMarker {
   id: string;
@@ -37,7 +30,6 @@ export interface MapProps {
   activeMarkerId?: string;
   drawRoute?: boolean;
   interactive?: boolean;
-  showStyleSwitcher?: boolean;
   userLocation?: { lng: number; lat: number };
   onReady?: () => void;
   onMapClick?: (lngLat: { lng: number; lat: number }) => void;
@@ -135,7 +127,6 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
     activeMarkerId,
     drawRoute = false,
     interactive = true,
-    showStyleSwitcher = false,
     userLocation,
     onReady,
     onMapClick,
@@ -149,29 +140,6 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markerEls = useRef<globalThis.Map<string, HTMLElement>>(new globalThis.Map());
   const routeDataRef = useRef<[number, number][] | null>(null);
-  const markersRef = useRef(markers);
-  markersRef.current = markers;
-
-  const [styleOpen, setStyleOpen] = useState(false);
-  const [activeStyle, setActiveStyle] = useState(
-    () => (typeof window !== "undefined" ? localStorage.getItem(STYLE_KEY) : null) ?? DEFAULT_STYLE,
-  );
-
-  const handleStyleChange = useCallback((url: string) => {
-    const map = mapRef.current;
-    if (!map || url === activeStyle) return;
-
-    localStorage.setItem(STYLE_KEY, url);
-    setActiveStyle(url);
-    setStyleOpen(false);
-
-    map.setStyle(url);
-    map.once("styledata", () => {
-      if (routeDataRef.current) {
-        addRouteToMap(map, routeDataRef.current);
-      }
-    });
-  }, [activeStyle]);
 
   useImperativeHandle(ref, () => ({
     flyTo: (lng: number, lat: number, z?: number) => {
@@ -341,60 +309,7 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return (
-    <div className={`relative ${className}`}>
-      <div ref={containerRef} className="h-full w-full" />
-
-      {showStyleSwitcher && (
-        <div className="absolute bottom-3 right-3 z-10">
-          {styleOpen && (
-            <>
-              <div className="fixed inset-0" onClick={() => setStyleOpen(false)} />
-              <div className="absolute bottom-12 right-0 mb-1 grid grid-cols-2 gap-1.5 rounded-xl bg-[#1a2435]/95 p-2 shadow-xl backdrop-blur-xl ring-1 ring-white/10">
-                {MAP_STYLES.map((s) => (
-                  <button
-                    key={s.id}
-                    onClick={() => handleStyleChange(s.url)}
-                    className={`flex flex-col items-center gap-1 rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
-                      activeStyle === s.url
-                        ? "bg-blue-500/20 text-blue-400 ring-1 ring-blue-500/40"
-                        : "text-zinc-300 active:bg-white/10"
-                    }`}
-                  >
-                    <div
-                      className="h-8 w-8 rounded-md ring-1 ring-white/20"
-                      style={{ background: s.color }}
-                    />
-                    {s.label}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-          <button
-            onClick={() => setStyleOpen(!styleOpen)}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-black/50 shadow-lg backdrop-blur-md active:bg-black/70"
-            aria-label="Map style"
-          >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="white"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="m12 3-4 1-6-1v16l6 1 4-1 4 1 6-1V2l-6 1z" />
-              <path d="M8 4v16" />
-              <path d="M16 4v16" />
-            </svg>
-          </button>
-        </div>
-      )}
-    </div>
-  );
+  return <div ref={containerRef} className={className} />;
 });
 
 export default Map;
