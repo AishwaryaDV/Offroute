@@ -4,7 +4,7 @@ import uuid
 from datetime import date, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Date, DateTime, Enum, ForeignKey, Text, func
+from sqlalchemy import Date, DateTime, Enum, ForeignKey, Integer, Text, func
 from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -33,6 +33,7 @@ class Circuit(Base):
     )
     tags: Mapped[list[str] | None] = mapped_column(ARRAY(Text))
     share_token: Mapped[str | None] = mapped_column(Text, unique=True)
+    clone_count: Mapped[int] = mapped_column(Integer, server_default="0", nullable=False)
     start_date: Mapped[date | None] = mapped_column(Date)
     end_date: Mapped[date | None] = mapped_column(Date)
     created_at: Mapped[datetime] = mapped_column(

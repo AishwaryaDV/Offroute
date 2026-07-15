@@ -134,7 +134,10 @@ async def clone_circuit(db: AsyncSession, token: str, user_id: uuid.UUID) -> Cir
     source = (await db.execute(stmt)).scalar_one_or_none()
     if source is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Shared circuit not found")
+    if source.owner_id == user_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot clone your own circuit")
 
+    source.clone_count = (source.clone_count or 0) + 1
     clone = Circuit(
         owner_id=user_id,
         title=source.title,
