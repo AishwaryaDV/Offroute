@@ -29,6 +29,14 @@ export function deleteCircuit(id: string): Promise<void> {
   return apiFetch<void>(`/circuits/${id}`, { method: "DELETE" });
 }
 
+export function starCircuit(id: string): Promise<{ star_count: number; is_starred: boolean }> {
+  return apiFetch(`/circuits/${id}/star`, { method: "POST" });
+}
+
+export function unstarCircuit(id: string): Promise<{ star_count: number; is_starred: boolean }> {
+  return apiFetch(`/circuits/${id}/star`, { method: "DELETE" });
+}
+
 export function shareCircuit(id: string): Promise<{ share_token: string }> {
   return apiFetch<{ share_token: string }>(`/circuits/${id}/share`, {
     method: "POST",

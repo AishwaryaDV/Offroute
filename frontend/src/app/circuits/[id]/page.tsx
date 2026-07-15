@@ -12,6 +12,7 @@ import {
   Mountain,
   Plus,
   Share2,
+  Star,
   Tag,
   Trash2,
   Utensils,
@@ -27,7 +28,7 @@ import { AuthGuard } from "@/components/AuthGuard";
 import MapDynamic from "@/components/MapDynamic";
 import type { MapMarker, MapHandle } from "@/components/MapDynamic";
 import { TagInput } from "@/components/TagInput";
-import { getCircuit, deleteCircuit, shareCircuit, updateCircuit } from "@/lib/circuits";
+import { getCircuit, deleteCircuit, shareCircuit, updateCircuit, starCircuit, unstarCircuit } from "@/lib/circuits";
 import { getPoints, deletePoint } from "@/lib/points";
 import type { Point } from "@/types/api";
 
@@ -126,6 +127,16 @@ function CircuitDetail() {
       toast.success("Tags updated");
     },
     onError: () => toast.error("Could not update tags"),
+  });
+
+  const starMutation = useMutation({
+    mutationFn: () =>
+      circuit?.is_starred ? unstarCircuit(id) : starCircuit(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["circuit", id] });
+      queryClient.invalidateQueries({ queryKey: ["circuits"] });
+    },
+    onError: () => toast.error("Could not update star"),
   });
 
   function handleSelectPoint(point: Point) {
@@ -227,13 +238,31 @@ function CircuitDetail() {
           )}
         </div>
 
-        <button
-          onClick={() => setShowMenu(!showMenu)}
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-black/50 backdrop-blur-md active:bg-black/70"
-          aria-label="Menu"
-        >
-          <MoreVertical size={18} className="text-white" />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => starMutation.mutate()}
+            disabled={starMutation.isPending}
+            className="flex h-10 items-center gap-1 rounded-full bg-black/50 px-3 backdrop-blur-md active:bg-black/70 disabled:opacity-50"
+            aria-label={circuit?.is_starred ? "Unstar" : "Star"}
+          >
+            <Star
+              size={16}
+              className={circuit?.is_starred ? "fill-amber-400 text-amber-400" : "text-white"}
+            />
+            {(circuit?.star_count ?? 0) > 0 && (
+              <span className="text-xs font-semibold text-white">
+                {circuit?.star_count}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setShowMenu(!showMenu)}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-black/50 backdrop-blur-md active:bg-black/70"
+            aria-label="Menu"
+          >
+            <MoreVertical size={18} className="text-white" />
+          </button>
+        </div>
       </div>
 
       {/* Actions menu dropdown */}
