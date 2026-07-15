@@ -3,6 +3,7 @@
 import { Fragment } from "react";
 import {
   ArrowLeft,
+  Copy,
   Gem,
   Home,
   Landmark,
@@ -239,6 +240,14 @@ function CircuitDetail() {
         </div>
 
         <div className="flex items-center gap-2">
+          {(circuit?.clone_count ?? 0) > 0 && (
+            <div className="flex h-10 items-center gap-1 rounded-full bg-black/50 px-3 backdrop-blur-md">
+              <Copy size={14} className="text-white/70" />
+              <span className="text-xs font-semibold text-white">
+                {circuit?.clone_count}
+              </span>
+            </div>
+          )}
           <button
             onClick={() => starMutation.mutate()}
             disabled={starMutation.isPending}

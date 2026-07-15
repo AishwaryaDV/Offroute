@@ -64,7 +64,12 @@ export default function SharedCircuitPage() {
       toast.success("Circuit cloned to your account");
       router.push(`/circuits/${cloned.id}`);
     },
-    onError: () => toast.error("Could not clone — are you logged in?"),
+    onError: (err: Error) =>
+      toast.error(
+        err.message?.includes("400")
+          ? "You can't clone your own circuit"
+          : "Could not clone — are you logged in?"
+      ),
   });
 
   const { data: circuit, isLoading, error } = useQuery({
