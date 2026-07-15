@@ -111,3 +111,13 @@ async def get_shared_circuit(
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     return await circuits_service.get_circuit_by_token(db, token)
+
+
+@shared_router.post("/shared/{token}/clone", response_model=CircuitResponse, status_code=201)
+async def clone_shared_circuit(
+    token: str,
+    user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    circuit = await circuits_service.clone_circuit(db, token, user.id)
+    return await circuits_service.get_circuit_with_count(db, circuit.id, user.id)

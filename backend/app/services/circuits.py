@@ -125,6 +125,45 @@ async def generate_share_token(db: AsyncSession, circuit: Circuit) -> str:
     return token
 
 
+async def clone_circuit(db: AsyncSession, token: str, user_id: uuid.UUID) -> Circuit:
+    stmt = (
+        select(Circuit)
+        .options(selectinload(Circuit.points))
+        .where(Circuit.share_token == token)
+    )
+    source = (await db.execute(stmt)).scalar_one_or_none()
+    if source is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Shared circuit not found")
+
+    clone = Circuit(
+        owner_id=user_id,
+        title=source.title,
+        description=source.description,
+        tags=source.tags,
+        start_date=source.start_date,
+        end_date=source.end_date,
+    )
+    db.add(clone)
+    await db.flush()
+
+    for p in sorted(source.points, key=lambda p: p.order_index):
+        point = Point(
+            circuit_id=clone.id,
+            order_index=p.order_index,
+            title=p.title,
+            notes=p.notes,
+            location=p.location,
+            visited_at=p.visited_at,
+            category=p.category,
+            rating=p.rating,
+        )
+        db.add(point)
+
+    await db.commit()
+    await db.refresh(clone)
+    return clone
+
+
 async def get_circuit_by_token(db: AsyncSession, token: str) -> dict:
     stmt = (
         select(Circuit)
