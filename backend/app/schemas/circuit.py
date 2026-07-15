@@ -66,3 +66,5 @@ class CircuitResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     point_count: int = 0
+    star_count: int = 0
+    is_starred: bool = False
