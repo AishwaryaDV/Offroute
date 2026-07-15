@@ -2,6 +2,7 @@
 
 import {
   ArrowLeft,
+  Copy,
   Gem,
   Home,
   Landmark,
@@ -13,14 +14,14 @@ import {
   Wine,
   Zap,
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { toast } from "sonner";
 import MapDynamic from "@/components/MapDynamic";
 import type { MapMarker } from "@/components/MapDynamic";
-import { getSharedCircuit } from "@/lib/circuits";
+import { getSharedCircuit, cloneCircuit } from "@/lib/circuits";
 import type { SharedPoint } from "@/types/api";
 
 type IconComponent = React.ComponentType<{
@@ -55,6 +56,16 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 export default function SharedCircuitPage() {
   const { token } = useParams<{ token: string }>();
+  const router = useRouter();
+
+  const cloneMutation = useMutation({
+    mutationFn: () => cloneCircuit(token),
+    onSuccess: (cloned) => {
+      toast.success("Circuit cloned to your account");
+      router.push(`/circuits/${cloned.id}`);
+    },
+    onError: () => toast.error("Could not clone — are you logged in?"),
+  });
 
   const { data: circuit, isLoading, error } = useQuery({
     queryKey: ["shared", token],
@@ -167,13 +178,23 @@ export default function SharedCircuitPage() {
               </span>
             )}
           </div>
-          <button
-            onClick={handleShare}
-            className="mt-4 flex items-center gap-2 rounded-full bg-[#f5f6f8] px-4 py-2 text-sm font-medium text-[#0f1d32] ring-1 ring-gray-200 active:bg-gray-100"
-          >
-            <Share2 size={14} />
-            Share
-          </button>
+          <div className="mt-4 flex gap-2">
+            <button
+              onClick={() => cloneMutation.mutate()}
+              disabled={cloneMutation.isPending}
+              className="flex items-center gap-2 rounded-full bg-[#0f1d32] px-4 py-2 text-sm font-medium text-white active:bg-[#162a46] disabled:opacity-50"
+            >
+              <Copy size={14} />
+              {cloneMutation.isPending ? "Cloning…" : "Clone to my circuits"}
+            </button>
+            <button
+              onClick={handleShare}
+              className="flex items-center gap-2 rounded-full bg-[#f5f6f8] px-4 py-2 text-sm font-medium text-[#0f1d32] ring-1 ring-gray-200 active:bg-gray-100"
+            >
+              <Share2 size={14} />
+              Share
+            </button>
+          </div>
         </div>
 
         {/* Points list */}

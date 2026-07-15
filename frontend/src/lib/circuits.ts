@@ -43,6 +43,10 @@ export function shareCircuit(id: string): Promise<{ share_token: string }> {
   });
 }
 
+export function cloneCircuit(token: string): Promise<Circuit> {
+  return apiFetch<Circuit>(`/shared/${token}/clone`, { method: "POST" });
+}
+
 export async function getSharedCircuit(token: string): Promise<SharedCircuit> {
   const res = await fetch(`${API_URL}/shared/${token}`);
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
