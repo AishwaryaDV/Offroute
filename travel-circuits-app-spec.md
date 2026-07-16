@@ -62,7 +62,7 @@ Before building any page, drop the relevant reference screenshot(s) into a `/des
 - JWT verification, auto-provisioned `users` table, protected routes
 - Settings: display name, nationality, change password, delete account
 
-### Phase 2 — Circuits, points & POC core (in progress)
+### Phase 2 — Circuits, points & POC core (complete)
 - Create, edit, delete a circuit (name, description, cover image, visibility, trip dates)
 - Add, edit, delete, reorder points within a circuit (title, lat/lng via map pin drop or GPS, notes, category, rating)
 - Map view: category-icon pin markers with order badges, smooth bezier route lines, horizontal points carousel with map fly-to
@@ -74,19 +74,18 @@ Before building any page, drop the relevant reference screenshot(s) into a `/des
 - Location permission guidance screen before first GPS call in add-point
 - Share circuit button: Web Share API with copy-link fallback (done)
 
-### Phase 3 — Social & sharing
-- Clone a circuit into your own account and track completion per point
-- Collaborator invites (edit access) for a circuit
-- Star/fork counts on circuits, notifications when someone clones/stars yours
-- Tags on circuits (e.g. "off-grid," "food crawl," "day trip") for browsability
+### Phase 3 — Social & sharing (complete)
+- Tags on circuits (e.g. "off-grid," "food crawl," "day trip") — chip-style input, displayed as pills on cards and detail page
+- Star/unstar circuits with count — junction table, subquery joins for efficient list queries
+- Clone a circuit via share token — copies circuit + all points, blocks self-clone, tracks clone_count, stores cloned_from_token for lineage ("View original circuit" link)
+- Collaborator invites (viewer/editor roles) — invite by email, accept/decline flow, pending invites on dashboard
+- Notifications — event-driven from stars, clones, invites, acceptances; bell icon with unread badge on dashboard, color-coded notification sheet
 
-### Phase 4 — Media & AI
-- Video and file attachments (not just photos) on points
-- AI: auto-caption generation for a point from its photos + short note
-- AI: OCR text extraction from attachment images (tickets, receipts)
-- AI: route reorder suggestions for a circuit ("optimize this loop")
-- Export a circuit as a printable PDF/photo book
-- Offline logging: queue new points/media locally when offline, sync on reconnect
+### Phase 4 — Export (in progress)
+- Export a circuit as a PDF — client-side jsPDF generation with title, description, tags, dates, stats, and all points with details
+- ~~Video and file attachments~~ — **dropped**: user decided not to add media attachments
+- ~~AI: auto-caption, OCR, route reorder~~ — **parked**: user unsure if needed, revisit later
+- ~~Offline logging~~ — **parked**: revisit post-launch
 
 ### Phase 5 — Profile & timeline
 - Travel Profile: opt-in curated public page (`/u/[username]` — bio, cover photo, featured public circuits)

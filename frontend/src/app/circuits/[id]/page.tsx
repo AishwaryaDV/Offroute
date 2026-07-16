@@ -4,6 +4,7 @@ import { Fragment } from "react";
 import {
   ArrowLeft,
   Copy,
+  Download,
   Gem,
   Home,
   Landmark,
@@ -35,6 +36,7 @@ import { TagInput } from "@/components/TagInput";
 import { getCircuit, deleteCircuit, shareCircuit, updateCircuit, starCircuit, unstarCircuit } from "@/lib/circuits";
 import { getCollaborators, inviteCollaborator, removeCollaborator } from "@/lib/collaborators";
 import { getPoints, deletePoint } from "@/lib/points";
+import { exportCircuitPdf } from "@/lib/exportPdf";
 import type { Collaborator, Point } from "@/types/api";
 
 type IconComponent = React.ComponentType<{
@@ -338,6 +340,17 @@ function CircuitDetail() {
             >
               <Share2 size={16} className="text-gray-400" />
               Share circuit
+            </button>
+            <div className="mx-4 h-px bg-gray-100" />
+            <button
+              onClick={() => {
+                setShowMenu(false);
+                if (circuit && points) exportCircuitPdf(circuit, points);
+              }}
+              className="flex w-full items-center gap-3 px-4 py-3.5 text-sm font-medium text-[#0f1d32] active:bg-gray-50"
+            >
+              <Download size={16} className="text-gray-400" />
+              Export PDF
             </button>
             <div className="mx-4 h-px bg-gray-100" />
             <button
