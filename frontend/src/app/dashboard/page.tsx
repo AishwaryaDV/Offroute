@@ -28,6 +28,7 @@ import MapDynamic from "@/components/MapDynamic";
 import { TagInput } from "@/components/TagInput";
 import { getMe } from "@/lib/me";
 import { getCircuits, createCircuit } from "@/lib/circuits";
+import { getMyStats } from "@/lib/stats";
 import { getMyInvites, acceptInvite, declineInvite } from "@/lib/collaborators";
 import { getNotifications, getUnreadCount, markAllRead } from "@/lib/notifications";
 import type { Invite, Notification } from "@/types/api";
@@ -47,6 +48,10 @@ function Dashboard() {
   const { data: circuits } = useQuery({
     queryKey: ["circuits"],
     queryFn: getCircuits,
+  });
+  const { data: stats } = useQuery({
+    queryKey: ["stats"],
+    queryFn: getMyStats,
   });
   const { data: invites } = useQuery({
     queryKey: ["invites"],
@@ -224,19 +229,31 @@ function Dashboard() {
           </div>
         )}
 
-        {/* Stats row */}
-        <div className="mt-5 flex px-6">
-          <div className="flex-1 border-r border-gray-200">
-            <p className="text-2xl font-bold text-[#0f1d32]">
-              {circuits?.length ?? 0}
+        {/* Stats grid */}
+        <div className="mt-5 grid grid-cols-4 gap-1 px-6">
+          <div className="rounded-xl bg-[#f5f6f8] p-3 text-center">
+            <p className="text-xl font-bold text-[#0f1d32]">
+              {stats?.circuits ?? circuits?.length ?? 0}
             </p>
-            <p className="text-base text-gray-500">Circuits</p>
+            <p className="text-xs text-gray-400">Circuits</p>
           </div>
-          <div className="flex-1 pl-6">
-            <p className="text-2xl font-bold text-[#0f1d32]">
-              {circuits?.reduce((sum, c) => sum + c.point_count, 0) ?? 0}
+          <div className="rounded-xl bg-[#f5f6f8] p-3 text-center">
+            <p className="text-xl font-bold text-[#0f1d32]">
+              {stats?.points ?? 0}
             </p>
-            <p className="text-base text-gray-500">Points</p>
+            <p className="text-xs text-gray-400">Points</p>
+          </div>
+          <div className="rounded-xl bg-[#f5f6f8] p-3 text-center">
+            <p className="text-xl font-bold text-[#0f1d32]">
+              {stats?.stars_received ?? 0}
+            </p>
+            <p className="text-xs text-gray-400">Stars</p>
+          </div>
+          <div className="rounded-xl bg-[#f5f6f8] p-3 text-center">
+            <p className="text-xl font-bold text-[#0f1d32]">
+              {stats?.total_clones ?? 0}
+            </p>
+            <p className="text-xs text-gray-400">Clones</p>
           </div>
         </div>
 
