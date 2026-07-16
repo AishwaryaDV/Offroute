@@ -15,6 +15,7 @@ class User(Base):
     # app data can never drift apart.
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
     email: Mapped[str] = mapped_column(Text, nullable=False)
+    username: Mapped[str | None] = mapped_column(Text, unique=True)
     display_name: Mapped[str | None] = mapped_column(Text)
     nationality: Mapped[str | None] = mapped_column(Text)
     avatar_url: Mapped[str | None] = mapped_column(Text)

@@ -2,8 +2,11 @@ import logging
 import uuid
 from typing import Any
 
+import re
+
 import httpx
 from fastapi import HTTPException, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
@@ -34,11 +37,32 @@ async def get_or_create_user(
 
 
 async def update_user(db: AsyncSession, user: User, data: UserUpdate) -> User:
-    for field, value in data.model_dump(exclude_unset=True).items():
+    updates = data.model_dump(exclude_unset=True)
+    if "username" in updates and updates["username"] is not None:
+        username = updates["username"].lower().strip()
+        if not re.match(r"^[a-z0-9_]{3,30}$", username):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Username must be 3-30 characters: lowercase letters, numbers, underscores only",
+            )
+        existing = await db.scalar(
+            select(User).where(User.username == username, User.id != user.id)
+        )
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Username already taken",
+            )
+        updates["username"] = username
+    for field, value in updates.items():
         setattr(user, field, value)
     await db.commit()
     await db.refresh(user)
     return user
+
+
+async def get_user_by_username(db: AsyncSession, username: str) -> User | None:
+    return await db.scalar(select(User).where(User.username == username))
 
 
 async def delete_user(db: AsyncSession, user: User) -> None:
