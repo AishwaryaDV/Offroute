@@ -274,6 +274,17 @@ function CircuitDetail() {
         </div>
       </div>
 
+      {/* Cloned-from banner */}
+      {circuit?.cloned_from_token && (
+        <Link
+          href={`/s/${circuit.cloned_from_token}`}
+          className="absolute left-4 top-[calc(max(env(safe-area-inset-top),0.75rem)+3.5rem)] z-10 flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-xs font-medium text-[#0f1d32] shadow-md backdrop-blur-md active:bg-white"
+        >
+          <Copy size={12} className="text-gray-500" />
+          View original circuit
+        </Link>
+      )}
+
       {/* Actions menu dropdown */}
       {showMenu && (
         <>

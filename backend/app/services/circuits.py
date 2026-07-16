@@ -143,6 +143,7 @@ async def clone_circuit(db: AsyncSession, token: str, user_id: uuid.UUID) -> Cir
         title=source.title,
         description=source.description,
         tags=source.tags,
+        cloned_from_token=token,
         start_date=source.start_date,
         end_date=source.end_date,
     )

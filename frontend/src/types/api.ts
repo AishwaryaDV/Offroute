@@ -39,6 +39,7 @@ export interface Circuit {
   updated_at: string;
   point_count: number;
   clone_count: number;
+  cloned_from_token: string | null;
   star_count: number;
   is_starred: boolean;
 }

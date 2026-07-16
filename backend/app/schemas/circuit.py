@@ -67,5 +67,6 @@ class CircuitResponse(BaseModel):
     updated_at: datetime
     point_count: int = 0
     clone_count: int = 0
+    cloned_from_token: str | None = None
     star_count: int = 0
     is_starred: bool = False
