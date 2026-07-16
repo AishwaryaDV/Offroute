@@ -1,14 +1,18 @@
 "use client";
 
 import {
+  Bell,
   Check,
   Compass,
+  Copy,
   List,
   MapPin,
   Plus,
   Settings,
+  Star,
   Tag,
   Timer,
+  UserPlus,
   X,
   Calendar,
   Eye,
@@ -25,7 +29,8 @@ import { TagInput } from "@/components/TagInput";
 import { getMe } from "@/lib/me";
 import { getCircuits, createCircuit } from "@/lib/circuits";
 import { getMyInvites, acceptInvite, declineInvite } from "@/lib/collaborators";
-import type { Invite } from "@/types/api";
+import { getNotifications, getUnreadCount, markAllRead } from "@/lib/notifications";
+import type { Invite, Notification } from "@/types/api";
 
 interface NewCircuitValues {
   title: string;
@@ -67,6 +72,25 @@ function Dashboard() {
     onError: () => toast.error("Could not decline invite"),
   });
 
+  const { data: notifications } = useQuery({
+    queryKey: ["notifications"],
+    queryFn: getNotifications,
+  });
+  const { data: unreadData } = useQuery({
+    queryKey: ["unread-count"],
+    queryFn: getUnreadCount,
+    refetchInterval: 30000,
+  });
+
+  const markReadMutation = useMutation({
+    mutationFn: markAllRead,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["unread-count"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+
+  const [showNotifications, setShowNotifications] = useState(false);
   const [showNewCircuit, setShowNewCircuit] = useState(false);
   const [mapReady, setMapReady] = useState(false);
   const [userLoc, setUserLoc] = useState<{ lng: number; lat: number } | null>(
@@ -152,13 +176,30 @@ function Dashboard() {
             offroute
           </h1>
         </div>
-        <Link
-          href="/settings"
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-black/30 backdrop-blur-md active:bg-black/50"
-          aria-label="Settings"
-        >
-          <Settings size={18} className="text-white/80" />
-        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              setShowNotifications(true);
+              if (unreadData && unreadData.count > 0) markReadMutation.mutate();
+            }}
+            className="relative flex h-10 w-10 items-center justify-center rounded-full bg-black/30 backdrop-blur-md active:bg-black/50"
+            aria-label="Notifications"
+          >
+            <Bell size={18} className="text-white/80" />
+            {unreadData && unreadData.count > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                {unreadData.count > 9 ? "9+" : unreadData.count}
+              </span>
+            )}
+          </button>
+          <Link
+            href="/settings"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-black/30 backdrop-blur-md active:bg-black/50"
+            aria-label="Settings"
+          >
+            <Settings size={18} className="text-white/80" />
+          </Link>
+        </div>
       </header>
 
       {/* Me sheet — white, curved top, pulled up over the map (Polarsteps home) */}
@@ -332,6 +373,78 @@ function Dashboard() {
           </Link>
         </nav>
       </div>
+
+      {/* Notifications bottom sheet */}
+      {showNotifications && (
+        <div
+          className="fixed inset-0 z-50 flex items-end bg-black/50 backdrop-blur-sm"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowNotifications(false);
+          }}
+        >
+          <div className="max-h-[75dvh] w-full overflow-y-auto rounded-t-3xl bg-white pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+            <div className="flex justify-center pb-1 pt-3">
+              <div className="h-1 w-10 rounded-full bg-gray-300" />
+            </div>
+            <div className="flex items-center justify-between px-5 pb-3 pt-2">
+              <button
+                onClick={() => setShowNotifications(false)}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 active:bg-gray-200"
+              >
+                <X size={18} className="text-gray-600" />
+              </button>
+              <h2 className="text-lg font-bold text-gray-900">Notifications</h2>
+              <div className="w-9" />
+            </div>
+
+            {!notifications || notifications.length === 0 ? (
+              <div className="px-5 py-10 text-center">
+                <Bell size={32} className="mx-auto mb-3 text-gray-300" />
+                <p className="text-sm text-gray-400">No notifications yet</p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-1 px-5">
+                {notifications.map((n: Notification) => (
+                  <div
+                    key={n.id}
+                    className={`flex items-start gap-3 rounded-2xl p-4 ${
+                      n.read ? "bg-white" : "bg-blue-50/60"
+                    }`}
+                  >
+                    <div
+                      className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+                        n.type === "star"
+                          ? "bg-amber-100 text-amber-600"
+                          : n.type === "clone"
+                            ? "bg-purple-100 text-purple-600"
+                            : n.type === "invite"
+                              ? "bg-blue-100 text-blue-600"
+                              : "bg-emerald-100 text-emerald-600"
+                      }`}
+                    >
+                      {n.type === "star" && <Star size={14} />}
+                      {n.type === "clone" && <Copy size={14} />}
+                      {n.type === "invite" && <UserPlus size={14} />}
+                      {n.type === "invite_accepted" && <Check size={14} />}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm text-gray-800">{n.message}</p>
+                      <p className="mt-0.5 text-xs text-gray-400">
+                        {new Date(n.created_at).toLocaleDateString(undefined, {
+                          month: "short",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* New Circuit bottom sheet */}
       {showNewCircuit && (

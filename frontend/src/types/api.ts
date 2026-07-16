@@ -165,6 +165,18 @@ export interface Invite {
   created_at: string;
 }
 
+// --- Notifications ---
+
+export interface Notification {
+  id: string;
+  type: "star" | "clone" | "invite" | "invite_accepted";
+  message: string;
+  circuit_id: string | null;
+  actor_name: string | null;
+  read: boolean;
+  created_at: string;
+}
+
 // --- Media ---
 
 export interface Media {
