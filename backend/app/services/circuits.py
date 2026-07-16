@@ -125,6 +125,10 @@ async def generate_share_token(db: AsyncSession, circuit: Circuit) -> str:
     return token
 
 
+async def get_circuit_by_share_token(db: AsyncSession, token: str) -> Circuit | None:
+    return await db.scalar(select(Circuit).where(Circuit.share_token == token))
+
+
 async def clone_circuit(db: AsyncSession, token: str, user_id: uuid.UUID) -> Circuit:
     stmt = (
         select(Circuit)

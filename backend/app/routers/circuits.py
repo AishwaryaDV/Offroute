@@ -9,6 +9,7 @@ from app.dependencies import get_current_user
 from app.models.user import User
 from app.schemas.circuit import CircuitCreate, CircuitResponse, CircuitUpdate, SharedCircuitResponse
 from app.services import circuits as circuits_service
+from app.services import notifications as notif_service
 from app.services import stars as stars_service
 
 router = APIRouter(prefix="/circuits", tags=["circuits"])
@@ -73,8 +74,15 @@ async def star_circuit(
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    await circuits_service.get_circuit(db, circuit_id)
+    circuit = await circuits_service.get_circuit(db, circuit_id)
     await stars_service.star(db, user.id, circuit_id)
+    if circuit.owner_id != user.id:
+        actor_name = user.display_name or user.email
+        await notif_service.create(
+            db, circuit.owner_id, "star",
+            f"{actor_name} starred your circuit \"{circuit.title}\"",
+            circuit_id=circuit_id, actor_id=user.id,
+        )
     count = await stars_service.star_count(db, circuit_id)
     return {"star_count": count, "is_starred": True}
 
@@ -119,5 +127,13 @@ async def clone_shared_circuit(
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    circuit = await circuits_service.clone_circuit(db, token, user.id)
-    return await circuits_service.get_circuit_with_count(db, circuit.id, user.id)
+    clone = await circuits_service.clone_circuit(db, token, user.id)
+    source = await circuits_service.get_circuit_by_share_token(db, token)
+    if source:
+        actor_name = user.display_name or user.email
+        await notif_service.create(
+            db, source.owner_id, "clone",
+            f"{actor_name} cloned your circuit \"{source.title}\"",
+            circuit_id=source.id, actor_id=user.id,
+        )
+    return await circuits_service.get_circuit_with_count(db, clone.id, user.id)

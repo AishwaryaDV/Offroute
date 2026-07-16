@@ -99,7 +99,7 @@ async def get_pending_invites(db: AsyncSession, user_id: uuid.UUID) -> list[dict
 
 async def respond_invite(
     db: AsyncSession, collab_id: uuid.UUID, user_id: uuid.UUID, accept: bool
-) -> None:
+) -> Collaborator:
     collab = await db.get(Collaborator, collab_id)
     if collab is None or collab.user_id != user_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invite not found")
@@ -107,6 +107,7 @@ async def respond_invite(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invite already responded to")
     collab.status = "accepted" if accept else "declined"
     await db.commit()
+    return collab
 
 
 async def is_collaborator(

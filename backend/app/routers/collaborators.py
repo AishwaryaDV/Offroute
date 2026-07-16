@@ -10,6 +10,7 @@ from app.models.user import User
 from app.schemas.collaborator import CollaboratorInvite, CollaboratorResponse, InviteResponse
 from app.services import circuits as circuits_service
 from app.services import collaborators as collab_service
+from app.services import notifications as notif_service
 
 router = APIRouter(tags=["collaborators"])
 
@@ -27,7 +28,14 @@ async def invite_collaborator(
 ):
     circuit = await circuits_service.get_circuit(db, circuit_id)
     circuits_service.assert_owner(circuit, user.id)
-    return await collab_service.invite(db, circuit_id, user.id, data.email, data.role)
+    result = await collab_service.invite(db, circuit_id, user.id, data.email, data.role)
+    inviter_name = user.display_name or user.email
+    await notif_service.create(
+        db, result["user_id"], "invite",
+        f"{inviter_name} invited you to collaborate on \"{circuit.title}\"",
+        circuit_id=circuit_id, actor_id=user.id,
+    )
+    return result
 
 
 @router.get(
@@ -70,7 +78,14 @@ async def accept_invite(
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    await collab_service.respond_invite(db, invite_id, user.id, accept=True)
+    collab = await collab_service.respond_invite(db, invite_id, user.id, accept=True)
+    circuit = await circuits_service.get_circuit(db, collab.circuit_id)
+    accepter_name = user.display_name or user.email
+    await notif_service.create(
+        db, collab.invited_by, "invite_accepted",
+        f"{accepter_name} accepted your invite to \"{circuit.title}\"",
+        circuit_id=collab.circuit_id, actor_id=user.id,
+    )
 
 
 @router.post("/me/invites/{invite_id}/decline", status_code=204)
