@@ -11,8 +11,11 @@ import { deleteMe, getMe, updateMe } from "@/lib/me";
 import { supabase } from "@/lib/supabase";
 
 interface ProfileValues {
+  username: string;
   display_name: string;
   nationality: string;
+  profile_bio: string;
+  profile_enabled: boolean;
 }
 
 interface PasswordValues {
@@ -77,8 +80,11 @@ function Settings() {
 
   const profileForm = useForm<ProfileValues>({
     values: {
+      username: me?.username ?? "",
       display_name: me?.display_name ?? "",
       nationality: me?.nationality ?? "",
+      profile_bio: me?.profile_bio ?? "",
+      profile_enabled: me?.profile_enabled ?? false,
     },
   });
 
@@ -238,8 +244,11 @@ function Settings() {
           <button
             onClick={profileForm.handleSubmit((data) =>
               profileMutation.mutate({
+                username: data.username || undefined,
                 display_name: data.display_name || undefined,
                 nationality: data.nationality || undefined,
+                profile_bio: data.profile_bio || undefined,
+                profile_enabled: data.profile_enabled,
               })
             )}
             disabled={profileMutation.isPending}
@@ -264,6 +273,21 @@ function Settings() {
         </div>
 
         <div className="border-t border-gray-200">
+          <div className="flex items-center gap-4 px-5 py-4">
+            <label
+              htmlFor="username"
+              className="w-28 shrink-0 text-base text-gray-400"
+            >
+              Username
+            </label>
+            <input
+              id="username"
+              placeholder="your_username"
+              {...profileForm.register("username")}
+              className="flex-1 bg-transparent text-lg font-medium text-[#0f1d32] placeholder-gray-300 outline-none"
+            />
+          </div>
+          <div className="mx-5 h-px bg-gray-200" />
           <div className="flex items-center gap-4 px-5 py-4">
             <label
               htmlFor="display_name"
@@ -317,6 +341,37 @@ function Settings() {
             )}
           </div>
           <div className="mx-5 h-px bg-gray-200" />
+          <div className="flex items-start gap-4 px-5 py-4">
+            <label className="w-28 shrink-0 pt-1 text-base text-gray-400">
+              Bio
+            </label>
+            <textarea
+              placeholder="A short bio"
+              rows={3}
+              maxLength={200}
+              {...profileForm.register("profile_bio")}
+              className="flex-1 resize-none bg-transparent text-lg font-medium text-[#0f1d32] placeholder-gray-300 outline-none"
+            />
+          </div>
+          <div className="mx-5 h-px bg-gray-200" />
+          <div className="flex items-center justify-between px-5 py-4">
+            <div>
+              <p className="text-base text-gray-400">Public profile</p>
+              <p className="text-xs text-gray-300">
+                {profileForm.watch("username")
+                  ? `offroute.app/u/${profileForm.watch("username")}`
+                  : "Set a username first"}
+              </p>
+            </div>
+            <label className="relative inline-flex cursor-pointer items-center">
+              <input
+                type="checkbox"
+                {...profileForm.register("profile_enabled")}
+                className="peer sr-only"
+              />
+              <div className="h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-[#0f1d32] peer-checked:after:translate-x-full" />
+            </label>
+          </div>
         </div>
         </div>
       </div>

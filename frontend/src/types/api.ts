@@ -6,6 +6,7 @@ export interface HealthResponse {
 export interface User {
   id: string;
   email: string;
+  username: string | null;
   display_name: string | null;
   nationality: string | null;
   avatar_url: string | null;
@@ -15,11 +16,32 @@ export interface User {
 }
 
 export interface UserUpdate {
+  username?: string;
   display_name?: string;
   nationality?: string;
   avatar_url?: string;
   profile_enabled?: boolean;
   profile_bio?: string;
+}
+
+export interface PublicProfile {
+  username: string;
+  display_name: string | null;
+  nationality: string | null;
+  avatar_url: string | null;
+  profile_bio: string | null;
+  created_at: string;
+}
+
+export interface PublicCircuit {
+  id: string;
+  title: string;
+  description: string | null;
+  tags: string[] | null;
+  start_date: string | null;
+  end_date: string | null;
+  created_at: string;
+  share_token: string | null;
 }
 
 // --- Circuits ---
