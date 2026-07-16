@@ -16,8 +16,11 @@ import {
   Star,
   Tag,
   Trash2,
+  UserPlus,
+  Users,
   Utensils,
   Wine,
+  X,
   Zap,
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -30,8 +33,9 @@ import MapDynamic from "@/components/MapDynamic";
 import type { MapMarker, MapHandle } from "@/components/MapDynamic";
 import { TagInput } from "@/components/TagInput";
 import { getCircuit, deleteCircuit, shareCircuit, updateCircuit, starCircuit, unstarCircuit } from "@/lib/circuits";
+import { getCollaborators, inviteCollaborator, removeCollaborator } from "@/lib/collaborators";
 import { getPoints, deletePoint } from "@/lib/points";
-import type { Point } from "@/types/api";
+import type { Collaborator, Point } from "@/types/api";
 
 type IconComponent = React.ComponentType<{
   size?: number;
@@ -72,6 +76,9 @@ function CircuitDetail() {
   );
   const [showMenu, setShowMenu] = useState(false);
   const [showTagEditor, setShowTagEditor] = useState(false);
+  const [showCollaborators, setShowCollaborators] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState<"viewer" | "editor">("viewer");
   const [editTags, setEditTags] = useState<string[]>([]);
   const [activePointId, setActivePointId] = useState<string | null>(null);
   const mapHandleRef = useRef<MapHandle | null>(null);
@@ -84,6 +91,12 @@ function CircuitDetail() {
   const { data: points } = useQuery({
     queryKey: ["points", id],
     queryFn: () => getPoints(id),
+  });
+
+  const { data: collaborators } = useQuery({
+    queryKey: ["collaborators", id],
+    queryFn: () => getCollaborators(id),
+    enabled: showCollaborators,
   });
 
   const mapMarkers: MapMarker[] = useMemo(
@@ -138,6 +151,32 @@ function CircuitDetail() {
       queryClient.invalidateQueries({ queryKey: ["circuits"] });
     },
     onError: () => toast.error("Could not update star"),
+  });
+
+  const inviteMutation = useMutation({
+    mutationFn: () => inviteCollaborator(id, inviteEmail, inviteRole),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["collaborators", id] });
+      setInviteEmail("");
+      toast.success("Invite sent");
+    },
+    onError: (err: Error) =>
+      toast.error(
+        err.message?.includes("404")
+          ? "No user found with that email"
+          : err.message?.includes("409")
+            ? "User already invited"
+            : "Could not send invite"
+      ),
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: (collabId: string) => removeCollaborator(id, collabId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["collaborators", id] });
+      toast.success("Collaborator removed");
+    },
+    onError: () => toast.error("Could not remove collaborator"),
   });
 
   function handleSelectPoint(point: Point) {
@@ -316,6 +355,17 @@ function CircuitDetail() {
             <button
               onClick={() => {
                 setShowMenu(false);
+                setShowCollaborators(true);
+              }}
+              className="flex w-full items-center gap-3 px-4 py-3.5 text-sm font-medium text-[#0f1d32] active:bg-gray-50"
+            >
+              <Users size={16} className="text-gray-400" />
+              Collaborators
+            </button>
+            <div className="mx-4 h-px bg-gray-100" />
+            <button
+              onClick={() => {
+                setShowMenu(false);
                 setShowDeleteConfirm("circuit");
               }}
               className="flex w-full items-center gap-3 px-4 py-3.5 text-sm font-medium text-red-500 active:bg-gray-50"
@@ -468,6 +518,97 @@ function CircuitDetail() {
               >
                 {updateTagsMutation.isPending ? "Saving…" : "Save"}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Collaborators sheet */}
+      {showCollaborators && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowCollaborators(false);
+          }}
+        >
+          <div className="max-h-[80dvh] w-full max-w-sm overflow-y-auto rounded-t-3xl bg-white p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-gray-300" />
+            <div className="flex items-center justify-between">
+              <p className="text-lg font-semibold text-[#0f1d32]">Collaborators</p>
+              <button
+                onClick={() => setShowCollaborators(false)}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 active:bg-gray-200"
+              >
+                <X size={16} className="text-gray-600" />
+              </button>
+            </div>
+
+            {/* Invite form */}
+            <div className="mt-4 flex gap-2">
+              <input
+                type="email"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="Email address"
+                className="min-w-0 flex-1 rounded-xl bg-[#f5f6f8] px-3 py-2.5 text-sm text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ring-gray-200 focus:ring-blue-500"
+              />
+              <button
+                onClick={() => inviteMutation.mutate()}
+                disabled={!inviteEmail.trim() || inviteMutation.isPending}
+                className="flex items-center gap-1 rounded-xl bg-[#0f1d32] px-3 py-2.5 text-sm font-medium text-white active:bg-[#162a46] disabled:opacity-50"
+              >
+                <UserPlus size={14} />
+                Invite
+              </button>
+            </div>
+
+            {/* Role toggle */}
+            <div className="mt-3 flex gap-2">
+              {(["viewer", "editor"] as const).map((r) => (
+                <button
+                  key={r}
+                  onClick={() => setInviteRole(r)}
+                  className={`flex-1 rounded-lg py-2 text-xs font-medium capitalize ring-1 transition-colors ${
+                    inviteRole === r
+                      ? "bg-[#0f1d32] text-white ring-[#0f1d32]"
+                      : "bg-white text-gray-600 ring-gray-200"
+                  }`}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
+
+            {/* Collaborator list */}
+            <div className="mt-5 flex flex-col gap-2">
+              {collaborators && collaborators.length > 0 ? (
+                collaborators.map((c: Collaborator) => (
+                  <div
+                    key={c.id}
+                    className="flex items-center justify-between rounded-xl bg-[#f5f6f8] px-3 py-3"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-[#0f1d32]">
+                        {c.user_display_name || c.user_email}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {c.role} · {c.status}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => removeMutation.mutate(c.id)}
+                      disabled={removeMutation.isPending}
+                      className="ml-2 rounded-full p-1.5 text-gray-400 active:bg-gray-200 active:text-red-500"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <p className="py-4 text-center text-sm text-gray-400">
+                  No collaborators yet
+                </p>
+              )}
             </div>
           </div>
         </div>

@@ -142,6 +142,29 @@ export interface ReorderItem {
   order_index: number;
 }
 
+// --- Collaborators ---
+
+export interface Collaborator {
+  id: string;
+  circuit_id: string;
+  user_id: string;
+  role: "viewer" | "editor";
+  status: "pending" | "accepted" | "declined";
+  created_at: string;
+  user_email: string | null;
+  user_display_name: string | null;
+}
+
+export interface Invite {
+  id: string;
+  circuit_id: string;
+  circuit_title: string;
+  role: "viewer" | "editor";
+  status: string;
+  invited_by_name: string | null;
+  created_at: string;
+}
+
 // --- Media ---
 
 export interface Media {

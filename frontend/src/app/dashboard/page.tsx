@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Check,
   Compass,
   List,
   MapPin,
@@ -23,6 +24,8 @@ import MapDynamic from "@/components/MapDynamic";
 import { TagInput } from "@/components/TagInput";
 import { getMe } from "@/lib/me";
 import { getCircuits, createCircuit } from "@/lib/circuits";
+import { getMyInvites, acceptInvite, declineInvite } from "@/lib/collaborators";
+import type { Invite } from "@/types/api";
 
 interface NewCircuitValues {
   title: string;
@@ -39,6 +42,29 @@ function Dashboard() {
   const { data: circuits } = useQuery({
     queryKey: ["circuits"],
     queryFn: getCircuits,
+  });
+  const { data: invites } = useQuery({
+    queryKey: ["invites"],
+    queryFn: getMyInvites,
+  });
+
+  const acceptMutation = useMutation({
+    mutationFn: acceptInvite,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invites"] });
+      queryClient.invalidateQueries({ queryKey: ["circuits"] });
+      toast.success("Invite accepted");
+    },
+    onError: () => toast.error("Could not accept invite"),
+  });
+
+  const declineMutation = useMutation({
+    mutationFn: declineInvite,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invites"] });
+      toast.success("Invite declined");
+    },
+    onError: () => toast.error("Could not decline invite"),
   });
 
   const [showNewCircuit, setShowNewCircuit] = useState(false);
@@ -227,6 +253,48 @@ function Dashboard() {
                 </div>
               </Link>
             ))}
+          </div>
+        )}
+
+        {/* Pending invites */}
+        {invites && invites.length > 0 && (
+          <div className="px-6 pt-5">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
+              Invites
+            </p>
+            <div className="flex flex-col gap-2">
+              {invites.map((inv: Invite) => (
+                <div
+                  key={inv.id}
+                  className="flex items-center justify-between rounded-2xl bg-[#f5f6f8] p-4"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-[#0f1d32]">
+                      {inv.circuit_title}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      from {inv.invited_by_name} · {inv.role}
+                    </p>
+                  </div>
+                  <div className="flex gap-1.5">
+                    <button
+                      onClick={() => acceptMutation.mutate(inv.id)}
+                      disabled={acceptMutation.isPending}
+                      className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-white active:bg-emerald-600 disabled:opacity-50"
+                    >
+                      <Check size={16} />
+                    </button>
+                    <button
+                      onClick={() => declineMutation.mutate(inv.id)}
+                      disabled={declineMutation.isPending}
+                      className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-gray-600 active:bg-gray-300 disabled:opacity-50"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
