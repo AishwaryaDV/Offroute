@@ -81,18 +81,28 @@ Before building any page, drop the relevant reference screenshot(s) into a `/des
 - Collaborator invites (viewer/editor roles) — invite by email, accept/decline flow, pending invites on dashboard
 - Notifications — event-driven from stars, clones, invites, acceptances; bell icon with unread badge on dashboard, color-coded notification sheet
 
-### Phase 4 — Export (in progress)
+### Phase 4 — Export (complete)
 - Export a circuit as a PDF — client-side jsPDF generation with title, description, tags, dates, stats, and all points with details
 - ~~Video and file attachments~~ — **dropped**: user decided not to add media attachments
 - ~~AI: auto-caption, OCR, route reorder~~ — **parked**: user unsure if needed, revisit later
 - ~~Offline logging~~ — **parked**: revisit post-launch
 
-### Phase 5 — Profile & timeline
+### Phase 5 — Activity timeline
+- Activity page with all points laid out chronologically across all circuits
+- Wired to the existing "Activity" tab in the bottom nav
+
+### Phase 6 — Profile, stats & trips
 - Travel Profile: opt-in curated public page (`/u/[username]` — bio, cover photo, featured public circuits)
-- Aggregate view, timeline mode: Activity page with all points laid out chronologically
 - Stats dashboard: countries visited, points logged, distance traveled
 - Trip grouping: bundle several circuits from one longer journey under an optional parent Trip
-- PWA push notifications (revisit when social features from Phase 3 land)
+
+### Phase 7 — PWA & push notifications
+- PWA push notifications for stars, clones, invites, and collaborator activity
+
+### Phase 8 — Testing & deployment
+- UI fixes document from user
+- QA testing of all features across phases
+- Production deployment
 
 ### Explicitly out of scope for now
 - Live GPS trip tracking (that's Polarsteps' job, not this app's)
