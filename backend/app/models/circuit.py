@@ -12,6 +12,7 @@ from app.models.base import Base
 
 if TYPE_CHECKING:
     from app.models.point import Point
+    from app.models.trip import Trip
 
 VisibilityEnum = Enum("private", "shared", "public", name="visibility", create_type=False)
 
@@ -35,6 +36,9 @@ class Circuit(Base):
     share_token: Mapped[str | None] = mapped_column(Text, unique=True)
     clone_count: Mapped[int] = mapped_column(Integer, server_default="0", nullable=False)
     cloned_from_token: Mapped[str | None] = mapped_column(Text)
+    trip_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("trips.id", ondelete="SET NULL")
+    )
     start_date: Mapped[date | None] = mapped_column(Date)
     end_date: Mapped[date | None] = mapped_column(Date)
     created_at: Mapped[datetime] = mapped_column(
@@ -47,3 +51,4 @@ class Circuit(Base):
     points: Mapped[list[Point]] = relationship(
         back_populates="circuit", cascade="all, delete-orphan", order_by="Point.order_index"
     )
+    trip: Mapped[Trip | None] = relationship(back_populates="circuits")

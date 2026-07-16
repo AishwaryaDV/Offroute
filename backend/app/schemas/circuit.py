@@ -66,6 +66,7 @@ class CircuitResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     point_count: int = 0
+    trip_id: uuid.UUID | None = None
     clone_count: int = 0
     cloned_from_token: str | None = None
     star_count: int = 0
