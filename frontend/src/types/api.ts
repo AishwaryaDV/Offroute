@@ -60,6 +60,7 @@ export interface Circuit {
   created_at: string;
   updated_at: string;
   point_count: number;
+  trip_id: string | null;
   clone_count: number;
   cloned_from_token: string | null;
   star_count: number;
@@ -185,6 +186,15 @@ export interface Invite {
   status: string;
   invited_by_name: string | null;
   created_at: string;
+}
+
+// --- Trips ---
+
+export interface Trip {
+  id: string;
+  title: string;
+  description: string | null;
+  circuit_count: number;
 }
 
 // --- Notifications ---
