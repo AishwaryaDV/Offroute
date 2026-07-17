@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     supabase_url: str = ""
     supabase_service_role_key: str = ""
     cors_origins: str = "http://localhost:3000"
+    vapid_private_key: str = ""
+    vapid_public_key: str = ""
+    vapid_contact_email: str = ""
 
     @property
     def cors_origins_list(self) -> list[str]:
