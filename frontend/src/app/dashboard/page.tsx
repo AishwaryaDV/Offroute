@@ -85,9 +85,11 @@ function Dashboard() {
   // Draggable sheet state
   const [snap, setSnap] = useState<SheetSnap>("half");
   const [dragOffset, setDragOffset] = useState<number | null>(null);
+  const isDragging = useRef(false);
   const dragStartY = useRef(0);
   const dragStartSnap = useRef<SheetSnap>("half");
   const sheetRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const SNAP_HEIGHTS: Record<SheetSnap, string> = {
     collapsed: "80px",
@@ -99,6 +101,7 @@ function Dashboard() {
     (e: React.TouchEvent) => {
       dragStartY.current = e.touches[0].clientY;
       dragStartSnap.current = snap;
+      isDragging.current = false;
       setDragOffset(0);
     },
     [snap]
@@ -106,21 +109,25 @@ function Dashboard() {
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
     const delta = e.touches[0].clientY - dragStartY.current;
+    isDragging.current = true;
     setDragOffset(delta);
   }, []);
 
   const handleTouchEnd = useCallback(() => {
+    if (!isDragging.current) {
+      setDragOffset(null);
+      return;
+    }
     if (dragOffset === null) return;
-    const threshold = 60;
+    const threshold = 50;
     if (dragOffset > threshold) {
-      // dragged down
       if (dragStartSnap.current === "full") setSnap("half");
       else setSnap("collapsed");
     } else if (dragOffset < -threshold) {
-      // dragged up
       if (dragStartSnap.current === "collapsed") setSnap("half");
       else setSnap("full");
     }
+    isDragging.current = false;
     setDragOffset(null);
   }, [dragOffset]);
 
@@ -231,20 +238,20 @@ function Dashboard() {
           paddingBottom: "calc(80px + max(0.75rem, env(safe-area-inset-bottom)))",
         }}
       >
-        {/* Drag handle — touch-action:none prevents browser scroll from stealing the gesture */}
+        {/* Drag zone — handle + profile header, touch-action:none so browser doesn't steal gesture */}
         <div
-          className="flex shrink-0 cursor-grab justify-center pb-1 pt-3 active:cursor-grabbing"
+          className="shrink-0 cursor-grab active:cursor-grabbing"
           style={{ touchAction: "none" }}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
-          <div className="h-1 w-10 rounded-full bg-gray-300" />
-        </div>
+          <div className="flex justify-center pb-1 pt-3">
+            <div className="h-1 w-10 rounded-full bg-gray-300" />
+          </div>
 
-        <div className={`flex-1 ${snap === "collapsed" ? "overflow-hidden" : "overflow-y-auto"}`}>
         {me && (
-          <div className="flex items-center gap-4 px-6 pt-2">
+          <div className="flex items-center gap-4 px-6 pt-2 pb-2">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#0f1d32]/10 text-xl font-bold text-[#0f1d32]">
               {(me.display_name?.[0] ?? me.email[0]).toUpperCase()}
             </div>
@@ -258,7 +265,9 @@ function Dashboard() {
             </div>
           </div>
         )}
+        </div>
 
+        <div className={`flex-1 ${snap === "collapsed" ? "overflow-hidden" : "overflow-y-auto"}`}>
         {/* Stats grid — icon + value inline, label below */}
         <div className="mt-4 grid grid-cols-4 gap-2 px-6">
           {[

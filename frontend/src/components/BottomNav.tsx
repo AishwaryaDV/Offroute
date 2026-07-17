@@ -3,6 +3,7 @@
 import { Search } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 const NAV_ITEMS = [
   {
@@ -53,23 +54,58 @@ const NAV_ITEMS = [
 
 export function BottomNav() {
   const pathname = usePathname();
+  const navRef = useRef<HTMLElement>(null);
+  const itemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+  const [indicator, setIndicator] = useState({ left: 0, width: 0 });
+
+  const activeIndex = NAV_ITEMS.findIndex(
+    (item) =>
+      pathname === item.href ||
+      (item.href === "/circuits" && pathname.startsWith("/circuits"))
+  );
+
+  useEffect(() => {
+    const el = itemRefs.current[activeIndex];
+    const nav = navRef.current;
+    if (!el || !nav) return;
+    const navRect = nav.getBoundingClientRect();
+    const elRect = el.getBoundingClientRect();
+    setIndicator({
+      left: elRect.left - navRect.left,
+      width: elRect.width,
+    });
+  }, [activeIndex]);
 
   return (
-    <div className="absolute inset-x-0 bottom-0 z-20 flex items-end gap-2.5 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+    <div className="absolute inset-x-0 bottom-0 z-20 flex items-center gap-2.5 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
       {/* Main 4 nav items */}
-      <nav className="flex flex-1 items-center justify-around rounded-full bg-white/95 px-2 py-2 shadow-lg ring-1 ring-black/5 backdrop-blur-xl">
-        {NAV_ITEMS.map((item) => {
-          const active =
-            pathname === item.href ||
-            (item.href === "/circuits" && pathname.startsWith("/circuits"));
+      <nav
+        ref={navRef}
+        className="relative flex flex-1 items-center justify-around rounded-full bg-white/95 px-2 py-2 shadow-lg ring-1 ring-black/5 backdrop-blur-xl"
+      >
+        {/* Sliding indicator */}
+        {activeIndex >= 0 && indicator.width > 0 && (
+          <div
+            className="absolute rounded-full bg-[#0f1d32]/8"
+            style={{
+              left: indicator.left,
+              width: indicator.width,
+              top: "50%",
+              transform: "translateY(-50%)",
+              height: "calc(100% - 8px)",
+              transition: "left 0.3s cubic-bezier(.4,0,.2,1), width 0.3s cubic-bezier(.4,0,.2,1)",
+            }}
+          />
+        )}
+        {NAV_ITEMS.map((item, i) => {
+          const active = i === activeIndex;
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center gap-0.5 rounded-full px-3 py-1.5 transition-colors ${
-                active
-                  ? "bg-[#0f1d32]/8 text-[#0f1d32]"
-                  : "text-[#0f1d32]/35"
+              ref={(el) => { itemRefs.current[i] = el; }}
+              className={`relative z-10 flex flex-col items-center gap-0.5 rounded-full px-3 py-1.5 transition-colors duration-200 ${
+                active ? "text-[#0f1d32]" : "text-[#0f1d32]/35"
               }`}
             >
               {item.icon}
@@ -82,10 +118,10 @@ export function BottomNav() {
       {/* Separated search icon */}
       <button
         disabled
-        className="flex h-[56px] w-[56px] shrink-0 items-center justify-center rounded-full bg-white/95 shadow-lg ring-1 ring-black/5 backdrop-blur-xl text-[#0f1d32]/25"
+        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#0f1d32]/8 shadow-lg ring-1 ring-black/5 backdrop-blur-xl text-[#0f1d32]/40"
         aria-label="Search (coming soon)"
       >
-        <Search size={22} />
+        <Search size={20} />
       </button>
     </div>
   );
