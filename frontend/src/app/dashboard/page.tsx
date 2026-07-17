@@ -2,15 +2,18 @@
 
 import {
   BarChart3,
+  Calendar,
   Check,
   Compass,
   Copy,
   Eye,
-  Calendar,
+  Globe2,
+  Lock,
   MapPin,
   Plus,
   Star,
-  Tag,
+  UserPlus,
+  Users,
   X,
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -22,7 +25,6 @@ import { toast } from "sonner";
 import { AuthGuard } from "@/components/AuthGuard";
 import { BottomNav } from "@/components/BottomNav";
 import MapDynamic from "@/components/MapDynamic";
-import { TagInput } from "@/components/TagInput";
 import { getMe } from "@/lib/me";
 import { getCircuits, createCircuit } from "@/lib/circuits";
 import { getMyStats } from "@/lib/stats";
@@ -80,7 +82,6 @@ function Dashboard() {
   const [userLoc, setUserLoc] = useState<{ lng: number; lat: number } | null>(
     null
   );
-  const [tags, setTags] = useState<string[]>([]);
 
   // Draggable sheet state
   const [snap, setSnap] = useState<SheetSnap>("half");
@@ -89,7 +90,6 @@ function Dashboard() {
   const dragStartY = useRef(0);
   const dragStartSnap = useRef<SheetSnap>("half");
   const sheetRef = useRef<HTMLDivElement>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
 
   const SNAP_HEIGHTS: Record<SheetSnap, string> = {
     collapsed: "80px",
@@ -160,7 +160,6 @@ function Dashboard() {
         description: data.description || undefined,
         visibility:
           (data.visibility as "private" | "shared" | "public") || undefined,
-        tags: tags.length > 0 ? tags : undefined,
         start_date: data.start_date || undefined,
         end_date: data.end_date || undefined,
       }),
@@ -169,7 +168,6 @@ function Dashboard() {
       toast.success("Circuit created");
       setShowNewCircuit(false);
       reset();
-      setTags([]);
       router.push(`/circuits/${circuit.id}`);
     },
     onError: () => toast.error("Could not create circuit — try again"),
@@ -435,33 +433,34 @@ function Dashboard() {
             if (e.target === e.currentTarget) {
               setShowNewCircuit(false);
               reset();
-              setTags([]);
             }
           }}
         >
-          <div className="max-h-[85dvh] w-full overflow-y-auto rounded-t-3xl bg-white pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+          <div className="max-h-[94dvh] w-full overflow-y-auto rounded-t-3xl bg-white pb-[max(1.5rem,env(safe-area-inset-bottom))]">
             <div className="flex justify-center pb-1 pt-3">
               <div className="h-1 w-10 rounded-full bg-gray-300" />
             </div>
 
-            <div className="flex items-center justify-between px-5 pb-3 pt-2">
+            <div className="flex items-center justify-between px-5 pb-1 pt-2">
               <button
                 onClick={() => {
                   setShowNewCircuit(false);
                   reset();
-                  setTags([]);
                 }}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 active:bg-gray-200"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f6f8] active:bg-gray-200"
               >
                 <X size={18} className="text-gray-600" />
               </button>
-              <h2 className="text-lg font-bold text-gray-900">New Circuit</h2>
+              <h2 className="text-lg font-bold text-[#0f1d32]">New Circuit</h2>
               <div className="w-9" />
             </div>
+            <p className="px-5 pb-5 text-center text-xs text-gray-400">
+              Don&apos;t worry, you can change all of this later
+            </p>
 
             <form
               onSubmit={handleSubmit((data) => createMutation.mutate(data))}
-              className="flex flex-col gap-4 px-5"
+              className="flex flex-col gap-5 px-5"
             >
               <div>
                 <input
@@ -473,10 +472,10 @@ function Dashboard() {
                     required: "Give your circuit a name",
                     maxLength: { value: 200, message: "200 characters max" },
                   })}
-                  className={`w-full rounded-xl bg-gray-50 px-4 py-3.5 text-base text-gray-900 placeholder-gray-400 outline-none ring-1 ${
+                  className={`w-full rounded-xl bg-white px-4 py-3.5 text-base text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ${
                     errors.title
                       ? "ring-red-400 focus:ring-red-500"
-                      : "ring-gray-200 focus:ring-blue-500"
+                      : "ring-gray-200 focus:ring-[#0f1d32]"
                   }`}
                 />
                 {errors.title && (
@@ -494,87 +493,99 @@ function Dashboard() {
                   {...register("description", {
                     maxLength: { value: 200, message: "200 characters max" },
                   })}
-                  className="w-full resize-none rounded-xl bg-gray-50 px-4 py-3.5 text-base text-gray-900 placeholder-gray-400 outline-none ring-1 ring-gray-200 focus:ring-blue-500"
+                  className="w-full resize-none rounded-xl bg-white px-4 py-3.5 text-base text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ring-gray-200 focus:ring-[#0f1d32]"
                 />
                 <p className="mt-1 text-right text-xs text-gray-400">
                   {descValue.length}/200
                 </p>
               </div>
 
-              <div className="rounded-xl bg-gray-50 p-4 ring-1 ring-gray-200">
-                <div className="mb-3 flex items-center gap-2 text-sm font-medium text-gray-700">
-                  <Tag size={16} />
-                  <span>Tags</span>
-                </div>
-                <TagInput tags={tags} onChange={setTags} />
-              </div>
-
-              <div className="rounded-xl bg-gray-50 p-4 ring-1 ring-gray-200">
-                <div className="mb-3 flex items-center gap-2 text-sm font-medium text-gray-700">
-                  <Calendar size={16} />
+              <div>
+                <div className="mb-3 flex items-center gap-2 text-sm font-medium text-[#0f1d32]">
+                  <Calendar size={16} className="text-gray-400" />
                   <span>Trip dates</span>
+                  <span className="text-xs font-normal text-gray-400">(optional)</span>
                 </div>
                 <div className="flex gap-3">
                   <div className="flex-1">
-                    <label className="mb-1 block text-xs text-gray-500">
+                    <label className="mb-1 block text-xs text-gray-400">
                       Start date
                     </label>
                     <input
                       type="date"
                       {...register("start_date")}
-                      className="w-full rounded-lg bg-white px-3 py-2.5 text-sm text-gray-900 outline-none ring-1 ring-gray-200 focus:ring-blue-500"
+                      className="w-full rounded-xl bg-white px-3 py-2.5 text-sm text-[#0f1d32] outline-none ring-1 ring-gray-200 focus:ring-[#0f1d32]"
                     />
                   </div>
                   <div className="flex-1">
-                    <label className="mb-1 block text-xs text-gray-500">
+                    <label className="mb-1 block text-xs text-gray-400">
                       End date
                     </label>
                     <input
                       type="date"
                       {...register("end_date")}
-                      className="w-full rounded-lg bg-white px-3 py-2.5 text-sm text-gray-900 outline-none ring-1 ring-gray-200 focus:ring-blue-500"
+                      className="w-full rounded-xl bg-white px-3 py-2.5 text-sm text-[#0f1d32] outline-none ring-1 ring-gray-200 focus:ring-[#0f1d32]"
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="rounded-xl bg-gray-50 p-4 ring-1 ring-gray-200">
-                <div className="mb-3 flex items-center gap-2 text-sm font-medium text-gray-700">
-                  <Eye size={16} />
+              <div>
+                <div className="mb-3 flex items-center gap-2 text-sm font-medium text-[#0f1d32]">
+                  <Eye size={16} className="text-gray-400" />
                   <span>Who can see this?</span>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-2">
                   {(
                     [
-                      { value: "private", label: "Only me" },
-                      { value: "shared", label: "Friends" },
-                      { value: "public", label: "Everyone" },
+                      { value: "private", label: "Only me", desc: "Only you can see this circuit", icon: <Lock size={18} /> },
+                      { value: "shared", label: "Friends", desc: "People you share with can see it", icon: <Users size={18} /> },
+                      { value: "public", label: "Everyone", desc: "Anyone can discover this circuit", icon: <Globe2 size={18} /> },
                     ] as const
-                  ).map((opt) => (
-                    <label
-                      key={opt.value}
-                      className={`flex flex-1 cursor-pointer items-center justify-center rounded-lg px-3 py-2.5 text-sm font-medium ring-1 transition-colors ${
-                        watch("visibility") === opt.value
-                          ? "bg-[#0f1d32] text-white ring-[#0f1d32]"
-                          : "bg-white text-gray-600 ring-gray-200"
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        value={opt.value}
-                        {...register("visibility")}
-                        className="sr-only"
-                      />
-                      {opt.label}
-                    </label>
-                  ))}
+                  ).map((opt) => {
+                    const selected = watch("visibility") === opt.value;
+                    return (
+                      <label
+                        key={opt.value}
+                        className={`flex cursor-pointer items-center gap-3 rounded-xl px-4 py-3 ring-1 transition-colors ${
+                          selected
+                            ? "bg-[#0f1d32]/5 ring-[#0f1d32]"
+                            : "bg-white ring-gray-200"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          value={opt.value}
+                          {...register("visibility")}
+                          className="sr-only"
+                        />
+                        <span className={selected ? "text-[#0f1d32]" : "text-gray-400"}>{opt.icon}</span>
+                        <div className="flex-1">
+                          <p className={`text-sm font-semibold ${selected ? "text-[#0f1d32]" : "text-gray-600"}`}>{opt.label}</p>
+                          <p className="text-xs text-gray-400">{opt.desc}</p>
+                        </div>
+                        <div className={`h-4 w-4 rounded-full ring-1 ${selected ? "bg-[#0f1d32] ring-[#0f1d32]" : "ring-gray-300"}`}>
+                          {selected && (
+                            <Check size={12} className="m-0.5 text-white" />
+                          )}
+                        </div>
+                      </label>
+                    );
+                  })}
                 </div>
+              </div>
+
+              <div className="flex items-center gap-3 rounded-xl bg-[#f5f6f8] px-4 py-3">
+                <UserPlus size={18} className="shrink-0 text-gray-400" />
+                <p className="text-xs text-gray-400">
+                  You can invite collaborators after creating your circuit
+                </p>
               </div>
 
               <button
                 type="submit"
                 disabled={createMutation.isPending}
-                className="mt-1 rounded-full bg-[#0f1d32] py-4 text-base font-semibold text-white active:bg-[#162a46] disabled:opacity-50"
+                className="rounded-full bg-[#0f1d32] py-4 text-base font-semibold text-white active:bg-[#162a46] disabled:opacity-50"
               >
                 {createMutation.isPending ? "Creating…" : "Create circuit"}
               </button>
