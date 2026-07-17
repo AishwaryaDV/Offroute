@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, EyeOff } from "lucide-react";
+import { Compass, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -48,22 +48,22 @@ function PasswordInput({
           placeholder={placeholder}
           autoComplete={autoComplete}
           {...registration}
-          className={`w-full rounded-xl bg-white/[0.08] px-4 py-4 pr-12 text-base text-white placeholder-zinc-500 outline-none ring-1 ${
+          className={`w-full rounded-xl bg-gray-50 px-4 py-4 pr-12 text-base text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ${
             error
-              ? "ring-red-500/60 focus:ring-red-500"
-              : "ring-white/[0.12] focus:ring-blue-500/60"
+              ? "ring-red-400 focus:ring-red-500"
+              : "ring-gray-200 focus:ring-blue-500"
           }`}
         />
         <button
           type="button"
           onClick={() => setVisible(!visible)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-zinc-500 active:text-zinc-300"
+          className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 active:text-gray-600"
           aria-label={visible ? "Hide password" : "Show password"}
         >
           {visible ? <EyeOff size={20} /> : <Eye size={20} />}
         </button>
       </div>
-      {error && <p className="mt-1.5 text-sm text-red-400">{error}</p>}
+      {error && <p className="mt-1.5 text-sm text-red-500">{error}</p>}
     </div>
   );
 }
@@ -101,8 +101,8 @@ function LoginForm({
 
   return (
     <>
-      <h2 className="mb-2 text-2xl font-bold text-white">Welcome back</h2>
-      <p className="mb-8 text-sm text-zinc-400">Log in to continue to Offroute</p>
+      <h2 className="mb-2 text-2xl font-bold text-[#0f1d32]">Welcome back</h2>
+      <p className="mb-8 text-sm text-gray-500">Log in to continue to Offroute</p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         <div>
@@ -114,14 +114,14 @@ function LoginForm({
               required: "Email is required",
               pattern: { value: EMAIL_REGEX, message: "Enter a valid email" },
             })}
-            className={`w-full rounded-xl bg-white/[0.08] px-4 py-4 text-base text-white placeholder-zinc-500 outline-none ring-1 ${
+            className={`w-full rounded-xl bg-gray-50 px-4 py-4 text-base text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ${
               errors.email
-                ? "ring-red-500/60 focus:ring-red-500"
-                : "ring-white/[0.12] focus:ring-blue-500/60"
+                ? "ring-red-400 focus:ring-red-500"
+                : "ring-gray-200 focus:ring-blue-500"
             }`}
           />
           {errors.email && (
-            <p className="mt-1.5 text-sm text-red-400">{errors.email.message}</p>
+            <p className="mt-1.5 text-sm text-red-500">{errors.email.message}</p>
           )}
         </div>
 
@@ -138,7 +138,7 @@ function LoginForm({
         <button
           type="button"
           onClick={onForgot}
-          className="self-end text-sm font-medium text-zinc-400 active:text-zinc-200"
+          className="self-end text-sm font-medium text-gray-500 active:text-gray-700"
         >
           Forgot password?
         </button>
@@ -146,30 +146,30 @@ function LoginForm({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="mt-2 rounded-xl bg-blue-500 py-4 text-base font-semibold text-white active:bg-blue-600 disabled:opacity-50"
+          className="mt-2 rounded-xl bg-[#0f1d32] py-4 text-base font-semibold text-white active:bg-[#162a46] disabled:opacity-50"
         >
           {isSubmitting ? "Logging in…" : "Log in"}
         </button>
       </form>
 
       <div className="my-6 flex items-center gap-3">
-        <div className="h-px flex-1 bg-white/[0.1]" />
-        <span className="text-xs text-zinc-500">or</span>
-        <div className="h-px flex-1 bg-white/[0.1]" />
+        <div className="h-px flex-1 bg-gray-200" />
+        <span className="text-xs text-gray-400">or</span>
+        <div className="h-px flex-1 bg-gray-200" />
       </div>
 
       <button
         onClick={signInWithGoogle}
-        className="w-full rounded-xl bg-white/[0.08] py-4 text-base font-medium text-white ring-1 ring-white/[0.12] active:bg-white/[0.12]"
+        className="w-full rounded-xl bg-gray-50 py-4 text-base font-medium text-[#0f1d32] ring-1 ring-gray-200 active:bg-gray-100"
       >
         Continue with Google
       </button>
 
-      <p className="mt-8 text-center text-sm text-zinc-400">
+      <p className="mt-8 text-center text-sm text-gray-500">
         Don&apos;t have an account?{" "}
         <button
           onClick={onSwitch}
-          className="font-semibold text-blue-400 active:text-blue-300"
+          className="font-semibold text-[#0f1d32] active:text-[#162a46]"
         >
           Sign up
         </button>
@@ -209,8 +209,8 @@ function SignupForm({ onSwitch }: { onSwitch: () => void }) {
 
   return (
     <>
-      <h2 className="mb-2 text-2xl font-bold text-white">Create your account</h2>
-      <p className="mb-8 text-sm text-zinc-400">Start logging your travels on Offroute</p>
+      <h2 className="mb-2 text-2xl font-bold text-[#0f1d32]">Create your account</h2>
+      <p className="mb-8 text-sm text-gray-500">Start logging your travels on Offroute</p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         <div>
@@ -223,14 +223,14 @@ function SignupForm({ onSwitch }: { onSwitch: () => void }) {
               minLength: { value: 2, message: "At least 2 characters" },
               maxLength: { value: 50, message: "50 characters max" },
             })}
-            className={`w-full rounded-xl bg-white/[0.08] px-4 py-4 text-base text-white placeholder-zinc-500 outline-none ring-1 ${
+            className={`w-full rounded-xl bg-gray-50 px-4 py-4 text-base text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ${
               errors.display_name
-                ? "ring-red-500/60 focus:ring-red-500"
-                : "ring-white/[0.12] focus:ring-blue-500/60"
+                ? "ring-red-400 focus:ring-red-500"
+                : "ring-gray-200 focus:ring-blue-500"
             }`}
           />
           {errors.display_name && (
-            <p className="mt-1.5 text-sm text-red-400">{errors.display_name.message}</p>
+            <p className="mt-1.5 text-sm text-red-500">{errors.display_name.message}</p>
           )}
         </div>
 
@@ -243,14 +243,14 @@ function SignupForm({ onSwitch }: { onSwitch: () => void }) {
               required: "Email is required",
               pattern: { value: EMAIL_REGEX, message: "Enter a valid email" },
             })}
-            className={`w-full rounded-xl bg-white/[0.08] px-4 py-4 text-base text-white placeholder-zinc-500 outline-none ring-1 ${
+            className={`w-full rounded-xl bg-gray-50 px-4 py-4 text-base text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ${
               errors.email
-                ? "ring-red-500/60 focus:ring-red-500"
-                : "ring-white/[0.12] focus:ring-blue-500/60"
+                ? "ring-red-400 focus:ring-red-500"
+                : "ring-gray-200 focus:ring-blue-500"
             }`}
           />
           {errors.email && (
-            <p className="mt-1.5 text-sm text-red-400">{errors.email.message}</p>
+            <p className="mt-1.5 text-sm text-red-500">{errors.email.message}</p>
           )}
         </div>
 
@@ -265,7 +265,7 @@ function SignupForm({ onSwitch }: { onSwitch: () => void }) {
               pattern: { value: PASSWORD_REGEX, message: PASSWORD_HINT },
             })}
           />
-          <p className="mt-1.5 text-xs text-zinc-500">{PASSWORD_HINT}</p>
+          <p className="mt-1.5 text-xs text-gray-400">{PASSWORD_HINT}</p>
         </div>
 
         <PasswordInput
@@ -282,17 +282,17 @@ function SignupForm({ onSwitch }: { onSwitch: () => void }) {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="mt-2 rounded-xl bg-blue-500 py-4 text-base font-semibold text-white active:bg-blue-600 disabled:opacity-50"
+          className="mt-2 rounded-xl bg-[#0f1d32] py-4 text-base font-semibold text-white active:bg-[#162a46] disabled:opacity-50"
         >
           {isSubmitting ? "Creating account…" : "Create account"}
         </button>
       </form>
 
-      <p className="mt-8 text-center text-sm text-zinc-400">
+      <p className="mt-8 text-center text-sm text-gray-500">
         Already have an account?{" "}
         <button
           onClick={onSwitch}
-          className="font-semibold text-blue-400 active:text-blue-300"
+          className="font-semibold text-[#0f1d32] active:text-[#162a46]"
         >
           Log in
         </button>
@@ -322,8 +322,8 @@ function ForgotPasswordForm({ onBack }: { onBack: () => void }) {
 
   return (
     <>
-      <h2 className="mb-2 text-2xl font-bold text-white">Reset password</h2>
-      <p className="mb-8 text-sm text-zinc-400">
+      <h2 className="mb-2 text-2xl font-bold text-[#0f1d32]">Reset password</h2>
+      <p className="mb-8 text-sm text-gray-500">
         {sent
           ? "Check your inbox for a reset link."
           : "Enter your email and we'll send you a reset link."}
@@ -340,21 +340,21 @@ function ForgotPasswordForm({ onBack }: { onBack: () => void }) {
                 required: "Email is required",
                 pattern: { value: EMAIL_REGEX, message: "Enter a valid email" },
               })}
-              className={`w-full rounded-xl bg-white/[0.08] px-4 py-4 text-base text-white placeholder-zinc-500 outline-none ring-1 ${
+              className={`w-full rounded-xl bg-gray-50 px-4 py-4 text-base text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ${
                 errors.email
-                  ? "ring-red-500/60 focus:ring-red-500"
-                  : "ring-white/[0.12] focus:ring-blue-500/60"
+                  ? "ring-red-400 focus:ring-red-500"
+                  : "ring-gray-200 focus:ring-blue-500"
               }`}
             />
             {errors.email && (
-              <p className="mt-1.5 text-sm text-red-400">{errors.email.message}</p>
+              <p className="mt-1.5 text-sm text-red-500">{errors.email.message}</p>
             )}
           </div>
 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="mt-2 rounded-xl bg-blue-500 py-4 text-base font-semibold text-white active:bg-blue-600 disabled:opacity-50"
+            className="mt-2 rounded-xl bg-[#0f1d32] py-4 text-base font-semibold text-white active:bg-[#162a46] disabled:opacity-50"
           >
             {isSubmitting ? "Sending…" : "Send reset link"}
           </button>
@@ -363,7 +363,7 @@ function ForgotPasswordForm({ onBack }: { onBack: () => void }) {
 
       <button
         onClick={onBack}
-        className="mt-6 w-full text-center text-sm font-semibold text-blue-400 active:text-blue-300"
+        className="mt-6 w-full text-center text-sm font-semibold text-[#0f1d32] active:text-[#162a46]"
       >
         Back to log in
       </button>
@@ -382,12 +382,22 @@ export default function LoginPage() {
   }, [router]);
 
   return (
-    <div className="flex min-h-[100dvh] flex-col justify-end bg-[#0b1120]">
-      <div className="px-6 pb-10 pt-16">
-        <h1 className="mb-10 text-center text-4xl font-bold tracking-tight text-white">
-          Offroute
-        </h1>
+    <div className="flex min-h-[100dvh] flex-col bg-[#0b1120]">
+      {/* Dark header with branding */}
+      <div className="flex flex-col items-center px-6 pt-[max(env(safe-area-inset-top),3rem)] pb-10">
+        <div className="flex items-center gap-2.5">
+          <Compass size={28} className="text-white/80" />
+          <h1 className="text-3xl font-bold tracking-tight text-white">
+            offroute
+          </h1>
+        </div>
+        <p className="mt-2 text-sm text-white/50">
+          Log travel as circuits
+        </p>
+      </div>
 
+      {/* White sheet with form */}
+      <div className="sheet-up sheet-light flex-1 rounded-t-[28px] bg-white px-6 pt-8 pb-[max(2rem,env(safe-area-inset-bottom))]">
         {view === "login" && (
           <LoginForm
             onSwitch={() => setView("signup")}
