@@ -88,6 +88,7 @@ function LoginForm({
       toast.error(error.message);
       return;
     }
+    toast.success("Welcome back!");
     router.push("/dashboard");
   }
 
@@ -146,7 +147,7 @@ function LoginForm({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="mt-2 rounded-xl bg-[#0f1d32] py-4 text-base font-semibold text-white active:bg-[#162a46] disabled:opacity-50"
+          className="mt-2 rounded-full bg-[#0f1d32] py-4 text-base font-semibold text-white active:bg-[#162a46] disabled:opacity-50"
         >
           {isSubmitting ? "Logging in…" : "Log in"}
         </button>
@@ -160,7 +161,7 @@ function LoginForm({
 
       <button
         onClick={signInWithGoogle}
-        className="w-full rounded-xl bg-gray-50 py-4 text-base font-medium text-[#0f1d32] ring-1 ring-gray-200 active:bg-gray-100"
+        className="w-full rounded-full bg-gray-50 py-4 text-base font-medium text-[#0f1d32] ring-1 ring-gray-200 active:bg-gray-100"
       >
         Continue with Google
       </button>
@@ -200,6 +201,7 @@ function SignupForm({ onSwitch }: { onSwitch: () => void }) {
       return;
     }
     if (data.session) {
+      toast.success("Account created — welcome to Offroute!");
       router.push("/dashboard");
     } else {
       toast.success("Check your email to confirm your account, then log in.");
@@ -282,7 +284,7 @@ function SignupForm({ onSwitch }: { onSwitch: () => void }) {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="mt-2 rounded-xl bg-[#0f1d32] py-4 text-base font-semibold text-white active:bg-[#162a46] disabled:opacity-50"
+          className="mt-2 rounded-full bg-[#0f1d32] py-4 text-base font-semibold text-white active:bg-[#162a46] disabled:opacity-50"
         >
           {isSubmitting ? "Creating account…" : "Create account"}
         </button>
@@ -354,7 +356,7 @@ function ForgotPasswordForm({ onBack }: { onBack: () => void }) {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="mt-2 rounded-xl bg-[#0f1d32] py-4 text-base font-semibold text-white active:bg-[#162a46] disabled:opacity-50"
+            className="mt-2 rounded-full bg-[#0f1d32] py-4 text-base font-semibold text-white active:bg-[#162a46] disabled:opacity-50"
           >
             {isSubmitting ? "Sending…" : "Send reset link"}
           </button>
@@ -384,20 +386,20 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-[100dvh] flex-col bg-[#0b1120]">
       {/* Dark header with branding */}
-      <div className="flex flex-col items-center px-6 pt-[max(env(safe-area-inset-top),3rem)] pb-10">
+      <div className="flex flex-1 flex-col items-center justify-center px-6">
         <div className="flex items-center gap-2.5">
-          <Compass size={28} className="text-white/80" />
-          <h1 className="text-3xl font-bold tracking-tight text-white">
-            offroute
+          <Compass size={32} className="text-white/80" />
+          <h1 className="text-4xl font-bold tracking-tight text-white">
+            Offroute
           </h1>
         </div>
-        <p className="mt-2 text-sm text-white/50">
+        <p className="mt-3 text-base text-white/50">
           Log travel as circuits
         </p>
       </div>
 
-      {/* White sheet with form */}
-      <div className="sheet-up sheet-light flex-1 rounded-t-[28px] bg-white px-6 pt-8 pb-[max(2rem,env(safe-area-inset-bottom))]">
+      {/* White sheet with form — half screen */}
+      <div className="sheet-up sheet-light max-h-[50dvh] overflow-y-auto rounded-t-[28px] bg-white px-6 pt-8 pb-[max(2rem,env(safe-area-inset-bottom))]">
         {view === "login" && (
           <LoginForm
             onSwitch={() => setView("signup")}
