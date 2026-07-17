@@ -197,18 +197,8 @@ function Dashboard() {
           mapReady ? "pointer-events-none opacity-0" : "opacity-100"
         }`}
       >
-        <div className="relative mb-5 h-10 w-10">
-          <Compass size={40} strokeWidth={1.6} className="absolute inset-0 text-white/80" style={{ animation: "icon-cycle 4s ease-in-out infinite" }} />
-          <MapPin size={40} strokeWidth={1.6} className="absolute inset-0 text-white/80" style={{ animation: "icon-cycle-2 4s ease-in-out infinite" }} />
-          <Star size={40} strokeWidth={1.6} className="absolute inset-0 text-white/80" style={{ animation: "icon-cycle-3 4s ease-in-out infinite" }} />
-          <Copy size={40} strokeWidth={1.6} className="absolute inset-0 text-white/80" style={{ animation: "icon-cycle-4 4s ease-in-out infinite" }} />
-        </div>
-        <div className="relative h-5">
-          <p className="absolute inset-x-0 text-center text-sm text-white/50" style={{ animation: "icon-cycle 4s ease-in-out infinite" }}>Loading your map…</p>
-          <p className="absolute inset-x-0 text-center text-sm text-white/50" style={{ animation: "icon-cycle-2 4s ease-in-out infinite" }}>Finding your pins…</p>
-          <p className="absolute inset-x-0 text-center text-sm text-white/50" style={{ animation: "icon-cycle-3 4s ease-in-out infinite" }}>Charting routes…</p>
-          <p className="absolute inset-x-0 text-center text-sm text-white/50" style={{ animation: "icon-cycle-4 4s ease-in-out infinite" }}>Almost there…</p>
-        </div>
+        <Compass size={36} strokeWidth={1.6} className="mb-4 animate-spin text-white/80" style={{ animationDuration: "3s" }} />
+        <p className="text-sm text-white/50">Loading your map…</p>
       </div>
 
       {/* Header: Offroute branding */}
@@ -231,7 +221,7 @@ function Dashboard() {
             dragOffset !== null ? `translateY(${Math.max(0, dragOffset)}px)` : undefined,
           transition: dragOffset !== null ? "none" : "height 0.35s cubic-bezier(.4,0,.2,1)",
           paddingBottom: "calc(80px + max(0.75rem, env(safe-area-inset-bottom)))",
-          overflow: snap === "full" ? "auto" : "hidden",
+          overflow: snap === "collapsed" ? "hidden" : "auto",
         }}
       >
         {/* Drag handle */}
