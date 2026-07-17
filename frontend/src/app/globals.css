@@ -71,6 +71,31 @@ select {
   animation: page-enter 0.2s ease-out;
 }
 
+@keyframes icon-cycle {
+  0%, 20% { opacity: 1; transform: scale(1); }
+  25%, 45% { opacity: 0; transform: scale(0.6); }
+  50%, 70% { opacity: 0; transform: scale(0.6); }
+  75%, 95% { opacity: 0; transform: scale(0.6); }
+}
+@keyframes icon-cycle-2 {
+  0%, 20% { opacity: 0; transform: scale(0.6); }
+  25%, 45% { opacity: 1; transform: scale(1); }
+  50%, 70% { opacity: 0; transform: scale(0.6); }
+  75%, 95% { opacity: 0; transform: scale(0.6); }
+}
+@keyframes icon-cycle-3 {
+  0%, 20% { opacity: 0; transform: scale(0.6); }
+  25%, 45% { opacity: 0; transform: scale(0.6); }
+  50%, 70% { opacity: 1; transform: scale(1); }
+  75%, 95% { opacity: 0; transform: scale(0.6); }
+}
+@keyframes icon-cycle-4 {
+  0%, 20% { opacity: 0; transform: scale(0.6); }
+  25%, 45% { opacity: 0; transform: scale(0.6); }
+  50%, 70% { opacity: 0; transform: scale(0.6); }
+  75%, 95% { opacity: 1; transform: scale(1); }
+}
+
 /* Light-themed pages/sheets: native controls should render light */
 .sheet-light input,
 .sheet-light textarea,

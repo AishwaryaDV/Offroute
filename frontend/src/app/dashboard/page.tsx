@@ -9,7 +9,6 @@ import {
   Calendar,
   MapPin,
   Plus,
-  Settings,
   Star,
   Tag,
   X,
@@ -192,34 +191,34 @@ function Dashboard() {
         onReady={() => setMapReady(true)}
       />
 
-      {/* Loading overlay */}
+      {/* Loading overlay — fully opaque so no tile pop-in shows */}
       <div
-        className={`absolute inset-0 z-30 flex items-center justify-center bg-[#0b1120]/35 backdrop-blur-lg transition-opacity duration-700 ${
+        className={`absolute inset-0 z-30 flex flex-col items-center justify-center bg-[#0b1120] transition-opacity duration-700 ${
           mapReady ? "pointer-events-none opacity-0" : "opacity-100"
         }`}
       >
-        <Compass
-          size={64}
-          strokeWidth={1.6}
-          className="animate-spin text-white [animation-duration:2.5s]"
-        />
+        <div className="relative mb-5 h-10 w-10">
+          <Compass size={40} strokeWidth={1.6} className="absolute inset-0 text-white/80" style={{ animation: "icon-cycle 4s ease-in-out infinite" }} />
+          <MapPin size={40} strokeWidth={1.6} className="absolute inset-0 text-white/80" style={{ animation: "icon-cycle-2 4s ease-in-out infinite" }} />
+          <Star size={40} strokeWidth={1.6} className="absolute inset-0 text-white/80" style={{ animation: "icon-cycle-3 4s ease-in-out infinite" }} />
+          <Copy size={40} strokeWidth={1.6} className="absolute inset-0 text-white/80" style={{ animation: "icon-cycle-4 4s ease-in-out infinite" }} />
+        </div>
+        <div className="relative h-5">
+          <p className="absolute inset-x-0 text-center text-sm text-white/50" style={{ animation: "icon-cycle 4s ease-in-out infinite" }}>Loading your map…</p>
+          <p className="absolute inset-x-0 text-center text-sm text-white/50" style={{ animation: "icon-cycle-2 4s ease-in-out infinite" }}>Finding your pins…</p>
+          <p className="absolute inset-x-0 text-center text-sm text-white/50" style={{ animation: "icon-cycle-3 4s ease-in-out infinite" }}>Charting routes…</p>
+          <p className="absolute inset-x-0 text-center text-sm text-white/50" style={{ animation: "icon-cycle-4 4s ease-in-out infinite" }}>Almost there…</p>
+        </div>
       </div>
 
-      {/* Header: Offroute branding + settings gear */}
-      <header className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-5 pt-[max(env(safe-area-inset-top),1.25rem)]">
+      {/* Header: Offroute branding */}
+      <header className="absolute inset-x-0 top-0 z-10 px-5 pt-[max(env(safe-area-inset-top),1.25rem)]">
         <div className="flex items-center gap-2">
           <Compass size={22} className="text-white/80" />
           <h1 className="text-xl font-bold tracking-tight text-white [text-shadow:0_1px_6px_rgba(0,0,0,.6)]">
-            offroute
+            Offroute
           </h1>
         </div>
-        <Link
-          href="/settings"
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-black/30 backdrop-blur-md active:bg-black/50"
-          aria-label="Settings"
-        >
-          <Settings size={18} className="text-white/80" />
-        </Link>
       </header>
 
       {/* Draggable bottom sheet */}
@@ -261,36 +260,22 @@ function Dashboard() {
           </div>
         )}
 
-        {/* Stats grid with icons */}
+        {/* Stats grid — icon + value inline, label below */}
         <div className="mt-4 grid grid-cols-4 gap-2 px-6">
-          <div className="flex flex-col items-center rounded-xl bg-[#f5f6f8] px-2 py-3">
-            <Compass size={16} className="mb-1 text-[#0f1d32]/50" />
-            <p className="text-lg font-bold text-[#0f1d32]">
-              {stats?.circuits ?? circuits?.length ?? 0}
-            </p>
-            <p className="text-[10px] text-gray-400">Circuits</p>
-          </div>
-          <div className="flex flex-col items-center rounded-xl bg-[#f5f6f8] px-2 py-3">
-            <MapPin size={16} className="mb-1 text-[#0f1d32]/50" />
-            <p className="text-lg font-bold text-[#0f1d32]">
-              {stats?.points ?? 0}
-            </p>
-            <p className="text-[10px] text-gray-400">Points</p>
-          </div>
-          <div className="flex flex-col items-center rounded-xl bg-[#f5f6f8] px-2 py-3">
-            <Star size={16} className="mb-1 text-[#0f1d32]/50" />
-            <p className="text-lg font-bold text-[#0f1d32]">
-              {stats?.stars_received ?? 0}
-            </p>
-            <p className="text-[10px] text-gray-400">Stars</p>
-          </div>
-          <div className="flex flex-col items-center rounded-xl bg-[#f5f6f8] px-2 py-3">
-            <Copy size={16} className="mb-1 text-[#0f1d32]/50" />
-            <p className="text-lg font-bold text-[#0f1d32]">
-              {stats?.total_clones ?? 0}
-            </p>
-            <p className="text-[10px] text-gray-400">Clones</p>
-          </div>
+          {[
+            { icon: <Compass size={14} />, value: stats?.circuits ?? circuits?.length ?? 0, label: "Circuits" },
+            { icon: <MapPin size={14} />, value: stats?.points ?? 0, label: "Points" },
+            { icon: <Star size={14} />, value: stats?.stars_received ?? 0, label: "Stars" },
+            { icon: <Copy size={14} />, value: stats?.total_clones ?? 0, label: "Clones" },
+          ].map((s) => (
+            <div key={s.label} className="rounded-xl bg-[#f5f6f8] px-2 py-3">
+              <div className="flex items-center justify-center gap-1.5">
+                <span className="text-[#0f1d32]/40">{s.icon}</span>
+                <p className="text-lg font-bold text-[#0f1d32]">{s.value}</p>
+              </div>
+              <p className="mt-0.5 text-center text-[10px] text-gray-400">{s.label}</p>
+            </div>
+          ))}
         </div>
 
         {/* CTA row: New circuit + Travel stats */}
@@ -587,7 +572,7 @@ function Dashboard() {
               <button
                 type="submit"
                 disabled={createMutation.isPending}
-                className="mt-1 rounded-xl bg-[#0f1d32] py-4 text-base font-semibold text-white active:bg-[#162a46] disabled:opacity-50"
+                className="mt-1 rounded-full bg-[#0f1d32] py-4 text-base font-semibold text-white active:bg-[#162a46] disabled:opacity-50"
               >
                 {createMutation.isPending ? "Creating…" : "Create circuit"}
               </button>
