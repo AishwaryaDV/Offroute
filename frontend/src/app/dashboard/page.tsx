@@ -1,37 +1,34 @@
 "use client";
 
 import {
-  Bell,
+  BarChart3,
   Check,
   Compass,
   Copy,
-  List,
+  Eye,
+  Calendar,
   MapPin,
   Plus,
   Settings,
   Star,
   Tag,
-  Timer,
-  UserPlus,
   X,
-  Calendar,
-  Eye,
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AuthGuard } from "@/components/AuthGuard";
+import { BottomNav } from "@/components/BottomNav";
 import MapDynamic from "@/components/MapDynamic";
 import { TagInput } from "@/components/TagInput";
 import { getMe } from "@/lib/me";
 import { getCircuits, createCircuit } from "@/lib/circuits";
 import { getMyStats } from "@/lib/stats";
 import { getMyInvites, acceptInvite, declineInvite } from "@/lib/collaborators";
-import { getNotifications, getUnreadCount, markAllRead } from "@/lib/notifications";
-import type { Invite, Notification } from "@/types/api";
+import type { Invite } from "@/types/api";
 
 interface NewCircuitValues {
   title: string;
@@ -40,6 +37,8 @@ interface NewCircuitValues {
   end_date: string;
   visibility: string;
 }
+
+type SheetSnap = "collapsed" | "half" | "full";
 
 function Dashboard() {
   const router = useRouter();
@@ -77,31 +76,54 @@ function Dashboard() {
     onError: () => toast.error("Could not decline invite"),
   });
 
-  const { data: notifications } = useQuery({
-    queryKey: ["notifications"],
-    queryFn: getNotifications,
-  });
-  const { data: unreadData } = useQuery({
-    queryKey: ["unread-count"],
-    queryFn: getUnreadCount,
-    refetchInterval: 30000,
-  });
-
-  const markReadMutation = useMutation({
-    mutationFn: markAllRead,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["unread-count"] });
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
-    },
-  });
-
-  const [showNotifications, setShowNotifications] = useState(false);
   const [showNewCircuit, setShowNewCircuit] = useState(false);
   const [mapReady, setMapReady] = useState(false);
   const [userLoc, setUserLoc] = useState<{ lng: number; lat: number } | null>(
     null
   );
   const [tags, setTags] = useState<string[]>([]);
+
+  // Draggable sheet state
+  const [snap, setSnap] = useState<SheetSnap>("half");
+  const [dragOffset, setDragOffset] = useState<number | null>(null);
+  const dragStartY = useRef(0);
+  const dragStartSnap = useRef<SheetSnap>("half");
+  const sheetRef = useRef<HTMLDivElement>(null);
+
+  const SNAP_HEIGHTS: Record<SheetSnap, string> = {
+    collapsed: "80px",
+    half: "42dvh",
+    full: "85dvh",
+  };
+
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      dragStartY.current = e.touches[0].clientY;
+      dragStartSnap.current = snap;
+      setDragOffset(0);
+    },
+    [snap]
+  );
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    const delta = e.touches[0].clientY - dragStartY.current;
+    setDragOffset(delta);
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    if (dragOffset === null) return;
+    const threshold = 60;
+    if (dragOffset > threshold) {
+      // dragged down
+      if (dragStartSnap.current === "full") setSnap("half");
+      else setSnap("collapsed");
+    } else if (dragOffset < -threshold) {
+      // dragged up
+      if (dragStartSnap.current === "collapsed") setSnap("half");
+      else setSnap("full");
+    }
+    setDragOffset(null);
+  }, [dragOffset]);
 
   useEffect(() => {
     if (!navigator.geolocation) return;
@@ -147,6 +169,17 @@ function Dashboard() {
     onError: () => toast.error("Could not create circuit — try again"),
   });
 
+  const visibleCircuits =
+    snap === "full" ? circuits : circuits?.slice(0, 3);
+
+  function formatDate(d: string) {
+    return new Date(d).toLocaleDateString(undefined, {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  }
+
   return (
     <div className="relative h-[100dvh] overflow-hidden bg-[#0b1120]">
       {/* Full-screen satellite map */}
@@ -159,8 +192,7 @@ function Dashboard() {
         onReady={() => setMapReady(true)}
       />
 
-      {/* Loading overlay — translucent + blurred so tile pop-in never shows,
-          spinning compass, fades out only once every tile has rendered */}
+      {/* Loading overlay */}
       <div
         className={`absolute inset-0 z-30 flex items-center justify-center bg-[#0b1120]/35 backdrop-blur-lg transition-opacity duration-700 ${
           mapReady ? "pointer-events-none opacity-0" : "opacity-100"
@@ -181,136 +213,185 @@ function Dashboard() {
             offroute
           </h1>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => {
-              setShowNotifications(true);
-              if (unreadData && unreadData.count > 0) markReadMutation.mutate();
-            }}
-            className="relative flex h-10 w-10 items-center justify-center rounded-full bg-black/30 backdrop-blur-md active:bg-black/50"
-            aria-label="Notifications"
-          >
-            <Bell size={18} className="text-white/80" />
-            {unreadData && unreadData.count > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
-                {unreadData.count > 9 ? "9+" : unreadData.count}
-              </span>
-            )}
-          </button>
-          <Link
-            href="/settings"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-black/30 backdrop-blur-md active:bg-black/50"
-            aria-label="Settings"
-          >
-            <Settings size={18} className="text-white/80" />
-          </Link>
-        </div>
+        <Link
+          href="/settings"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-black/30 backdrop-blur-md active:bg-black/50"
+          aria-label="Settings"
+        >
+          <Settings size={18} className="text-white/80" />
+        </Link>
       </header>
 
-      {/* Me sheet — white, curved top, pulled up over the map (Polarsteps home) */}
-      <div className="sheet-up sheet-light absolute inset-x-0 bottom-0 z-10 rounded-t-[28px] bg-white pb-28 shadow-[0_-10px_40px_rgba(0,0,0,0.35)]">
-        <div className="flex justify-center pt-3">
+      {/* Draggable bottom sheet */}
+      <div
+        ref={sheetRef}
+        className="absolute inset-x-0 bottom-0 z-10 rounded-t-[28px] bg-white shadow-[0_-10px_40px_rgba(0,0,0,0.35)]"
+        style={{
+          height: SNAP_HEIGHTS[snap],
+          transform:
+            dragOffset !== null ? `translateY(${Math.max(0, dragOffset)}px)` : undefined,
+          transition: dragOffset !== null ? "none" : "height 0.35s cubic-bezier(.4,0,.2,1)",
+          paddingBottom: "calc(80px + max(0.75rem, env(safe-area-inset-bottom)))",
+          overflow: snap === "full" ? "auto" : "hidden",
+        }}
+      >
+        {/* Drag handle */}
+        <div
+          className="flex cursor-grab justify-center pb-1 pt-3 active:cursor-grabbing"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
           <div className="h-1 w-10 rounded-full bg-gray-300" />
         </div>
 
         {me && (
-          <div className="flex items-center gap-4 px-6 pt-3">
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#0f1d32]/10 text-2xl font-bold text-[#0f1d32]">
+          <div className="flex items-center gap-4 px-6 pt-2">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#0f1d32]/10 text-xl font-bold text-[#0f1d32]">
               {(me.display_name?.[0] ?? me.email[0]).toUpperCase()}
             </div>
             <div className="min-w-0">
-              <p className="truncate text-2xl font-bold text-[#0f1d32]">
+              <p className="truncate text-xl font-bold text-[#0f1d32]">
                 {me.display_name ?? "Traveler"}
               </p>
-              <p className="truncate text-base text-gray-500">
+              <p className="truncate text-sm text-gray-500">
                 {me.nationality ?? me.email}
               </p>
             </div>
           </div>
         )}
 
-        {/* Stats grid */}
-        <div className="mt-5 grid grid-cols-4 gap-1 px-6">
-          <div className="rounded-xl bg-[#f5f6f8] p-3 text-center">
-            <p className="text-xl font-bold text-[#0f1d32]">
+        {/* Stats grid with icons */}
+        <div className="mt-4 grid grid-cols-4 gap-2 px-6">
+          <div className="flex flex-col items-center rounded-xl bg-[#f5f6f8] px-2 py-3">
+            <Compass size={16} className="mb-1 text-[#0f1d32]/50" />
+            <p className="text-lg font-bold text-[#0f1d32]">
               {stats?.circuits ?? circuits?.length ?? 0}
             </p>
-            <p className="text-xs text-gray-400">Circuits</p>
+            <p className="text-[10px] text-gray-400">Circuits</p>
           </div>
-          <div className="rounded-xl bg-[#f5f6f8] p-3 text-center">
-            <p className="text-xl font-bold text-[#0f1d32]">
+          <div className="flex flex-col items-center rounded-xl bg-[#f5f6f8] px-2 py-3">
+            <MapPin size={16} className="mb-1 text-[#0f1d32]/50" />
+            <p className="text-lg font-bold text-[#0f1d32]">
               {stats?.points ?? 0}
             </p>
-            <p className="text-xs text-gray-400">Points</p>
+            <p className="text-[10px] text-gray-400">Points</p>
           </div>
-          <div className="rounded-xl bg-[#f5f6f8] p-3 text-center">
-            <p className="text-xl font-bold text-[#0f1d32]">
+          <div className="flex flex-col items-center rounded-xl bg-[#f5f6f8] px-2 py-3">
+            <Star size={16} className="mb-1 text-[#0f1d32]/50" />
+            <p className="text-lg font-bold text-[#0f1d32]">
               {stats?.stars_received ?? 0}
             </p>
-            <p className="text-xs text-gray-400">Stars</p>
+            <p className="text-[10px] text-gray-400">Stars</p>
           </div>
-          <div className="rounded-xl bg-[#f5f6f8] p-3 text-center">
-            <p className="text-xl font-bold text-[#0f1d32]">
+          <div className="flex flex-col items-center rounded-xl bg-[#f5f6f8] px-2 py-3">
+            <Copy size={16} className="mb-1 text-[#0f1d32]/50" />
+            <p className="text-lg font-bold text-[#0f1d32]">
               {stats?.total_clones ?? 0}
             </p>
-            <p className="text-xs text-gray-400">Clones</p>
+            <p className="text-[10px] text-gray-400">Clones</p>
           </div>
         </div>
 
-        {/* CTA */}
-        <div className="px-6 pt-6">
+        {/* CTA row: New circuit + Travel stats */}
+        <div className="flex gap-3 px-6 pt-5">
           <button
             onClick={() => setShowNewCircuit(true)}
-            className="flex w-full items-center justify-center gap-2 rounded-full bg-[#0f1d32] py-4 text-base font-semibold text-white active:bg-[#162a46]"
+            className="flex flex-1 items-center justify-center gap-2 rounded-full bg-[#0f1d32] py-3.5 text-sm font-semibold text-white active:bg-[#162a46]"
           >
-            <Plus size={20} strokeWidth={2.5} />
+            <Plus size={18} strokeWidth={2.5} />
             New circuit
           </button>
-          {(!circuits || circuits.length === 0) && (
-            <p className="mt-4 text-center text-base text-gray-500">
-              Kick things off by logging your first circuit.
-            </p>
-          )}
+          <button
+            disabled
+            className="flex flex-1 items-center justify-center gap-2 rounded-full border border-gray-200 bg-white py-3.5 text-sm font-semibold text-gray-300"
+          >
+            <BarChart3 size={18} />
+            Travel stats
+          </button>
         </div>
 
-        {/* Recent circuits strip */}
+        {(!circuits || circuits.length === 0) && (
+          <p className="mt-4 px-6 text-center text-sm text-gray-500">
+            Kick things off by logging your first circuit.
+          </p>
+        )}
+
+        {/* Circuit cards */}
         {circuits && circuits.length > 0 && (
-          <div className="flex gap-3 overflow-x-auto px-6 pt-5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {circuits.map((circuit) => (
-              <Link
-                key={circuit.id}
-                href={`/circuits/${circuit.id}`}
-                className="min-w-[200px] shrink-0 rounded-2xl bg-[#f5f6f8] p-4 active:bg-gray-100"
-              >
-                <p className="truncate font-semibold text-[#0f1d32]">
-                  {circuit.title}
-                </p>
-                {circuit.tags && circuit.tags.length > 0 && (
-                  <div className="mt-1.5 flex flex-wrap gap-1">
-                    {circuit.tags.slice(0, 3).map((tag) => (
-                      <span
-                        key={tag}
-                        className="rounded-full bg-[#0f1d32]/10 px-2 py-0.5 text-[10px] font-medium text-[#0f1d32]/70"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                    {circuit.tags.length > 3 && (
-                      <span className="rounded-full bg-[#0f1d32]/10 px-2 py-0.5 text-[10px] font-medium text-[#0f1d32]/70">
-                        +{circuit.tags.length - 3}
+          <div className="px-6 pt-5">
+            <div className="flex flex-col gap-3">
+              {visibleCircuits?.map((circuit) => (
+                <Link
+                  key={circuit.id}
+                  href={`/circuits/${circuit.id}`}
+                  className="rounded-2xl bg-[#f5f6f8] p-4 active:bg-gray-100"
+                >
+                  <div className="flex items-start justify-between">
+                    <p className="truncate text-base font-semibold text-[#0f1d32]">
+                      {circuit.title}
+                    </p>
+                    <span className="ml-2 shrink-0 rounded-full bg-[#0f1d32]/8 px-2 py-0.5 text-[10px] font-medium capitalize text-gray-500">
+                      {circuit.visibility}
+                    </span>
+                  </div>
+                  {circuit.description && (
+                    <p className="mt-1 line-clamp-1 text-sm text-gray-500">
+                      {circuit.description}
+                    </p>
+                  )}
+                  <div className="mt-2.5 flex items-center gap-3 text-xs text-gray-400">
+                    <span className="flex items-center gap-1">
+                      <MapPin size={12} />
+                      {circuit.point_count}{" "}
+                      {circuit.point_count === 1 ? "pt" : "pts"}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Star size={12} />
+                      {circuit.star_count}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Copy size={12} />
+                      {circuit.clone_count}
+                    </span>
+                    {circuit.start_date && (
+                      <span className="ml-auto text-[11px]">
+                        {formatDate(circuit.start_date)}
                       </span>
                     )}
                   </div>
-                )}
-                <div className="mt-1.5 flex items-center gap-1.5 text-sm text-gray-500">
-                  <MapPin size={13} />
-                  <span>
-                    {circuit.point_count}{" "}
-                    {circuit.point_count === 1 ? "point" : "points"}
-                  </span>
-                </div>
-              </Link>
-            ))}
+                  {circuit.tags && circuit.tags.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {circuit.tags.slice(0, 3).map((tag) => (
+                        <span
+                          key={tag}
+                          className="rounded-full bg-[#0f1d32]/8 px-2 py-0.5 text-[10px] font-medium text-[#0f1d32]/60"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                      {circuit.tags.length > 3 && (
+                        <span className="rounded-full bg-[#0f1d32]/8 px-2 py-0.5 text-[10px] font-medium text-[#0f1d32]/60">
+                          +{circuit.tags.length - 3}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </Link>
+              ))}
+            </div>
+
+            {/* Show more / Show less */}
+            {circuits.length > 3 && (
+              <button
+                onClick={() => setSnap(snap === "full" ? "half" : "full")}
+                className="mt-3 w-full rounded-xl py-2.5 text-center text-sm font-semibold text-blue-500 active:bg-blue-50"
+              >
+                {snap === "full"
+                  ? "Show less"
+                  : `Show all ${circuits.length} circuits`}
+              </button>
+            )}
           </div>
         )}
 
@@ -357,111 +438,7 @@ function Dashboard() {
         )}
       </div>
 
-      {/* Floating bottom nav — above the sheet */}
-      <div className="absolute inset-x-0 bottom-0 z-20 px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        <nav className="flex items-center justify-around rounded-full bg-[#f5f0e8]/90 px-3 py-2.5 shadow-lg backdrop-blur-xl">
-          <button className="flex flex-col items-center gap-1 px-3 py-1 text-[#0f1d32]">
-            <Compass size={26} strokeWidth={2.2} />
-            <span className="text-xs font-semibold">Me</span>
-          </button>
-
-          <Link
-            href="/circuits"
-            className="flex flex-col items-center gap-1 px-3 py-1 text-[#0f1d32]/50"
-          >
-            <List size={26} strokeWidth={2.2} />
-            <span className="text-xs font-semibold">Circuits</span>
-          </Link>
-
-          <button
-            onClick={() => setShowNewCircuit(true)}
-            className="flex flex-col items-center gap-1 px-3 py-1 text-[#0f1d32]/50 active:text-[#0f1d32]"
-          >
-            <Plus size={26} strokeWidth={2.2} />
-            <span className="text-xs font-semibold">Add</span>
-          </button>
-
-          <Link
-            href="/activity"
-            className="flex flex-col items-center gap-1 px-3 py-1 text-[#0f1d32]/50"
-          >
-            <Timer size={26} strokeWidth={2.2} />
-            <span className="text-xs font-semibold">Activity</span>
-          </Link>
-        </nav>
-      </div>
-
-      {/* Notifications bottom sheet */}
-      {showNotifications && (
-        <div
-          className="fixed inset-0 z-50 flex items-end bg-black/50 backdrop-blur-sm"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setShowNotifications(false);
-          }}
-        >
-          <div className="max-h-[75dvh] w-full overflow-y-auto rounded-t-3xl bg-white pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-            <div className="flex justify-center pb-1 pt-3">
-              <div className="h-1 w-10 rounded-full bg-gray-300" />
-            </div>
-            <div className="flex items-center justify-between px-5 pb-3 pt-2">
-              <button
-                onClick={() => setShowNotifications(false)}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 active:bg-gray-200"
-              >
-                <X size={18} className="text-gray-600" />
-              </button>
-              <h2 className="text-lg font-bold text-gray-900">Notifications</h2>
-              <div className="w-9" />
-            </div>
-
-            {!notifications || notifications.length === 0 ? (
-              <div className="px-5 py-10 text-center">
-                <Bell size={32} className="mx-auto mb-3 text-gray-300" />
-                <p className="text-sm text-gray-400">No notifications yet</p>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-1 px-5">
-                {notifications.map((n: Notification) => (
-                  <div
-                    key={n.id}
-                    className={`flex items-start gap-3 rounded-2xl p-4 ${
-                      n.read ? "bg-white" : "bg-blue-50/60"
-                    }`}
-                  >
-                    <div
-                      className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-                        n.type === "star"
-                          ? "bg-amber-100 text-amber-600"
-                          : n.type === "clone"
-                            ? "bg-purple-100 text-purple-600"
-                            : n.type === "invite"
-                              ? "bg-blue-100 text-blue-600"
-                              : "bg-emerald-100 text-emerald-600"
-                      }`}
-                    >
-                      {n.type === "star" && <Star size={14} />}
-                      {n.type === "clone" && <Copy size={14} />}
-                      {n.type === "invite" && <UserPlus size={14} />}
-                      {n.type === "invite_accepted" && <Check size={14} />}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm text-gray-800">{n.message}</p>
-                      <p className="mt-0.5 text-xs text-gray-400">
-                        {new Date(n.created_at).toLocaleDateString(undefined, {
-                          month: "short",
-                          day: "numeric",
-                          hour: "numeric",
-                          minute: "2-digit",
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      <BottomNav />
 
       {/* New Circuit bottom sheet */}
       {showNewCircuit && (
