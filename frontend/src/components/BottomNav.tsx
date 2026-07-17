@@ -55,7 +55,7 @@ export function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <div className="absolute inset-x-0 bottom-0 z-20 flex items-stretch gap-2.5 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+    <div className="absolute inset-x-0 bottom-0 z-20 flex items-end gap-2.5 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
       {/* Main 4 nav items */}
       <nav className="flex flex-1 items-center justify-around rounded-full bg-white/95 px-2 py-2 shadow-lg ring-1 ring-black/5 backdrop-blur-xl">
         {NAV_ITEMS.map((item) => {
@@ -79,10 +79,10 @@ export function BottomNav() {
         })}
       </nav>
 
-      {/* Separated search icon — matches navbar height via items-stretch */}
+      {/* Separated search icon */}
       <button
         disabled
-        className="flex aspect-square shrink-0 items-center justify-center rounded-full bg-white/95 shadow-lg ring-1 ring-black/5 backdrop-blur-xl text-[#0f1d32]/25"
+        className="flex h-[56px] w-[56px] shrink-0 items-center justify-center rounded-full bg-white/95 shadow-lg ring-1 ring-black/5 backdrop-blur-xl text-[#0f1d32]/25"
         aria-label="Search (coming soon)"
       >
         <Search size={22} />
