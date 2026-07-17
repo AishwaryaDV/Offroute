@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Check, ChevronRight, X } from "lucide-react";
+import { Bell, Check, ChevronRight, LogOut, Map, Shield, User, X } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -209,47 +209,56 @@ function Settings() {
           Settings
         </h1>
 
-        <div className="bg-white">
+        <div className="flex flex-col gap-2 px-4">
           <button
             onClick={() => setView("profile")}
-            className="flex w-full items-center justify-between px-5 py-5 active:bg-gray-50"
+            className="flex w-full items-center gap-4 rounded-2xl bg-white px-4 py-4 active:bg-gray-50"
           >
-            <span className="text-lg font-semibold text-[#0f1d32]">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f6f8]">
+              <User size={20} className="text-[#0f1d32]" />
+            </div>
+            <span className="flex-1 text-left text-base font-semibold text-[#0f1d32]">
               Profile
             </span>
-            <ChevronRight size={20} className="text-blue-500" />
+            <ChevronRight size={18} className="text-gray-300" />
           </button>
-          <div className="mx-5 h-px bg-gray-200" />
           <button
             onClick={() => setView("account")}
-            className="flex w-full items-center justify-between px-5 py-5 active:bg-gray-50"
+            className="flex w-full items-center gap-4 rounded-2xl bg-white px-4 py-4 active:bg-gray-50"
           >
-            <span className="text-lg font-semibold text-[#0f1d32]">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f6f8]">
+              <Shield size={20} className="text-[#0f1d32]" />
+            </div>
+            <span className="flex-1 text-left text-base font-semibold text-[#0f1d32]">
               Account
             </span>
-            <ChevronRight size={20} className="text-blue-500" />
+            <ChevronRight size={18} className="text-gray-300" />
           </button>
-          <div className="mx-5 h-px bg-gray-200" />
           <button
             onClick={() => setView("mapstyle")}
-            className="flex w-full items-center justify-between px-5 py-5 active:bg-gray-50"
+            className="flex w-full items-center gap-4 rounded-2xl bg-white px-4 py-4 active:bg-gray-50"
           >
-            <span className="text-lg font-semibold text-[#0f1d32]">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f6f8]">
+              <Map size={20} className="text-[#0f1d32]" />
+            </div>
+            <span className="flex-1 text-left text-base font-semibold text-[#0f1d32]">
               Map style
             </span>
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-400">
                 {MAP_STYLES.find((s) => s.url === mapStyle)?.label ?? "Satellite"}
               </span>
-              <ChevronRight size={20} className="text-blue-500" />
+              <ChevronRight size={18} className="text-gray-300" />
             </div>
           </button>
-          <div className="mx-5 h-px bg-gray-200" />
           <button
             onClick={() => setView("notifications")}
-            className="flex w-full items-center justify-between px-5 py-5 active:bg-gray-50"
+            className="flex w-full items-center gap-4 rounded-2xl bg-white px-4 py-4 active:bg-gray-50"
           >
-            <span className="text-lg font-semibold text-[#0f1d32]">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f6f8]">
+              <Bell size={20} className="text-[#0f1d32]" />
+            </div>
+            <span className="flex-1 text-left text-base font-semibold text-[#0f1d32]">
               Notifications
             </span>
             <div className="flex items-center gap-2">
@@ -258,21 +267,29 @@ function Settings() {
                   {pushEnabled ? "On" : "Off"}
                 </span>
               )}
-              <ChevronRight size={20} className="text-blue-500" />
+              <ChevronRight size={18} className="text-gray-300" />
             </div>
           </button>
         </div>
 
-        <div className="mt-6 bg-white">
+        <div className="mt-6 px-4">
           <button
             onClick={logout}
-            className="flex w-full items-center px-5 py-5 active:bg-gray-50"
+            className="flex w-full items-center gap-4 rounded-2xl bg-white px-4 py-4 active:bg-red-50"
           >
-            <span className="text-lg font-semibold text-[#0f1d32]">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-50">
+              <LogOut size={20} className="text-red-500" />
+            </div>
+            <span className="text-base font-semibold text-red-500">
               Log out
             </span>
           </button>
         </div>
+
+        <footer className="mt-auto px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-10 text-center">
+          <p className="text-xs text-gray-400">Offroute v1.0</p>
+          <p className="mt-1 text-[10px] text-gray-300">Made with care for travelers</p>
+        </footer>
         </div>
       </div>
     );
