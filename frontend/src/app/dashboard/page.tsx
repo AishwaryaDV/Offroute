@@ -171,12 +171,20 @@ function Dashboard() {
   const visibleCircuits =
     snap === "full" ? circuits : circuits?.slice(0, 3);
 
-  function formatDate(d: string) {
+  function formatMonthYear(d: string) {
     return new Date(d).toLocaleDateString(undefined, {
-      day: "numeric",
       month: "short",
       year: "numeric",
     });
+  }
+
+  function isActiveTrip(circuit: { start_date: string | null; end_date: string | null }) {
+    if (!circuit.start_date) return false;
+    const now = new Date();
+    const start = new Date(circuit.start_date);
+    if (start > now) return false;
+    if (!circuit.end_date) return true;
+    return new Date(circuit.end_date) >= now;
   }
 
   return (
@@ -214,19 +222,19 @@ function Dashboard() {
       {/* Draggable bottom sheet */}
       <div
         ref={sheetRef}
-        className="absolute inset-x-0 bottom-0 z-10 rounded-t-[28px] bg-white shadow-[0_-10px_40px_rgba(0,0,0,0.35)]"
+        className="absolute inset-x-0 bottom-0 z-10 flex flex-col rounded-t-[28px] bg-white shadow-[0_-10px_40px_rgba(0,0,0,0.35)]"
         style={{
           height: SNAP_HEIGHTS[snap],
           transform:
             dragOffset !== null ? `translateY(${Math.max(0, dragOffset)}px)` : undefined,
           transition: dragOffset !== null ? "none" : "height 0.35s cubic-bezier(.4,0,.2,1)",
           paddingBottom: "calc(80px + max(0.75rem, env(safe-area-inset-bottom)))",
-          overflow: snap === "collapsed" ? "hidden" : "auto",
         }}
       >
-        {/* Drag handle */}
+        {/* Drag handle — touch-action:none prevents browser scroll from stealing the gesture */}
         <div
-          className="flex cursor-grab justify-center pb-1 pt-3 active:cursor-grabbing"
+          className="flex shrink-0 cursor-grab justify-center pb-1 pt-3 active:cursor-grabbing"
+          style={{ touchAction: "none" }}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
@@ -234,6 +242,7 @@ function Dashboard() {
           <div className="h-1 w-10 rounded-full bg-gray-300" />
         </div>
 
+        <div className={`flex-1 ${snap === "collapsed" ? "overflow-hidden" : "overflow-y-auto"}`}>
         {me && (
           <div className="flex items-center gap-4 px-6 pt-2">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#0f1d32]/10 text-xl font-bold text-[#0f1d32]">
@@ -292,68 +301,46 @@ function Dashboard() {
           </p>
         )}
 
-        {/* Circuit cards */}
+        {/* Circuit cards — 2-column grid */}
         {circuits && circuits.length > 0 && (
           <div className="px-6 pt-5">
-            <div className="flex flex-col gap-3">
-              {visibleCircuits?.map((circuit) => (
-                <Link
-                  key={circuit.id}
-                  href={`/circuits/${circuit.id}`}
-                  className="rounded-2xl bg-[#f5f6f8] p-4 active:bg-gray-100"
-                >
-                  <div className="flex items-start justify-between">
-                    <p className="truncate text-base font-semibold text-[#0f1d32]">
-                      {circuit.title}
-                    </p>
-                    <span className="ml-2 shrink-0 rounded-full bg-[#0f1d32]/8 px-2 py-0.5 text-[10px] font-medium capitalize text-gray-500">
-                      {circuit.visibility}
-                    </span>
-                  </div>
-                  {circuit.description && (
-                    <p className="mt-1 line-clamp-1 text-sm text-gray-500">
-                      {circuit.description}
-                    </p>
-                  )}
-                  <div className="mt-2.5 flex items-center gap-3 text-xs text-gray-400">
-                    <span className="flex items-center gap-1">
-                      <MapPin size={12} />
-                      {circuit.point_count}{" "}
-                      {circuit.point_count === 1 ? "pt" : "pts"}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Star size={12} />
-                      {circuit.star_count}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Copy size={12} />
-                      {circuit.clone_count}
-                    </span>
-                    {circuit.start_date && (
-                      <span className="ml-auto text-[11px]">
-                        {formatDate(circuit.start_date)}
+            <div className="grid grid-cols-2 gap-3">
+              {visibleCircuits?.map((circuit) => {
+                const active = isActiveTrip(circuit);
+                return (
+                  <Link
+                    key={circuit.id}
+                    href={`/circuits/${circuit.id}`}
+                    className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f1d32] to-[#1a3a5c] p-4 active:opacity-90"
+                  >
+                    {active && (
+                      <span className="absolute right-2 top-2 rounded-full bg-emerald-500 px-2 py-0.5 text-[9px] font-bold uppercase text-white">
+                        Active
                       </span>
                     )}
-                  </div>
-                  {circuit.tags && circuit.tags.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      {circuit.tags.slice(0, 3).map((tag) => (
-                        <span
-                          key={tag}
-                          className="rounded-full bg-[#0f1d32]/8 px-2 py-0.5 text-[10px] font-medium text-[#0f1d32]/60"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                      {circuit.tags.length > 3 && (
-                        <span className="rounded-full bg-[#0f1d32]/8 px-2 py-0.5 text-[10px] font-medium text-[#0f1d32]/60">
-                          +{circuit.tags.length - 3}
-                        </span>
-                      )}
+                    <p className="truncate text-sm font-bold text-white">
+                      {circuit.title}
+                    </p>
+                    <p className="mt-0.5 text-[10px] capitalize text-white/50">
+                      {circuit.visibility}
+                    </p>
+                    <div className="mt-3 flex items-center gap-2 text-[10px] text-white/60">
+                      <span className="flex items-center gap-0.5">
+                        <MapPin size={10} /> {circuit.point_count}
+                      </span>
+                      <span className="flex items-center gap-0.5">
+                        <Star size={10} /> {circuit.star_count}
+                      </span>
+                      <span className="flex items-center gap-0.5">
+                        <Copy size={10} /> {circuit.clone_count}
+                      </span>
                     </div>
-                  )}
-                </Link>
-              ))}
+                    <p className="mt-2 text-[10px] text-white/40">
+                      {formatMonthYear(circuit.start_date ?? circuit.created_at)}
+                    </p>
+                  </Link>
+                );
+              })}
             </div>
 
             {/* Show more / Show less */}
@@ -411,6 +398,7 @@ function Dashboard() {
             </div>
           </div>
         )}
+        </div>
       </div>
 
       <BottomNav />
