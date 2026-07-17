@@ -280,7 +280,7 @@ function Dashboard() {
           {[
             { icon: <Compass size={14} />, value: stats?.circuits ?? circuits?.length ?? 0, label: "Circuits" },
             { icon: <MapPin size={14} />, value: stats?.points ?? 0, label: "Points" },
-            { icon: <Star size={14} />, value: stats?.stars_received ?? 0, label: "Stars" },
+            { icon: <Globe2 size={14} />, value: "—", label: "Countries" },
             { icon: <Copy size={14} />, value: stats?.total_clones ?? 0, label: "Clones" },
           ].map((s) => (
             <div key={s.label} className="rounded-xl bg-[#f5f6f8] px-2 py-3">
@@ -436,7 +436,7 @@ function Dashboard() {
             }
           }}
         >
-          <div className="max-h-[94dvh] w-full overflow-y-auto rounded-t-3xl bg-white pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+          <div className="flex max-h-[94dvh] w-full flex-col rounded-t-3xl bg-white">
             <div className="flex justify-center pb-1 pt-3">
               <div className="h-1 w-10 rounded-full bg-gray-300" />
             </div>
@@ -460,8 +460,9 @@ function Dashboard() {
 
             <form
               onSubmit={handleSubmit((data) => createMutation.mutate(data))}
-              className="flex flex-col gap-5 px-5"
+              className="flex flex-1 flex-col overflow-y-auto"
             >
+            <div className="flex flex-col gap-5 px-5">
               <div>
                 <input
                   type="text"
@@ -472,7 +473,7 @@ function Dashboard() {
                     required: "Give your circuit a name",
                     maxLength: { value: 200, message: "200 characters max" },
                   })}
-                  className={`w-full rounded-xl bg-white px-4 py-3.5 text-base text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ${
+                  className={`w-full rounded-xl bg-white px-4 py-3 text-base text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ${
                     errors.title
                       ? "ring-red-400 focus:ring-red-500"
                       : "ring-gray-200 focus:ring-[#0f1d32]"
@@ -493,7 +494,7 @@ function Dashboard() {
                   {...register("description", {
                     maxLength: { value: 200, message: "200 characters max" },
                   })}
-                  className="w-full resize-none rounded-xl bg-white px-4 py-3.5 text-base text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ring-gray-200 focus:ring-[#0f1d32]"
+                  className="w-full resize-none rounded-xl bg-white px-4 py-3 text-base text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ring-gray-200 focus:ring-[#0f1d32]"
                 />
                 <p className="mt-1 text-right text-xs text-gray-400">
                   {descValue.length}/200
@@ -581,14 +582,17 @@ function Dashboard() {
                   You can invite collaborators after creating your circuit
                 </p>
               </div>
+            </div>
 
-              <button
-                type="submit"
-                disabled={createMutation.isPending}
-                className="rounded-full bg-[#0f1d32] py-4 text-base font-semibold text-white active:bg-[#162a46] disabled:opacity-50"
-              >
-                {createMutation.isPending ? "Creating…" : "Create circuit"}
-              </button>
+              <div className="shrink-0 px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-3">
+                <button
+                  type="submit"
+                  disabled={createMutation.isPending}
+                  className="w-full rounded-full bg-[#0f1d32] py-4 text-base font-semibold text-white active:bg-[#162a46] disabled:opacity-50"
+                >
+                  {createMutation.isPending ? "Creating…" : "Create circuit"}
+                </button>
+              </div>
             </form>
           </div>
         </div>

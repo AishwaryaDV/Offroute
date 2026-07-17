@@ -104,8 +104,8 @@ export function BottomNav() {
               key={item.href}
               href={item.href}
               ref={(el) => { itemRefs.current[i] = el; }}
-              className={`relative z-10 flex flex-col items-center gap-0.5 rounded-full px-3 py-1.5 transition-colors duration-200 ${
-                active ? "text-[#0f1d32]" : "text-[#0f1d32]/35"
+              className={`relative z-10 flex flex-col items-center gap-0.5 rounded-full px-3 py-1.5 text-[#0f1d32] transition-colors duration-200 ${
+                active ? "font-bold" : ""
               }`}
             >
               {item.icon}
