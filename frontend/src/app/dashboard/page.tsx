@@ -227,9 +227,9 @@ function Dashboard() {
 
       {/* Header: Offroute branding */}
       <header className="absolute inset-x-0 top-0 z-10 px-5 pt-[max(env(safe-area-inset-top),1.25rem)]">
-        <div className="flex items-center gap-2">
-          <Compass size={22} className="text-white/80" />
-          <h1 className="text-xl font-bold tracking-tight text-white [text-shadow:0_1px_6px_rgba(0,0,0,.6)]">
+        <div className="flex items-center gap-2 [filter:drop-shadow(0_1px_4px_rgba(0,0,0,.7))]">
+          <Compass size={22} className="text-white" />
+          <h1 className="text-xl font-bold tracking-tight text-white">
             Offroute
           </h1>
         </div>
