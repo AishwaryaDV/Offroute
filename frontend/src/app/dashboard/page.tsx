@@ -151,7 +151,6 @@ function Dashboard() {
     defaultValues: { visibility: "private" },
   });
 
-  const descValue = watch("description") ?? "";
 
   const createMutation = useMutation({
     mutationFn: (data: NewCircuitValues) =>
@@ -464,16 +463,20 @@ function Dashboard() {
             >
             <div className="flex flex-col gap-5 px-5">
               <div>
+                <div className="mb-2 flex items-center gap-2 text-sm font-medium text-[#0f1d32]">
+                  <Compass size={16} className="text-gray-400" />
+                  <span>Circuit name</span>
+                </div>
                 <input
                   type="text"
-                  placeholder="Name your circuit"
+                  placeholder="e.g. Goa weekend"
                   autoComplete="off"
                   autoFocus
                   {...register("title", {
                     required: "Give your circuit a name",
                     maxLength: { value: 200, message: "200 characters max" },
                   })}
-                  className={`w-full rounded-xl bg-white px-4 py-3 text-base text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ${
+                  className={`w-full rounded-xl bg-white px-3 py-2.5 text-sm text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ${
                     errors.title
                       ? "ring-red-400 focus:ring-red-500"
                       : "ring-gray-200 focus:ring-[#0f1d32]"
@@ -487,18 +490,19 @@ function Dashboard() {
               </div>
 
               <div>
-                <textarea
-                  placeholder="Description (optional)"
-                  rows={2}
-                  maxLength={200}
+                <div className="mb-2 flex items-center gap-2 text-sm font-medium text-[#0f1d32]">
+                  <MapPin size={16} className="text-gray-400" />
+                  <span>Description</span>
+                  <span className="text-xs font-normal text-gray-400">(optional)</span>
+                </div>
+                <input
+                  type="text"
+                  placeholder="A short summary of your trip"
                   {...register("description", {
                     maxLength: { value: 200, message: "200 characters max" },
                   })}
-                  className="w-full resize-none rounded-xl bg-white px-4 py-3 text-base text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ring-gray-200 focus:ring-[#0f1d32]"
+                  className="w-full rounded-xl bg-white px-3 py-2.5 text-sm text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ring-gray-200 focus:ring-[#0f1d32]"
                 />
-                <p className="mt-1 text-right text-xs text-gray-400">
-                  {descValue.length}/200
-                </p>
               </div>
 
               <div>
