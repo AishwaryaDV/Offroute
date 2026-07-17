@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   Copy,
   Download,
+  FolderOpen,
   Gem,
   Home,
   Landmark,
@@ -37,7 +38,8 @@ import { getCircuit, deleteCircuit, shareCircuit, updateCircuit, starCircuit, un
 import { getCollaborators, inviteCollaborator, removeCollaborator } from "@/lib/collaborators";
 import { getPoints, deletePoint } from "@/lib/points";
 import { exportCircuitPdf } from "@/lib/exportPdf";
-import type { Collaborator, Point } from "@/types/api";
+import { getTrips, addCircuitToTrip, removeCircuitFromTrip } from "@/lib/trips";
+import type { Collaborator, Point, Trip } from "@/types/api";
 
 type IconComponent = React.ComponentType<{
   size?: number;
@@ -79,6 +81,7 @@ function CircuitDetail() {
   const [showMenu, setShowMenu] = useState(false);
   const [showTagEditor, setShowTagEditor] = useState(false);
   const [showCollaborators, setShowCollaborators] = useState(false);
+  const [showTripPicker, setShowTripPicker] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<"viewer" | "editor">("viewer");
   const [editTags, setEditTags] = useState<string[]>([]);
@@ -99,6 +102,34 @@ function CircuitDetail() {
     queryKey: ["collaborators", id],
     queryFn: () => getCollaborators(id),
     enabled: showCollaborators,
+  });
+
+  const { data: trips } = useQuery({
+    queryKey: ["trips"],
+    queryFn: getTrips,
+    enabled: showTripPicker,
+  });
+
+  const assignTripMutation = useMutation({
+    mutationFn: (tripId: string) => addCircuitToTrip(tripId, id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["circuit", id] });
+      queryClient.invalidateQueries({ queryKey: ["trips"] });
+      setShowTripPicker(false);
+      toast.success("Moved to trip");
+    },
+    onError: () => toast.error("Could not move circuit"),
+  });
+
+  const unassignTripMutation = useMutation({
+    mutationFn: (tripId: string) => removeCircuitFromTrip(tripId, id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["circuit", id] });
+      queryClient.invalidateQueries({ queryKey: ["trips"] });
+      setShowTripPicker(false);
+      toast.success("Removed from trip");
+    },
+    onError: () => toast.error("Could not remove circuit"),
   });
 
   const mapMarkers: MapMarker[] = useMemo(
@@ -351,6 +382,17 @@ function CircuitDetail() {
             >
               <Download size={16} className="text-gray-400" />
               Export PDF
+            </button>
+            <div className="mx-4 h-px bg-gray-100" />
+            <button
+              onClick={() => {
+                setShowMenu(false);
+                setShowTripPicker(true);
+              }}
+              className="flex w-full items-center gap-3 px-4 py-3.5 text-sm font-medium text-[#0f1d32] active:bg-gray-50"
+            >
+              <FolderOpen size={16} className="text-gray-400" />
+              {circuit?.trip_id ? "Change trip" : "Move to trip"}
             </button>
             <div className="mx-4 h-px bg-gray-100" />
             <button
@@ -669,6 +711,77 @@ function CircuitDetail() {
                 Delete
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Trip picker sheet */}
+      {showTripPicker && (
+        <div
+          className="fixed inset-0 z-50 flex items-end bg-black/50 backdrop-blur-sm"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowTripPicker(false);
+          }}
+        >
+          <div className="max-h-[60dvh] w-full overflow-y-auto rounded-t-3xl bg-white pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+            <div className="flex justify-center pb-1 pt-3">
+              <div className="h-1 w-10 rounded-full bg-gray-300" />
+            </div>
+            <div className="flex items-center justify-between px-5 pb-3 pt-2">
+              <button
+                onClick={() => setShowTripPicker(false)}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 active:bg-gray-200"
+              >
+                <X size={18} className="text-gray-600" />
+              </button>
+              <h2 className="text-lg font-bold text-gray-900">Move to trip</h2>
+              <div className="w-9" />
+            </div>
+
+            {circuit?.trip_id && (
+              <div className="px-5 pb-3">
+                <button
+                  onClick={() => unassignTripMutation.mutate(circuit.trip_id!)}
+                  className="w-full rounded-xl border border-gray-200 py-3 text-sm font-medium text-gray-500 active:bg-gray-50"
+                >
+                  Remove from trip
+                </button>
+              </div>
+            )}
+
+            {!trips || trips.length === 0 ? (
+              <div className="px-5 py-8 text-center">
+                <FolderOpen size={28} className="mx-auto mb-2 text-gray-300" />
+                <p className="text-sm text-gray-400">
+                  No trips yet — create one from the Circuits page
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-1 px-5">
+                {trips.map((trip: Trip) => (
+                  <button
+                    key={trip.id}
+                    onClick={() => assignTripMutation.mutate(trip.id)}
+                    disabled={circuit?.trip_id === trip.id}
+                    className={`flex items-center justify-between rounded-2xl p-4 text-left active:bg-gray-100 disabled:opacity-40 ${
+                      circuit?.trip_id === trip.id ? "bg-blue-50" : "bg-[#f5f6f8]"
+                    }`}
+                  >
+                    <div>
+                      <p className="text-sm font-semibold text-[#0f1d32]">
+                        {trip.title}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {trip.circuit_count} {trip.circuit_count === 1 ? "circuit" : "circuits"}
+                      </p>
+                    </div>
+                    {circuit?.trip_id === trip.id && (
+                      <span className="text-xs font-medium text-blue-500">Current</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
