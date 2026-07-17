@@ -78,7 +78,9 @@ function Dashboard() {
   });
 
   const [showNewCircuit, setShowNewCircuit] = useState(false);
-  const [mapReady, setMapReady] = useState(false);
+  const [mapReady, setMapReady] = useState(() =>
+    typeof window !== "undefined" && sessionStorage.getItem("offroute-map-loaded") === "1"
+  );
   const [userLoc, setUserLoc] = useState<{ lng: number; lat: number } | null>(
     null
   );
@@ -209,7 +211,7 @@ function Dashboard() {
         zoom={3.6}
         interactive
         userLocation={userLoc ?? undefined}
-        onReady={() => setMapReady(true)}
+        onReady={() => { setMapReady(true); sessionStorage.setItem("offroute-map-loaded", "1"); }}
       />
 
       {/* Loading overlay — fully opaque so no tile pop-in shows */}
