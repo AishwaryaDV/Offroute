@@ -330,7 +330,7 @@ function Dashboard() {
                   <Link
                     key={circuit.id}
                     href={`/circuits/${circuit.id}`}
-                    className="relative aspect-[4/5] overflow-hidden rounded-2xl active:opacity-90"
+                    className="relative aspect-[4/3] overflow-hidden rounded-2xl active:opacity-90"
                   >
                     <img
                       src={coverUrl}
