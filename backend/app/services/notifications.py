@@ -6,6 +6,14 @@ from sqlalchemy.orm import joinedload
 
 from app.models.notification import Notification
 from app.models.user import User
+from app.services.push import send_push_to_user
+
+PUSH_TITLES = {
+    "star": "New star",
+    "clone": "Circuit cloned",
+    "invite": "Collaboration invite",
+    "invite_accepted": "Invite accepted",
+}
 
 
 async def create(
@@ -26,6 +34,12 @@ async def create(
     db.add(notif)
     await db.commit()
     await db.refresh(notif)
+
+    url = f"/circuits/{circuit_id}" if circuit_id else "/dashboard"
+    await send_push_to_user(
+        db, user_id, PUSH_TITLES.get(type, "Offroute"), message, url
+    )
+
     return notif
 
 
