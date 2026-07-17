@@ -81,7 +81,7 @@ export function BottomNav() {
       {/* Main 4 nav items */}
       <nav
         ref={navRef}
-        className="relative flex flex-1 items-center justify-around rounded-full bg-white/95 px-2 py-2 shadow-lg ring-1 ring-black/5 backdrop-blur-xl"
+        className="relative flex flex-1 items-center justify-around rounded-full bg-white/95 px-2 py-1 shadow-lg ring-1 ring-black/5 backdrop-blur-xl"
       >
         {/* Sliding indicator */}
         {activeIndex >= 0 && indicator.width > 0 && (

@@ -178,6 +178,15 @@ function Dashboard() {
   const visibleCircuits =
     snap === "full" ? circuits : circuits?.slice(0, 3);
 
+  const PLACEHOLDER_COVERS = [
+    "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&h=300&fit=crop",
+    "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=400&h=300&fit=crop",
+    "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=400&h=300&fit=crop",
+    "https://images.unsplash.com/photo-1530789253388-582c481c54b0?w=400&h=300&fit=crop",
+    "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=300&fit=crop",
+    "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=400&h=300&fit=crop",
+  ];
+
   function formatMonthYear(d: string) {
     return new Date(d).toLocaleDateString(undefined, {
       month: "short",
@@ -314,39 +323,45 @@ function Dashboard() {
         {circuits && circuits.length > 0 && (
           <div className="px-6 pt-5">
             <div className="grid grid-cols-2 gap-3">
-              {visibleCircuits?.map((circuit) => {
+              {visibleCircuits?.map((circuit, i) => {
                 const active = isActiveTrip(circuit);
+                const coverUrl = PLACEHOLDER_COVERS[i % PLACEHOLDER_COVERS.length];
                 return (
                   <Link
                     key={circuit.id}
                     href={`/circuits/${circuit.id}`}
-                    className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f1d32] to-[#1a3a5c] p-4 active:opacity-90"
+                    className="relative aspect-[4/5] overflow-hidden rounded-2xl active:opacity-90"
                   >
+                    <img
+                      src={coverUrl}
+                      alt=""
+                      className="absolute inset-0 h-full w-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
                     {active && (
-                      <span className="absolute right-2 top-2 rounded-full bg-emerald-500 px-2 py-0.5 text-[9px] font-bold uppercase text-white">
+                      <span className="absolute right-2.5 top-2.5 rounded-full bg-emerald-500 px-2 py-0.5 text-[9px] font-bold uppercase text-white shadow-sm">
                         Active
                       </span>
                     )}
-                    <p className="truncate text-sm font-bold text-white">
-                      {circuit.title}
-                    </p>
-                    <p className="mt-0.5 text-[10px] capitalize text-white/50">
-                      {circuit.visibility}
-                    </p>
-                    <div className="mt-3 flex items-center gap-2 text-[10px] text-white/60">
-                      <span className="flex items-center gap-0.5">
-                        <MapPin size={10} /> {circuit.point_count}
-                      </span>
-                      <span className="flex items-center gap-0.5">
-                        <Star size={10} /> {circuit.star_count}
-                      </span>
-                      <span className="flex items-center gap-0.5">
-                        <Copy size={10} /> {circuit.clone_count}
-                      </span>
+                    <div className="absolute inset-x-0 bottom-0 p-3.5">
+                      <p className="truncate text-sm font-bold text-white">
+                        {circuit.title}
+                      </p>
+                      <div className="mt-1.5 flex items-center gap-2 text-[10px] text-white/70">
+                        <span className="flex items-center gap-0.5">
+                          <MapPin size={10} /> {circuit.point_count}
+                        </span>
+                        <span className="flex items-center gap-0.5">
+                          <Star size={10} /> {circuit.star_count}
+                        </span>
+                        <span className="flex items-center gap-0.5">
+                          <Copy size={10} /> {circuit.clone_count}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-[10px] text-white/50">
+                        {formatMonthYear(circuit.start_date ?? circuit.created_at)}
+                      </p>
                     </div>
-                    <p className="mt-2 text-[10px] text-white/40">
-                      {formatMonthYear(circuit.start_date ?? circuit.created_at)}
-                    </p>
                   </Link>
                 );
               })}
