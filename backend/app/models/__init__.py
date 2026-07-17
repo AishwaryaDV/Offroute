@@ -4,8 +4,9 @@ from app.models.collaborator import Collaborator
 from app.models.media import Media
 from app.models.notification import Notification
 from app.models.point import Point
+from app.models.push_subscription import PushSubscription
 from app.models.star import Star
 from app.models.trip import Trip
 from app.models.user import User
 
-__all__ = ["Base", "Circuit", "Collaborator", "Media", "Notification", "Point", "Star", "Trip", "User"]
+__all__ = ["Base", "Circuit", "Collaborator", "Media", "Notification", "Point", "PushSubscription", "Star", "Trip", "User"]
