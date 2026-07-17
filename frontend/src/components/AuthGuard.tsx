@@ -34,5 +34,5 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  return children;
+  return <div className="page-transition">{children}</div>;
 }
