@@ -1,13 +1,19 @@
 "use client";
 
-import { Check, ChevronRight, X } from "lucide-react";
+import { Bell, Check, ChevronRight, X } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AuthGuard } from "@/components/AuthGuard";
 import { deleteMe, getMe, updateMe } from "@/lib/me";
+import {
+  isPushSupported,
+  isSubscribedToPush,
+  subscribeToPush,
+  unsubscribeFromPush,
+} from "@/lib/push";
 import { supabase } from "@/lib/supabase";
 
 interface ProfileValues {
@@ -60,7 +66,7 @@ const MAP_STYLES = [
   { id: "terrain", url: "/map-style-terrain.json", label: "Terrain", color: "#7a9e6b" },
 ];
 
-type View = "menu" | "profile" | "account" | "mapstyle";
+type View = "menu" | "profile" | "account" | "mapstyle" | "notifications";
 
 function Settings() {
   const router = useRouter();
@@ -77,6 +83,41 @@ function Settings() {
       ? localStorage.getItem(MAP_STYLE_KEY) ?? "/map-style-satellite.json"
       : "/map-style-satellite.json"
   );
+
+  const [pushSupported, setPushSupported] = useState(false);
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushLoading, setPushLoading] = useState(false);
+
+  useEffect(() => {
+    const supported = isPushSupported();
+    setPushSupported(supported);
+    if (supported) {
+      isSubscribedToPush().then(setPushEnabled);
+    }
+  }, []);
+
+  async function togglePush() {
+    setPushLoading(true);
+    try {
+      if (pushEnabled) {
+        await unsubscribeFromPush();
+        setPushEnabled(false);
+        toast.success("Push notifications disabled");
+      } else {
+        const ok = await subscribeToPush();
+        if (ok) {
+          setPushEnabled(true);
+          toast.success("Push notifications enabled");
+        } else {
+          toast.error("Notification permission denied");
+        }
+      }
+    } catch {
+      toast.error("Could not update push settings");
+    } finally {
+      setPushLoading(false);
+    }
+  }
 
   const profileForm = useForm<ProfileValues>({
     values: {
@@ -204,12 +245,22 @@ function Settings() {
             </div>
           </button>
           <div className="mx-5 h-px bg-gray-200" />
-          <div className="flex w-full items-center justify-between px-5 py-5 opacity-40">
+          <button
+            onClick={() => setView("notifications")}
+            className="flex w-full items-center justify-between px-5 py-5 active:bg-gray-50"
+          >
             <span className="text-lg font-semibold text-[#0f1d32]">
               Notifications
             </span>
-            <span className="text-sm text-gray-500">Coming soon</span>
-          </div>
+            <div className="flex items-center gap-2">
+              {pushSupported && (
+                <span className="text-sm text-gray-400">
+                  {pushEnabled ? "On" : "Off"}
+                </span>
+              )}
+              <ChevronRight size={20} className="text-blue-500" />
+            </div>
+          </button>
         </div>
 
         <div className="mt-6 bg-white">
@@ -438,6 +489,78 @@ function Settings() {
           <p className="px-5 pt-6 text-center text-xs text-gray-400">
             Takes effect next time a map loads.
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  /* ---------- Notifications ---------- */
+  if (view === "notifications") {
+    const permissionDenied =
+      typeof window !== "undefined" && Notification.permission === "denied";
+    return (
+      <div className="flex min-h-[100dvh] flex-col bg-[#0b1120]">
+        <div className="h-[max(env(safe-area-inset-top),2.75rem)] shrink-0" />
+        <div className="sheet-up sheet-light flex-1 overflow-hidden rounded-t-[28px] bg-white">
+          <div className="flex items-center justify-between px-5 pt-5">
+            <button
+              onClick={() => setView("menu")}
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f5f6f8] active:bg-gray-200"
+              aria-label="Back"
+            >
+              <X size={22} className="text-[#0f1d32]" strokeWidth={2.5} />
+            </button>
+          </div>
+
+          <h1 className="px-5 pb-2 pt-4 text-4xl font-bold tracking-tight text-[#0f1d32]">
+            Notifications
+          </h1>
+          <p className="px-5 pb-6 text-base text-gray-400">
+            Get notified when someone stars, clones, or invites you to a circuit.
+          </p>
+
+          {pushSupported ? (
+            <div className="border-t border-gray-200">
+              <div className="flex items-center justify-between px-5 py-5">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f6f8]">
+                    <Bell size={20} className="text-[#0f1d32]" />
+                  </div>
+                  <div>
+                    <p className="text-base font-semibold text-[#0f1d32]">
+                      Push notifications
+                    </p>
+                    <p className="text-sm text-gray-400">
+                      {pushEnabled ? "Enabled" : "Disabled"}
+                    </p>
+                  </div>
+                </div>
+                <label className="relative inline-flex cursor-pointer items-center">
+                  <input
+                    type="checkbox"
+                    checked={pushEnabled}
+                    onChange={togglePush}
+                    disabled={pushLoading || permissionDenied}
+                    className="peer sr-only"
+                  />
+                  <div className="h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-[#0f1d32] peer-checked:after:translate-x-full peer-disabled:opacity-50" />
+                </label>
+              </div>
+              {permissionDenied && (
+                <p className="px-5 pb-4 text-sm text-red-500">
+                  Notifications are blocked by your browser. Update your site
+                  permissions to enable them.
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="border-t border-gray-200 px-5 py-8 text-center">
+              <Bell size={32} className="mx-auto mb-3 text-gray-300" />
+              <p className="text-base text-gray-500">
+                Push notifications are not supported on this browser.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     );
