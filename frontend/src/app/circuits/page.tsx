@@ -1,51 +1,74 @@
 "use client";
 
-import { FolderOpen, MapPin, Plus, Trash2, X } from "lucide-react";
+import { Copy, FolderOpen, MapPin, Plus, Star, Trash2, X } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AuthGuard } from "@/components/AuthGuard";
+import { BottomNav } from "@/components/BottomNav";
 import { getCircuits } from "@/lib/circuits";
 import { getMe } from "@/lib/me";
 import { getTrips, createTrip, deleteTrip } from "@/lib/trips";
 import type { Circuit, Trip } from "@/types/api";
 
-function formatDates(circuit: Circuit): string {
-  const fmt = (d: string) =>
-    new Date(d).toLocaleDateString(undefined, {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-  if (circuit.start_date && circuit.end_date)
-    return `${fmt(circuit.start_date)} – ${fmt(circuit.end_date)}`;
-  if (circuit.start_date) return fmt(circuit.start_date);
-  return fmt(circuit.created_at);
+const PLACEHOLDER_COVERS = [
+  "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&h=300&fit=crop",
+  "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=400&h=300&fit=crop",
+  "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=400&h=300&fit=crop",
+  "https://images.unsplash.com/photo-1530789253388-582c481c54b0?w=400&h=300&fit=crop",
+  "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=300&fit=crop",
+  "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=400&h=300&fit=crop",
+];
+
+function formatMonthYear(d: string) {
+  return new Date(d).toLocaleDateString(undefined, {
+    month: "short",
+    year: "numeric",
+  });
 }
 
-function CircuitRow({ circuit }: { circuit: Circuit }) {
+function CircuitCard({ circuit, index }: { circuit: Circuit; index: number }) {
+  const coverUrl = PLACEHOLDER_COVERS[index % PLACEHOLDER_COVERS.length];
+  const isActive = (() => {
+    if (!circuit.start_date) return false;
+    const now = new Date();
+    const start = new Date(circuit.start_date);
+    if (start > now) return false;
+    if (!circuit.end_date) return true;
+    return new Date(circuit.end_date) >= now;
+  })();
+
   return (
     <Link
       href={`/circuits/${circuit.id}`}
-      className="block px-5 py-5 active:bg-gray-50"
+      className="relative aspect-[4/3] overflow-hidden rounded-2xl active:opacity-90"
     >
-      <p className="text-2xl font-bold text-[#0f1d32]">{circuit.title}</p>
-      <div className="mt-1.5 flex items-center gap-1.5 text-base text-gray-500">
-        <span>
-          {circuit.point_count} {circuit.point_count === 1 ? "point" : "points"}
+      <img src={coverUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
+      {isActive && (
+        <span className="absolute right-2.5 top-2.5 rounded-full bg-emerald-500 px-2 py-0.5 text-[9px] font-bold uppercase text-white shadow-sm">
+          Active
         </span>
-        <span>·</span>
-        <span className="capitalize">{circuit.visibility}</span>
-        <span>·</span>
-        <span>{formatDates(circuit)}</span>
-      </div>
-      {circuit.description && (
-        <p className="mt-2 line-clamp-2 text-base text-gray-600">
-          {circuit.description}
-        </p>
       )}
+      <div className="absolute inset-x-0 bottom-0 p-3.5">
+        <p className="truncate text-sm font-bold text-white">{circuit.title}</p>
+        <div className="mt-1.5 flex items-center gap-2 text-[10px] text-white/70">
+          <span className="flex items-center gap-0.5">
+            <MapPin size={10} /> {circuit.point_count}
+          </span>
+          <span className="flex items-center gap-0.5">
+            <Star size={10} /> {circuit.star_count}
+          </span>
+          <span className="flex items-center gap-0.5">
+            <Copy size={10} /> {circuit.clone_count}
+          </span>
+        </div>
+        <p className="mt-1 text-[10px] text-white/50">
+          {formatMonthYear(circuit.start_date ?? circuit.created_at)}
+        </p>
+      </div>
     </Link>
   );
 }
@@ -101,11 +124,18 @@ function CircuitsList() {
     return { tripped, untripped };
   }, [circuits]);
 
+  let cardIndex = 0;
+
   return (
     <div className="flex min-h-[100dvh] flex-col bg-[#0b1120]">
       <div className="h-[max(env(safe-area-inset-top),2.75rem)] shrink-0" />
-      <div className="sheet-up sheet-light flex-1 overflow-hidden rounded-t-[28px] bg-white">
-        <header className="sticky top-0 z-10 rounded-t-[28px] bg-white px-5 pb-4 pt-5">
+      <div className="sheet-up sheet-light flex-1 overflow-y-auto rounded-t-[28px] bg-[#f5f6f8]" style={{ paddingBottom: "calc(80px + max(0.75rem, env(safe-area-inset-bottom)))" }}>
+        {/* Drag handle */}
+        <div className="flex justify-center pt-3 pb-1">
+          <div className="h-1 w-10 rounded-full bg-gray-300" />
+        </div>
+
+        <header className="px-5 pb-4 pt-2">
           <div className="flex items-start justify-between">
             <h1 className="text-4xl font-bold tracking-tight text-[#0f1d32]">
               Circuits
@@ -113,14 +143,14 @@ function CircuitsList() {
             <div className="flex gap-2">
               <button
                 onClick={() => setShowTrips(true)}
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f5f6f8] active:bg-gray-200"
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-white active:bg-gray-100"
                 aria-label="Manage trips"
               >
                 <FolderOpen size={20} className="text-[#0f1d32]" />
               </button>
               <button
-                onClick={() => router.push("/dashboard")}
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f5f6f8] active:bg-gray-200"
+                onClick={() => router.back()}
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-white active:bg-gray-100"
                 aria-label="Close"
               >
                 <X size={22} className="text-[#0f1d32]" strokeWidth={2.5} />
@@ -132,7 +162,7 @@ function CircuitsList() {
               <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#0f1d32]/10 text-xs font-bold text-[#0f1d32]">
                 {(me.display_name?.[0] ?? me.email[0]).toUpperCase()}
               </div>
-              <p className="text-base text-gray-500">
+              <p className="text-sm text-gray-500">
                 {me.display_name ?? "You"} ·{" "}
                 {circuits
                   ? `${circuits.length} ${circuits.length === 1 ? "circuit" : "circuits"}`
@@ -142,11 +172,11 @@ function CircuitsList() {
           )}
         </header>
 
-        <main className="pb-10">
+        <main className="px-5 pb-6">
           {isLoading ? (
-            <div className="space-y-6 px-5 pt-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-16 animate-pulse rounded-xl bg-gray-100" />
+            <div className="grid grid-cols-2 gap-3">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="aspect-[4/3] animate-pulse rounded-2xl bg-gray-200" />
               ))}
             </div>
           ) : circuits && circuits.length > 0 ? (
@@ -157,59 +187,57 @@ function CircuitsList() {
                   const tripCircuits = tripped.get(trip.id) ?? [];
                   if (tripCircuits.length === 0) return null;
                   return (
-                    <div key={trip.id}>
-                      <div className="flex items-center gap-2 bg-[#f5f6f8] px-5 py-3">
-                        <FolderOpen size={16} className="text-gray-400" />
-                        <p className="text-sm font-semibold text-gray-500">
+                    <div key={trip.id} className="mb-5">
+                      <div className="mb-3 flex items-center gap-2">
+                        <FolderOpen size={14} className="text-gray-400" />
+                        <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
                           {trip.title}
                         </p>
-                        <span className="text-xs text-gray-400">
-                          {tripCircuits.length}
-                        </span>
                       </div>
-                      {tripCircuits.map((circuit, i) => (
-                        <div key={circuit.id}>
-                          {i > 0 && <div className="mx-5 h-px bg-gray-100" />}
-                          <CircuitRow circuit={circuit} />
-                        </div>
-                      ))}
+                      <div className="grid grid-cols-2 gap-3">
+                        {tripCircuits.map((circuit) => {
+                          const idx = cardIndex++;
+                          return <CircuitCard key={circuit.id} circuit={circuit} index={idx} />;
+                        })}
+                      </div>
                     </div>
                   );
                 })}
 
               {/* Ungrouped circuits */}
               {untripped.length > 0 && tripped.size > 0 && (
-                <div className="flex items-center gap-2 bg-[#f5f6f8] px-5 py-3">
-                  <p className="text-sm font-semibold text-gray-500">
+                <div className="mb-3 flex items-center gap-2">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
                     Ungrouped
                   </p>
-                  <span className="text-xs text-gray-400">
-                    {untripped.length}
-                  </span>
                 </div>
               )}
-              {untripped.map((circuit, i) => (
-                <div key={circuit.id}>
-                  {i > 0 && <div className="h-2 bg-[#f5f6f8]" />}
-                  <CircuitRow circuit={circuit} />
+              {untripped.length > 0 && (
+                <div className="grid grid-cols-2 gap-3">
+                  {untripped.map((circuit) => {
+                    const idx = cardIndex++;
+                    return <CircuitCard key={circuit.id} circuit={circuit} index={idx} />;
+                  })}
                 </div>
-              ))}
+              )}
             </>
           ) : (
             <div className="flex flex-col items-center px-5 pt-24 text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#f5f6f8]">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white">
                 <MapPin size={28} className="text-gray-400" />
               </div>
               <p className="mt-4 text-lg font-semibold text-[#0f1d32]">
                 No circuits yet
               </p>
-              <p className="mt-1 text-base text-gray-500">
-                Tap Add on the home screen to start your first one
+              <p className="mt-1 text-sm text-gray-500">
+                Tap New circuit on the home screen to start
               </p>
             </div>
           )}
         </main>
       </div>
+
+      <BottomNav />
 
       {/* Manage trips sheet */}
       {showTrips && (
@@ -226,11 +254,11 @@ function CircuitsList() {
             <div className="flex items-center justify-between px-5 pb-3 pt-2">
               <button
                 onClick={() => setShowTrips(false)}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 active:bg-gray-200"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f6f8] active:bg-gray-200"
               >
                 <X size={18} className="text-gray-600" />
               </button>
-              <h2 className="text-lg font-bold text-gray-900">Trips</h2>
+              <h2 className="text-lg font-bold text-[#0f1d32]">Trips</h2>
               <div className="w-9" />
             </div>
 
@@ -244,7 +272,7 @@ function CircuitsList() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && newTripTitle.trim()) createTripMutation.mutate();
                 }}
-                className="flex-1 rounded-xl bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none ring-1 ring-gray-200 focus:ring-blue-500"
+                className="flex-1 rounded-xl bg-white px-4 py-3 text-sm text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ring-gray-200 focus:ring-[#0f1d32]"
               />
               <button
                 onClick={() => {
