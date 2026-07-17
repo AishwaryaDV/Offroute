@@ -96,8 +96,15 @@ Before building any page, drop the relevant reference screenshot(s) into a `/des
 - Stats dashboard: countries visited, points logged, distance traveled
 - Trip grouping: bundle several circuits from one longer journey under an optional parent Trip
 
-### Phase 7 — PWA & push notifications
-- PWA push notifications for stars, clones, invites, and collaborator activity
+### Phase 7 — PWA & push notifications ✅
+- VAPID key pair for Web Push API
+- `push_subscriptions` table storing browser push subscription per user/device
+- Backend push service: fires web push when in-app notifications are created (stars, clones, invites, invite accepts)
+- Stale subscription cleanup (auto-removes on 404/410 from push service)
+- Service worker `push` + `notificationclick` handlers (shows native OS notification, taps navigate to relevant circuit)
+- Frontend subscription flow: permission request, subscribe/unsubscribe via PushManager API
+- Settings → Notifications page: toggle push on/off, browser-blocked state handling
+- `/push/vapid-key` public endpoint, `/push/subscribe` + `/push/unsubscribe` authenticated endpoints
 
 ### Phase 8 — Testing & deployment
 - UI fixes document from user
