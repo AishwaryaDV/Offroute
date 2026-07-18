@@ -7,7 +7,6 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AuthGuard } from "@/components/AuthGuard";
-import MapDynamic from "@/components/MapDynamic";
 import { deleteMe, getMe, updateMe } from "@/lib/me";
 import {
   isPushSupported,
@@ -22,7 +21,6 @@ interface ProfileValues {
   display_name: string;
   nationality: string;
   profile_bio: string;
-  profile_enabled: boolean;
 }
 
 interface PasswordValues {
@@ -126,7 +124,6 @@ function Settings() {
       display_name: me?.display_name ?? "",
       nationality: me?.nationality ?? "",
       profile_bio: me?.profile_bio ?? "",
-      profile_enabled: me?.profile_enabled ?? false,
     },
   });
 
@@ -196,13 +193,7 @@ function Settings() {
 
   return (
     <div className="relative h-[100dvh]">
-      {/* Background map */}
-      <div className="pointer-events-none absolute inset-0">
-        <MapDynamic center={[78.9629, 20.5937]} zoom={3.6} />
-        <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
-      </div>
-
-      {/* Main sheet */}
+      {/* Main sheet — no map background, body's #0b1120 shows in the peek area */}
       <div className="sheet-light absolute inset-x-0 bottom-0 top-[6dvh] overflow-hidden rounded-t-[28px] bg-white">
         {/* Settings menu — always visible behind cards */}
         <div className="flex h-full flex-col">
@@ -341,7 +332,6 @@ function Settings() {
                       display_name: data.display_name || undefined,
                       nationality: data.nationality || undefined,
                       profile_bio: data.profile_bio || undefined,
-                      profile_enabled: data.profile_enabled,
                     })
                   )}
                   disabled={profileMutation.isPending}
@@ -419,25 +409,6 @@ function Settings() {
                     {...profileForm.register("profile_bio")}
                     className="flex-1 resize-none bg-transparent text-base font-medium text-[#0f1d32] placeholder-gray-300 outline-none"
                   />
-                </div>
-                <div className="h-px bg-gray-100" />
-                <div className="flex items-center justify-between py-3">
-                  <div>
-                    <p className="text-sm text-gray-400">Public profile</p>
-                    <p className="text-[10px] text-gray-300">
-                      {profileForm.watch("username")
-                        ? `offroute.app/u/${profileForm.watch("username")}`
-                        : "Set a username first"}
-                    </p>
-                  </div>
-                  <label className="relative inline-flex cursor-pointer items-center">
-                    <input
-                      type="checkbox"
-                      {...profileForm.register("profile_enabled")}
-                      className="peer sr-only"
-                    />
-                    <div className="h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-[#0f1d32] peer-checked:after:translate-x-full" />
-                  </label>
                 </div>
               </div>
             </div>
