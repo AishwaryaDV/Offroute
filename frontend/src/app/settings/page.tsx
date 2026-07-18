@@ -202,9 +202,9 @@ function Settings() {
       </div>
 
       {/* Main sheet */}
-      <div className="sheet-light absolute inset-x-0 bottom-0 top-[6dvh] overflow-hidden rounded-t-[28px]">
+      <div className="sheet-light absolute inset-x-0 bottom-0 top-[6dvh] overflow-hidden rounded-t-[28px] bg-white/85 backdrop-blur-2xl">
         {/* Settings menu — always visible behind cards */}
-        <div className="flex h-full flex-col bg-white">
+        <div className="flex h-full flex-col">
           <div className="flex justify-center pt-3 pb-1">
             <div className="h-1 w-10 rounded-full bg-gray-300" />
           </div>
