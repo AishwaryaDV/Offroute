@@ -192,11 +192,15 @@ function Settings() {
   /* ---------- Menu (Settings root) ---------- */
   if (view === "menu") {
     return (
-      <div className="flex min-h-[100dvh] flex-col bg-[#f5f6f8]">
-        <div className="sheet-up sheet-light flex-1 overflow-hidden" style={{ paddingTop: "max(env(safe-area-inset-top), 1rem)" }}>
-        <div className="flex justify-end px-5 pt-5">
+      <div className="flex min-h-[100dvh] flex-col bg-[#0b1120]">
+        <div className="shrink-0" style={{ height: "env(safe-area-inset-top, 0.75rem)" }} />
+        <div className="sheet-up sheet-light flex-1 overflow-hidden rounded-t-[28px] bg-[#f5f6f8]">
+        <div className="flex justify-center pt-3 pb-1">
+          <div className="h-1 w-10 rounded-full bg-gray-300" />
+        </div>
+        <div className="flex justify-end px-5 pt-2">
           <button
-            onClick={() => router.push("/dashboard")}
+            onClick={() => router.back()}
             className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-sm active:bg-gray-100"
             aria-label="Close"
           >
@@ -297,8 +301,12 @@ function Settings() {
   /* ---------- Profile edit ---------- */
   if (view === "profile") {
     return (
-      <div className="flex min-h-[100dvh] flex-col bg-white">
-        <div className="sheet-up sheet-light flex-1 overflow-hidden" style={{ paddingTop: "max(env(safe-area-inset-top), 1rem)" }}>
+      <div className="flex min-h-[100dvh] flex-col bg-[#0b1120]">
+        <div className="shrink-0" style={{ height: "env(safe-area-inset-top, 0.75rem)" }} />
+        <div className="sheet-up sheet-light flex-1 overflow-hidden rounded-t-[28px] bg-white">
+        <div className="flex justify-center pt-3 pb-1">
+          <div className="h-1 w-10 rounded-full bg-gray-300" />
+        </div>
         <div className="flex items-center justify-between px-5 pt-2">
           <button
             onClick={() => setView("menu")}
@@ -447,8 +455,12 @@ function Settings() {
   /* ---------- Map style ---------- */
   if (view === "mapstyle") {
     return (
-      <div className="flex min-h-[100dvh] flex-col bg-white">
-        <div className="sheet-up sheet-light flex-1 overflow-hidden" style={{ paddingTop: "max(env(safe-area-inset-top), 1rem)" }}>
+      <div className="flex min-h-[100dvh] flex-col bg-[#0b1120]">
+        <div className="shrink-0" style={{ height: "env(safe-area-inset-top, 0.75rem)" }} />
+        <div className="sheet-up sheet-light flex-1 overflow-hidden rounded-t-[28px] bg-white">
+          <div className="flex justify-center pt-3 pb-1">
+            <div className="h-1 w-10 rounded-full bg-gray-300" />
+          </div>
           <div className="flex items-center justify-between px-5 pt-2">
             <button
               onClick={() => setView("menu")}
@@ -513,8 +525,12 @@ function Settings() {
     const permissionDenied =
       typeof window !== "undefined" && Notification.permission === "denied";
     return (
-      <div className="flex min-h-[100dvh] flex-col bg-white">
-        <div className="sheet-up sheet-light flex-1 overflow-hidden" style={{ paddingTop: "max(env(safe-area-inset-top), 1rem)" }}>
+      <div className="flex min-h-[100dvh] flex-col bg-[#0b1120]">
+        <div className="shrink-0" style={{ height: "env(safe-area-inset-top, 0.75rem)" }} />
+        <div className="sheet-up sheet-light flex-1 overflow-hidden rounded-t-[28px] bg-white">
+          <div className="flex justify-center pt-3 pb-1">
+            <div className="h-1 w-10 rounded-full bg-gray-300" />
+          </div>
           <div className="flex items-center justify-between px-5 pt-2">
             <button
               onClick={() => setView("menu")}
@@ -581,8 +597,12 @@ function Settings() {
 
   /* ---------- Account ---------- */
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-[#f5f6f8]">
-      <div className="sheet-up sheet-light flex-1 overflow-hidden" style={{ paddingTop: "max(env(safe-area-inset-top), 1rem)" }}>
+    <div className="flex min-h-[100dvh] flex-col bg-[#0b1120]">
+      <div className="shrink-0" style={{ height: "env(safe-area-inset-top, 0.75rem)" }} />
+      <div className="sheet-up sheet-light flex-1 overflow-hidden rounded-t-[28px] bg-[#f5f6f8]">
+      <div className="flex justify-center pt-3 pb-1">
+        <div className="h-1 w-10 rounded-full bg-gray-300" />
+      </div>
       <div className="flex items-center justify-between bg-white px-5 pb-2 pt-2">
         <button
           onClick={() => setView("menu")}

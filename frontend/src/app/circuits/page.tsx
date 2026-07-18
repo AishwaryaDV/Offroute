@@ -132,8 +132,12 @@ function CircuitsList() {
 
   if (showTrips) {
     return (
-      <div className="flex min-h-[100dvh] flex-col bg-[#f5f6f8]">
-        <div className="sheet-up sheet-light flex-1 overflow-y-auto" style={{ paddingTop: "max(env(safe-area-inset-top), 1rem)" }}>
+      <div className="flex min-h-[100dvh] flex-col bg-[#0b1120]">
+        <div className="shrink-0" style={{ height: "env(safe-area-inset-top, 0.75rem)" }} />
+        <div className="sheet-up sheet-light flex-1 overflow-y-auto rounded-t-[28px] bg-[#f5f6f8]">
+          <div className="flex justify-center pt-3 pb-1">
+            <div className="h-1 w-10 rounded-full bg-gray-300" />
+          </div>
           <div className="flex items-center justify-between px-5 pt-2 pb-1">
             <button
               onClick={() => setShowTrips(false)}
@@ -224,8 +228,12 @@ function CircuitsList() {
   }
 
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-[#f5f6f8]">
-      <div className="sheet-up sheet-light flex-1 overflow-y-auto" style={{ paddingTop: "max(env(safe-area-inset-top), 1rem)", paddingBottom: "calc(80px + max(0.75rem, env(safe-area-inset-bottom)))" }}>
+    <div className="flex min-h-[100dvh] flex-col bg-[#0b1120]">
+      <div className="shrink-0" style={{ height: "env(safe-area-inset-top, 0.75rem)" }} />
+      <div className="sheet-up sheet-light flex-1 overflow-y-auto rounded-t-[28px] bg-[#f5f6f8]" style={{ paddingBottom: "calc(80px + max(0.75rem, env(safe-area-inset-bottom)))" }}>
+        <div className="flex justify-center pt-3 pb-1">
+          <div className="h-1 w-10 rounded-full bg-gray-300" />
+        </div>
         <header className="px-5 pb-4 pt-2">
           <div className="flex items-start justify-between">
             <h1 className="text-4xl font-bold tracking-tight text-[#0f1d32]">
