@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AuthGuard } from "@/components/AuthGuard";
+import MapDynamic from "@/components/MapDynamic";
 import { deleteMe, getMe, updateMe } from "@/lib/me";
 import {
   isPushSupported,
@@ -176,7 +177,6 @@ function Settings() {
   function saveAccount() {
     const password = pwForm.getValues("password");
     if (!password) {
-      // Leave blank if you don't want to change it
       setView("menu");
       return;
     }
@@ -189,494 +189,474 @@ function Settings() {
       )
     : COUNTRIES;
 
-  /* ---------- Menu (Settings root) ---------- */
-  if (view === "menu") {
-    return (
-      <div className="relative h-[100dvh] bg-[#64748b]">
-        <div className="sheet-up sheet-light absolute inset-x-0 bottom-0 top-[6dvh] overflow-y-auto rounded-t-[28px] bg-[#f5f6f8]">
-        <div className="flex justify-center pt-3 pb-1">
-          <div className="h-1 w-10 rounded-full bg-gray-300" />
-        </div>
-        <div className="flex justify-end px-5 pt-2">
-          <button
-            onClick={() => router.back()}
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-sm active:bg-gray-100"
-            aria-label="Close"
-          >
-            <X size={22} className="text-[#0f1d32]" strokeWidth={2.5} />
-          </button>
-        </div>
+  const permissionDenied =
+    typeof window !== "undefined" && "Notification" in window && Notification.permission === "denied";
 
-        <h1 className="px-5 pb-6 pt-2 text-4xl font-bold tracking-tight text-[#0f1d32]">
-          Settings
-        </h1>
+  const sheetBg = view === "menu" || view === "account" ? "bg-[#f5f6f8]" : "bg-white";
 
-        <div className="flex flex-col gap-2 px-4">
-          <button
-            onClick={() => setView("profile")}
-            className="flex w-full items-center gap-4 rounded-2xl bg-white px-4 py-4 active:bg-gray-50"
-          >
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f6f8]">
-              <User size={20} className="text-[#0f1d32]" />
-            </div>
-            <span className="flex-1 text-left text-base font-semibold text-[#0f1d32]">
-              Profile
-            </span>
-            <ChevronRight size={18} className="text-gray-300" />
-          </button>
-          <button
-            onClick={() => setView("account")}
-            className="flex w-full items-center gap-4 rounded-2xl bg-white px-4 py-4 active:bg-gray-50"
-          >
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f6f8]">
-              <Shield size={20} className="text-[#0f1d32]" />
-            </div>
-            <span className="flex-1 text-left text-base font-semibold text-[#0f1d32]">
-              Account
-            </span>
-            <ChevronRight size={18} className="text-gray-300" />
-          </button>
-          <button
-            onClick={() => setView("mapstyle")}
-            className="flex w-full items-center gap-4 rounded-2xl bg-white px-4 py-4 active:bg-gray-50"
-          >
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f6f8]">
-              <Map size={20} className="text-[#0f1d32]" />
-            </div>
-            <span className="flex-1 text-left text-base font-semibold text-[#0f1d32]">
-              Map style
-            </span>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-400">
-                {MAP_STYLES.find((s) => s.url === mapStyle)?.label ?? "Satellite"}
-              </span>
-              <ChevronRight size={18} className="text-gray-300" />
-            </div>
-          </button>
-          <button
-            onClick={() => setView("notifications")}
-            className="flex w-full items-center gap-4 rounded-2xl bg-white px-4 py-4 active:bg-gray-50"
-          >
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f6f8]">
-              <Bell size={20} className="text-[#0f1d32]" />
-            </div>
-            <span className="flex-1 text-left text-base font-semibold text-[#0f1d32]">
-              Notifications
-            </span>
-            <div className="flex items-center gap-2">
-              {pushSupported && (
-                <span className="text-sm text-gray-400">
-                  {pushEnabled ? "On" : "Off"}
-                </span>
-              )}
-              <ChevronRight size={18} className="text-gray-300" />
-            </div>
-          </button>
-        </div>
-
-        <div className="mt-6 px-4">
-          <button
-            onClick={logout}
-            className="flex w-full items-center gap-4 rounded-2xl bg-white px-4 py-4 active:bg-red-50"
-          >
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-50">
-              <LogOut size={20} className="text-red-500" />
-            </div>
-            <span className="text-base font-semibold text-red-500">
-              Log out
-            </span>
-          </button>
-        </div>
-
-        <footer className="mt-auto px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-10 text-center">
-          <p className="text-xs text-gray-400">Offroute v1.0</p>
-          <p className="mt-1 text-[10px] text-gray-300">Made with care for travelers</p>
-        </footer>
-        </div>
+  return (
+    <div className="relative h-[100dvh]">
+      {/* Background map — same as dashboard peek */}
+      <div className="pointer-events-none absolute inset-0">
+        <MapDynamic center={[78.9629, 20.5937]} zoom={3.6} />
       </div>
-    );
-  }
 
-  /* ---------- Profile edit ---------- */
-  if (view === "profile") {
-    return (
-      <div className="relative h-[100dvh] bg-[#64748b]">
-        <div className="sheet-up sheet-light absolute inset-x-0 bottom-0 top-[6dvh] overflow-y-auto rounded-t-[28px] bg-white">
+      <div className={`sheet-up sheet-light absolute inset-x-0 bottom-0 top-[6dvh] overflow-y-auto rounded-t-[28px] ${sheetBg}`}>
         <div className="flex justify-center pt-3 pb-1">
           <div className="h-1 w-10 rounded-full bg-gray-300" />
         </div>
-        <div className="flex items-center justify-between px-5 pt-2">
-          <button
-            onClick={() => setView("menu")}
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f5f6f8] active:bg-gray-200"
-            aria-label="Back"
-          >
-            <X size={22} className="text-[#0f1d32]" strokeWidth={2.5} />
-          </button>
-          <button
-            onClick={profileForm.handleSubmit((data) =>
-              profileMutation.mutate({
-                username: data.username || undefined,
-                display_name: data.display_name || undefined,
-                nationality: data.nationality || undefined,
-                profile_bio: data.profile_bio || undefined,
-                profile_enabled: data.profile_enabled,
-              })
-            )}
-            disabled={profileMutation.isPending}
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-[#0f1d32] active:bg-[#162a46] disabled:opacity-50"
-            aria-label="Save"
-          >
-            <Check size={22} className="text-white" strokeWidth={2.5} />
-          </button>
-        </div>
 
-        <h1 className="px-5 pb-6 pt-4 text-4xl font-bold tracking-tight text-[#0f1d32]">
-          Profile
-        </h1>
+        {/* ---------- Menu ---------- */}
+        {view === "menu" && (
+          <>
+            <div className="flex justify-end px-5 pt-2">
+              <button
+                onClick={() => router.back()}
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-sm active:bg-gray-100"
+                aria-label="Close"
+              >
+                <X size={22} className="text-[#0f1d32]" strokeWidth={2.5} />
+              </button>
+            </div>
 
-        <div className="flex items-center gap-5 px-5 pb-6">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#0f1d32]/10 text-2xl font-bold text-[#0f1d32]">
-            {(me?.display_name?.[0] ?? me?.email[0] ?? "?").toUpperCase()}
-          </div>
-          <p className="text-lg font-semibold text-gray-400">
-            Profile photos coming soon
-          </p>
-        </div>
+            <h1 className="px-5 pb-6 pt-2 text-4xl font-bold tracking-tight text-[#0f1d32]">
+              Settings
+            </h1>
 
-        <div className="border-t border-gray-200">
-          <div className="flex items-center gap-4 px-5 py-4">
-            <label
-              htmlFor="username"
-              className="w-28 shrink-0 text-base text-gray-400"
-            >
-              Username
-            </label>
-            <input
-              id="username"
-              placeholder="your_username"
-              {...profileForm.register("username")}
-              className="flex-1 bg-transparent text-lg font-medium text-[#0f1d32] placeholder-gray-300 outline-none"
-            />
-          </div>
-          <div className="mx-5 h-px bg-gray-200" />
-          <div className="flex items-center gap-4 px-5 py-4">
-            <label
-              htmlFor="display_name"
-              className="w-28 shrink-0 text-base text-gray-400"
-            >
-              Name
-            </label>
-            <input
-              id="display_name"
-              placeholder="Your name"
-              {...profileForm.register("display_name")}
-              className="flex-1 bg-transparent text-lg font-medium text-[#0f1d32] placeholder-gray-300 outline-none"
-            />
-          </div>
-          <div className="mx-5 h-px bg-gray-200" />
-          <div className="relative flex items-center gap-4 px-5 py-4">
-            <label className="w-28 shrink-0 text-base text-gray-400">
-              Nationality
-            </label>
-            <input
-              type="text"
-              placeholder="Search country"
-              value={natOpen ? natSearch : profileForm.watch("nationality")}
-              onChange={(e) => {
-                setNatSearch(e.target.value);
-                setNatOpen(true);
-              }}
-              onFocus={() => {
-                setNatSearch("");
-                setNatOpen(true);
-              }}
-              className="flex-1 bg-transparent text-lg font-medium text-[#0f1d32] placeholder-gray-300 outline-none"
-            />
-            {natOpen && filteredCountries.length > 0 && (
-              <div className="absolute inset-x-5 top-full z-20 max-h-56 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg">
-                {filteredCountries.slice(0, 30).map((country) => (
-                  <button
-                    type="button"
-                    key={country}
-                    onClick={() => {
-                      profileForm.setValue("nationality", country);
-                      setNatSearch("");
-                      setNatOpen(false);
-                    }}
-                    className="w-full px-4 py-3 text-left text-base text-[#0f1d32] active:bg-gray-50"
-                  >
-                    {country}
-                  </button>
-                ))}
+            <div className="flex flex-col gap-2 px-4">
+              <button
+                onClick={() => setView("profile")}
+                className="flex w-full items-center gap-4 rounded-2xl bg-white px-4 py-4 active:bg-gray-50"
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f6f8]">
+                  <User size={20} className="text-[#0f1d32]" />
+                </div>
+                <span className="flex-1 text-left text-base font-semibold text-[#0f1d32]">
+                  Profile
+                </span>
+                <ChevronRight size={18} className="text-gray-300" />
+              </button>
+              <button
+                onClick={() => setView("account")}
+                className="flex w-full items-center gap-4 rounded-2xl bg-white px-4 py-4 active:bg-gray-50"
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f6f8]">
+                  <Shield size={20} className="text-[#0f1d32]" />
+                </div>
+                <span className="flex-1 text-left text-base font-semibold text-[#0f1d32]">
+                  Account
+                </span>
+                <ChevronRight size={18} className="text-gray-300" />
+              </button>
+              <button
+                onClick={() => setView("mapstyle")}
+                className="flex w-full items-center gap-4 rounded-2xl bg-white px-4 py-4 active:bg-gray-50"
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f6f8]">
+                  <Map size={20} className="text-[#0f1d32]" />
+                </div>
+                <span className="flex-1 text-left text-base font-semibold text-[#0f1d32]">
+                  Map style
+                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-400">
+                    {MAP_STYLES.find((s) => s.url === mapStyle)?.label ?? "Satellite"}
+                  </span>
+                  <ChevronRight size={18} className="text-gray-300" />
+                </div>
+              </button>
+              <button
+                onClick={() => setView("notifications")}
+                className="flex w-full items-center gap-4 rounded-2xl bg-white px-4 py-4 active:bg-gray-50"
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f6f8]">
+                  <Bell size={20} className="text-[#0f1d32]" />
+                </div>
+                <span className="flex-1 text-left text-base font-semibold text-[#0f1d32]">
+                  Notifications
+                </span>
+                <div className="flex items-center gap-2">
+                  {pushSupported && (
+                    <span className="text-sm text-gray-400">
+                      {pushEnabled ? "On" : "Off"}
+                    </span>
+                  )}
+                  <ChevronRight size={18} className="text-gray-300" />
+                </div>
+              </button>
+            </div>
+
+            <div className="mt-6 px-4">
+              <button
+                onClick={logout}
+                className="flex w-full items-center gap-4 rounded-2xl bg-white px-4 py-4 active:bg-red-50"
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-50">
+                  <LogOut size={20} className="text-red-500" />
+                </div>
+                <span className="text-base font-semibold text-red-500">
+                  Log out
+                </span>
+              </button>
+            </div>
+
+            <footer className="px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-10 text-center">
+              <p className="text-xs text-gray-400">Offroute v1.0</p>
+              <p className="mt-1 text-[10px] text-gray-300">Made with care for travelers</p>
+            </footer>
+          </>
+        )}
+
+        {/* ---------- Profile ---------- */}
+        {view === "profile" && (
+          <>
+            <div className="flex items-center justify-between px-5 pt-2">
+              <button
+                onClick={() => setView("menu")}
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f5f6f8] active:bg-gray-200"
+                aria-label="Back"
+              >
+                <X size={22} className="text-[#0f1d32]" strokeWidth={2.5} />
+              </button>
+              <button
+                onClick={profileForm.handleSubmit((data) =>
+                  profileMutation.mutate({
+                    username: data.username || undefined,
+                    display_name: data.display_name || undefined,
+                    nationality: data.nationality || undefined,
+                    profile_bio: data.profile_bio || undefined,
+                    profile_enabled: data.profile_enabled,
+                  })
+                )}
+                disabled={profileMutation.isPending}
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-[#0f1d32] active:bg-[#162a46] disabled:opacity-50"
+                aria-label="Save"
+              >
+                <Check size={22} className="text-white" strokeWidth={2.5} />
+              </button>
+            </div>
+
+            <h1 className="px-5 pb-6 pt-4 text-4xl font-bold tracking-tight text-[#0f1d32]">
+              Profile
+            </h1>
+
+            <div className="flex items-center gap-5 px-5 pb-6">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#0f1d32]/10 text-2xl font-bold text-[#0f1d32]">
+                {(me?.display_name?.[0] ?? me?.email[0] ?? "?").toUpperCase()}
               </div>
-            )}
-          </div>
-          <div className="mx-5 h-px bg-gray-200" />
-          <div className="flex items-start gap-4 px-5 py-4">
-            <label className="w-28 shrink-0 pt-1 text-base text-gray-400">
-              Bio
-            </label>
-            <textarea
-              placeholder="A short bio"
-              rows={3}
-              maxLength={200}
-              {...profileForm.register("profile_bio")}
-              className="flex-1 resize-none bg-transparent text-lg font-medium text-[#0f1d32] placeholder-gray-300 outline-none"
-            />
-          </div>
-          <div className="mx-5 h-px bg-gray-200" />
-          <div className="flex items-center justify-between px-5 py-4">
-            <div>
-              <p className="text-base text-gray-400">Public profile</p>
-              <p className="text-xs text-gray-300">
-                {profileForm.watch("username")
-                  ? `offroute.app/u/${profileForm.watch("username")}`
-                  : "Set a username first"}
+              <p className="text-lg font-semibold text-gray-400">
+                Profile photos coming soon
               </p>
             </div>
-            <label className="relative inline-flex cursor-pointer items-center">
-              <input
-                type="checkbox"
-                {...profileForm.register("profile_enabled")}
-                className="peer sr-only"
-              />
-              <div className="h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-[#0f1d32] peer-checked:after:translate-x-full" />
-            </label>
-          </div>
-        </div>
-        </div>
-      </div>
-    );
-  }
 
-  /* ---------- Map style ---------- */
-  if (view === "mapstyle") {
-    return (
-      <div className="relative h-[100dvh] bg-[#64748b]">
-        <div className="sheet-up sheet-light absolute inset-x-0 bottom-0 top-[6dvh] overflow-y-auto rounded-t-[28px] bg-white">
-          <div className="flex justify-center pt-3 pb-1">
-            <div className="h-1 w-10 rounded-full bg-gray-300" />
-          </div>
-          <div className="flex items-center justify-between px-5 pt-2">
-            <button
-              onClick={() => setView("menu")}
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f5f6f8] active:bg-gray-200"
-              aria-label="Back"
-            >
-              <X size={22} className="text-[#0f1d32]" strokeWidth={2.5} />
-            </button>
-          </div>
-
-          <h1 className="px-5 pb-2 pt-4 text-4xl font-bold tracking-tight text-[#0f1d32]">
-            Map style
-          </h1>
-          <p className="px-5 pb-6 text-base text-gray-400">
-            Choose your preferred map look across the app.
-          </p>
-
-          <div className="grid grid-cols-2 gap-4 px-5">
-            {MAP_STYLES.map((s) => {
-              const isActive = mapStyle === s.url;
-              return (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => {
-                    setMapStyle(s.url);
-                    localStorage.setItem(MAP_STYLE_KEY, s.url);
-                    toast.success(`Map style set to ${s.label}`);
-                  }}
-                  className={`flex flex-col items-center gap-2 rounded-2xl p-3 transition-all ${
-                    isActive
-                      ? "bg-blue-50 ring-2 ring-blue-500"
-                      : "bg-[#f5f6f8] ring-1 ring-gray-200 active:bg-gray-100"
-                  }`}
-                >
-                  <div
-                    className="h-20 w-full rounded-xl"
-                    style={{ backgroundColor: s.color }}
-                  />
-                  <span
-                    className={`text-sm font-semibold ${
-                      isActive ? "text-blue-600" : "text-[#0f1d32]"
-                    }`}
-                  >
-                    {s.label}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          <p className="px-5 pt-6 text-center text-xs text-gray-400">
-            Takes effect next time a map loads.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  /* ---------- Notifications ---------- */
-  if (view === "notifications") {
-    const permissionDenied =
-      typeof window !== "undefined" && Notification.permission === "denied";
-    return (
-      <div className="relative h-[100dvh] bg-[#64748b]">
-        <div className="sheet-up sheet-light absolute inset-x-0 bottom-0 top-[6dvh] overflow-y-auto rounded-t-[28px] bg-white">
-          <div className="flex justify-center pt-3 pb-1">
-            <div className="h-1 w-10 rounded-full bg-gray-300" />
-          </div>
-          <div className="flex items-center justify-between px-5 pt-2">
-            <button
-              onClick={() => setView("menu")}
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f5f6f8] active:bg-gray-200"
-              aria-label="Back"
-            >
-              <X size={22} className="text-[#0f1d32]" strokeWidth={2.5} />
-            </button>
-          </div>
-
-          <h1 className="px-5 pb-2 pt-4 text-4xl font-bold tracking-tight text-[#0f1d32]">
-            Notifications
-          </h1>
-          <p className="px-5 pb-6 text-base text-gray-400">
-            Get notified when someone stars, clones, or invites you to a circuit.
-          </p>
-
-          {pushSupported ? (
             <div className="border-t border-gray-200">
-              <div className="flex items-center justify-between px-5 py-5">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f6f8]">
-                    <Bell size={20} className="text-[#0f1d32]" />
+              <div className="flex items-center gap-4 px-5 py-4">
+                <label htmlFor="username" className="w-28 shrink-0 text-base text-gray-400">
+                  Username
+                </label>
+                <input
+                  id="username"
+                  placeholder="your_username"
+                  {...profileForm.register("username")}
+                  className="flex-1 bg-transparent text-lg font-medium text-[#0f1d32] placeholder-gray-300 outline-none"
+                />
+              </div>
+              <div className="mx-5 h-px bg-gray-200" />
+              <div className="flex items-center gap-4 px-5 py-4">
+                <label htmlFor="display_name" className="w-28 shrink-0 text-base text-gray-400">
+                  Name
+                </label>
+                <input
+                  id="display_name"
+                  placeholder="Your name"
+                  {...profileForm.register("display_name")}
+                  className="flex-1 bg-transparent text-lg font-medium text-[#0f1d32] placeholder-gray-300 outline-none"
+                />
+              </div>
+              <div className="mx-5 h-px bg-gray-200" />
+              <div className="relative flex items-center gap-4 px-5 py-4">
+                <label className="w-28 shrink-0 text-base text-gray-400">
+                  Nationality
+                </label>
+                <input
+                  type="text"
+                  placeholder="Search country"
+                  value={natOpen ? natSearch : profileForm.watch("nationality")}
+                  onChange={(e) => {
+                    setNatSearch(e.target.value);
+                    setNatOpen(true);
+                  }}
+                  onFocus={() => {
+                    setNatSearch("");
+                    setNatOpen(true);
+                  }}
+                  className="flex-1 bg-transparent text-lg font-medium text-[#0f1d32] placeholder-gray-300 outline-none"
+                />
+                {natOpen && filteredCountries.length > 0 && (
+                  <div className="absolute inset-x-5 top-full z-20 max-h-56 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg">
+                    {filteredCountries.slice(0, 30).map((country) => (
+                      <button
+                        type="button"
+                        key={country}
+                        onClick={() => {
+                          profileForm.setValue("nationality", country);
+                          setNatSearch("");
+                          setNatOpen(false);
+                        }}
+                        className="w-full px-4 py-3 text-left text-base text-[#0f1d32] active:bg-gray-50"
+                      >
+                        {country}
+                      </button>
+                    ))}
                   </div>
-                  <div>
-                    <p className="text-base font-semibold text-[#0f1d32]">
-                      Push notifications
-                    </p>
-                    <p className="text-sm text-gray-400">
-                      {pushEnabled ? "Enabled" : "Disabled"}
-                    </p>
-                  </div>
+                )}
+              </div>
+              <div className="mx-5 h-px bg-gray-200" />
+              <div className="flex items-start gap-4 px-5 py-4">
+                <label className="w-28 shrink-0 pt-1 text-base text-gray-400">
+                  Bio
+                </label>
+                <textarea
+                  placeholder="A short bio"
+                  rows={3}
+                  maxLength={200}
+                  {...profileForm.register("profile_bio")}
+                  className="flex-1 resize-none bg-transparent text-lg font-medium text-[#0f1d32] placeholder-gray-300 outline-none"
+                />
+              </div>
+              <div className="mx-5 h-px bg-gray-200" />
+              <div className="flex items-center justify-between px-5 py-4">
+                <div>
+                  <p className="text-base text-gray-400">Public profile</p>
+                  <p className="text-xs text-gray-300">
+                    {profileForm.watch("username")
+                      ? `offroute.app/u/${profileForm.watch("username")}`
+                      : "Set a username first"}
+                  </p>
                 </div>
                 <label className="relative inline-flex cursor-pointer items-center">
                   <input
                     type="checkbox"
-                    checked={pushEnabled}
-                    onChange={togglePush}
-                    disabled={pushLoading || permissionDenied}
+                    {...profileForm.register("profile_enabled")}
                     className="peer sr-only"
                   />
-                  <div className="h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-[#0f1d32] peer-checked:after:translate-x-full peer-disabled:opacity-50" />
+                  <div className="h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-[#0f1d32] peer-checked:after:translate-x-full" />
                 </label>
               </div>
-              {permissionDenied && (
-                <p className="px-5 pb-4 text-sm text-red-500">
-                  Notifications are blocked by your browser. Update your site
-                  permissions to enable them.
-                </p>
-              )}
             </div>
-          ) : (
-            <div className="border-t border-gray-200 px-5 py-8 text-center">
-              <Bell size={32} className="mx-auto mb-3 text-gray-300" />
-              <p className="text-base text-gray-500">
-                Push notifications are not supported on this browser.
+          </>
+        )}
+
+        {/* ---------- Map style ---------- */}
+        {view === "mapstyle" && (
+          <>
+            <div className="flex items-center justify-between px-5 pt-2">
+              <button
+                onClick={() => setView("menu")}
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f5f6f8] active:bg-gray-200"
+                aria-label="Back"
+              >
+                <X size={22} className="text-[#0f1d32]" strokeWidth={2.5} />
+              </button>
+            </div>
+
+            <h1 className="px-5 pb-2 pt-4 text-4xl font-bold tracking-tight text-[#0f1d32]">
+              Map style
+            </h1>
+            <p className="px-5 pb-6 text-base text-gray-400">
+              Choose your preferred map look across the app.
+            </p>
+
+            <div className="grid grid-cols-2 gap-4 px-5">
+              {MAP_STYLES.map((s) => {
+                const isActive = mapStyle === s.url;
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => {
+                      setMapStyle(s.url);
+                      localStorage.setItem(MAP_STYLE_KEY, s.url);
+                      toast.success(`Map style set to ${s.label}`);
+                    }}
+                    className={`flex flex-col items-center gap-2 rounded-2xl p-3 transition-all ${
+                      isActive
+                        ? "bg-blue-50 ring-2 ring-blue-500"
+                        : "bg-[#f5f6f8] ring-1 ring-gray-200 active:bg-gray-100"
+                    }`}
+                  >
+                    <div
+                      className="h-20 w-full rounded-xl"
+                      style={{ backgroundColor: s.color }}
+                    />
+                    <span
+                      className={`text-sm font-semibold ${
+                        isActive ? "text-blue-600" : "text-[#0f1d32]"
+                      }`}
+                    >
+                      {s.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <p className="px-5 pt-6 text-center text-xs text-gray-400">
+              Takes effect next time a map loads.
+            </p>
+          </>
+        )}
+
+        {/* ---------- Notifications ---------- */}
+        {view === "notifications" && (
+          <>
+            <div className="flex items-center justify-between px-5 pt-2">
+              <button
+                onClick={() => setView("menu")}
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f5f6f8] active:bg-gray-200"
+                aria-label="Back"
+              >
+                <X size={22} className="text-[#0f1d32]" strokeWidth={2.5} />
+              </button>
+            </div>
+
+            <h1 className="px-5 pb-2 pt-4 text-4xl font-bold tracking-tight text-[#0f1d32]">
+              Notifications
+            </h1>
+            <p className="px-5 pb-6 text-base text-gray-400">
+              Get notified when someone stars, clones, or invites you to a circuit.
+            </p>
+
+            {pushSupported ? (
+              <div className="border-t border-gray-200">
+                <div className="flex items-center justify-between px-5 py-5">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f6f8]">
+                      <Bell size={20} className="text-[#0f1d32]" />
+                    </div>
+                    <div>
+                      <p className="text-base font-semibold text-[#0f1d32]">
+                        Push notifications
+                      </p>
+                      <p className="text-sm text-gray-400">
+                        {pushEnabled ? "Enabled" : "Disabled"}
+                      </p>
+                    </div>
+                  </div>
+                  <label className="relative inline-flex cursor-pointer items-center">
+                    <input
+                      type="checkbox"
+                      checked={pushEnabled}
+                      onChange={togglePush}
+                      disabled={pushLoading || permissionDenied}
+                      className="peer sr-only"
+                    />
+                    <div className="h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-[#0f1d32] peer-checked:after:translate-x-full peer-disabled:opacity-50" />
+                  </label>
+                </div>
+                {permissionDenied && (
+                  <p className="px-5 pb-4 text-sm text-red-500">
+                    Notifications are blocked by your browser. Update your site
+                    permissions to enable them.
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="border-t border-gray-200 px-5 py-8 text-center">
+                <Bell size={32} className="mx-auto mb-3 text-gray-300" />
+                <p className="text-base text-gray-500">
+                  Push notifications are not supported on this browser.
+                </p>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* ---------- Account ---------- */}
+        {view === "account" && (
+          <>
+            <div className="flex items-center justify-between bg-white px-5 pb-2 pt-2">
+              <button
+                onClick={() => setView("menu")}
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f5f6f8] active:bg-gray-200"
+                aria-label="Back"
+              >
+                <X size={22} className="text-[#0f1d32]" strokeWidth={2.5} />
+              </button>
+              <h1 className="text-xl font-bold text-[#0f1d32]">Account</h1>
+              <button
+                onClick={saveAccount}
+                disabled={pwMutation.isPending}
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-[#0f1d32] active:bg-[#162a46] disabled:opacity-50"
+                aria-label="Save"
+              >
+                <Check size={22} className="text-white" strokeWidth={2.5} />
+              </button>
+            </div>
+
+            <div className="bg-white">
+              <div className="flex items-center gap-4 px-5 py-4">
+                <span className="w-28 shrink-0 text-base text-gray-400">Email</span>
+                <span className="flex-1 truncate text-lg font-medium text-[#0f1d32]">
+                  {me?.email}
+                </span>
+              </div>
+            </div>
+
+            <div className="px-5 pb-2 pt-8">
+              <p className="text-base font-semibold text-gray-500">
+                Change password
+              </p>
+              <p className="text-sm text-gray-400">
+                (Leave blank if you don&apos;t want to change it)
               </p>
             </div>
-          )}
-        </div>
-      </div>
-    );
-  }
 
-  /* ---------- Account ---------- */
-  return (
-    <div className="relative h-[100dvh] bg-[#64748b]">
-      <div className="sheet-up sheet-light absolute inset-x-0 bottom-0 top-[6dvh] overflow-y-auto rounded-t-[28px] bg-[#f5f6f8]">
-      <div className="flex justify-center pt-3 pb-1">
-        <div className="h-1 w-10 rounded-full bg-gray-300" />
-      </div>
-      <div className="flex items-center justify-between bg-white px-5 pb-2 pt-2">
-        <button
-          onClick={() => setView("menu")}
-          className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f5f6f8] active:bg-gray-200"
-          aria-label="Back"
-        >
-          <X size={22} className="text-[#0f1d32]" strokeWidth={2.5} />
-        </button>
-        <h1 className="text-xl font-bold text-[#0f1d32]">Account</h1>
-        <button
-          onClick={saveAccount}
-          disabled={pwMutation.isPending}
-          className="flex h-11 w-11 items-center justify-center rounded-full bg-[#0f1d32] active:bg-[#162a46] disabled:opacity-50"
-          aria-label="Save"
-        >
-          <Check size={22} className="text-white" strokeWidth={2.5} />
-        </button>
-      </div>
+            <div className="bg-white">
+              <div className="px-5 py-4">
+                <input
+                  type="password"
+                  placeholder="New password"
+                  {...pwForm.register("password", {
+                    minLength: { value: 6, message: "At least 6 characters" },
+                  })}
+                  className="w-full bg-transparent text-lg font-medium text-[#0f1d32] placeholder-gray-300 outline-none"
+                />
+                {pwForm.formState.errors.password && (
+                  <p className="mt-1 text-sm text-red-500">
+                    {pwForm.formState.errors.password.message}
+                  </p>
+                )}
+              </div>
+              <div className="mx-5 h-px bg-gray-200" />
+              <div className="px-5 py-4">
+                <input
+                  type="password"
+                  placeholder="New password (again)"
+                  {...pwForm.register("confirm", {
+                    validate: (val) =>
+                      val === pwForm.watch("password") || "Passwords don't match",
+                  })}
+                  className="w-full bg-transparent text-lg font-medium text-[#0f1d32] placeholder-gray-300 outline-none"
+                />
+                {pwForm.formState.errors.confirm && (
+                  <p className="mt-1 text-sm text-red-500">
+                    {pwForm.formState.errors.confirm.message}
+                  </p>
+                )}
+              </div>
+            </div>
 
-      <div className="bg-white">
-        <div className="flex items-center gap-4 px-5 py-4">
-          <span className="w-28 shrink-0 text-base text-gray-400">Email</span>
-          <span className="flex-1 truncate text-lg font-medium text-[#0f1d32]">
-            {me?.email}
-          </span>
-        </div>
-      </div>
-
-      <div className="px-5 pb-2 pt-8">
-        <p className="text-base font-semibold text-gray-500">
-          Change password
-        </p>
-        <p className="text-sm text-gray-400">
-          (Leave blank if you don&apos;t want to change it)
-        </p>
-      </div>
-
-      <div className="bg-white">
-        <div className="px-5 py-4">
-          <input
-            type="password"
-            placeholder="New password"
-            {...pwForm.register("password", {
-              minLength: { value: 6, message: "At least 6 characters" },
-            })}
-            className="w-full bg-transparent text-lg font-medium text-[#0f1d32] placeholder-gray-300 outline-none"
-          />
-          {pwForm.formState.errors.password && (
-            <p className="mt-1 text-sm text-red-500">
-              {pwForm.formState.errors.password.message}
-            </p>
-          )}
-        </div>
-        <div className="mx-5 h-px bg-gray-200" />
-        <div className="px-5 py-4">
-          <input
-            type="password"
-            placeholder="New password (again)"
-            {...pwForm.register("confirm", {
-              validate: (val) =>
-                val === pwForm.watch("password") || "Passwords don't match",
-            })}
-            className="w-full bg-transparent text-lg font-medium text-[#0f1d32] placeholder-gray-300 outline-none"
-          />
-          {pwForm.formState.errors.confirm && (
-            <p className="mt-1 text-sm text-red-500">
-              {pwForm.formState.errors.confirm.message}
-            </p>
-          )}
-        </div>
-      </div>
-
-      <div className="mt-16 flex justify-center pb-[max(2rem,env(safe-area-inset-bottom))]">
-        <button
-          onClick={() => setShowDeleteModal(true)}
-          className="rounded-full border border-gray-300 bg-white px-8 py-3 text-base font-semibold text-[#0f1d32] active:bg-gray-50"
-        >
-          Delete my account
-        </button>
+            <div className="mt-16 flex justify-center pb-[max(2rem,env(safe-area-inset-bottom))]">
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                className="rounded-full border border-gray-300 bg-white px-8 py-3 text-base font-semibold text-[#0f1d32] active:bg-gray-50"
+              >
+                Delete my account
+              </button>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Delete confirmation modal */}
@@ -728,7 +708,6 @@ function Settings() {
           </div>
         </div>
       )}
-      </div>
     </div>
   );
 }
