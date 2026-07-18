@@ -192,7 +192,7 @@ function Settings() {
   /* ---------- Menu (Settings root) ---------- */
   if (view === "menu") {
     return (
-      <div className="relative h-[100dvh] bg-[#0b1120]">
+      <div className="relative h-[100dvh] bg-[#64748b]">
         <div className="sheet-up sheet-light absolute inset-x-0 bottom-0 top-[6dvh] overflow-y-auto rounded-t-[28px] bg-[#f5f6f8]">
         <div className="flex justify-center pt-3 pb-1">
           <div className="h-1 w-10 rounded-full bg-gray-300" />
@@ -300,7 +300,7 @@ function Settings() {
   /* ---------- Profile edit ---------- */
   if (view === "profile") {
     return (
-      <div className="relative h-[100dvh] bg-[#0b1120]">
+      <div className="relative h-[100dvh] bg-[#64748b]">
         <div className="sheet-up sheet-light absolute inset-x-0 bottom-0 top-[6dvh] overflow-y-auto rounded-t-[28px] bg-white">
         <div className="flex justify-center pt-3 pb-1">
           <div className="h-1 w-10 rounded-full bg-gray-300" />
@@ -453,7 +453,7 @@ function Settings() {
   /* ---------- Map style ---------- */
   if (view === "mapstyle") {
     return (
-      <div className="relative h-[100dvh] bg-[#0b1120]">
+      <div className="relative h-[100dvh] bg-[#64748b]">
         <div className="sheet-up sheet-light absolute inset-x-0 bottom-0 top-[6dvh] overflow-y-auto rounded-t-[28px] bg-white">
           <div className="flex justify-center pt-3 pb-1">
             <div className="h-1 w-10 rounded-full bg-gray-300" />
@@ -522,7 +522,7 @@ function Settings() {
     const permissionDenied =
       typeof window !== "undefined" && Notification.permission === "denied";
     return (
-      <div className="relative h-[100dvh] bg-[#0b1120]">
+      <div className="relative h-[100dvh] bg-[#64748b]">
         <div className="sheet-up sheet-light absolute inset-x-0 bottom-0 top-[6dvh] overflow-y-auto rounded-t-[28px] bg-white">
           <div className="flex justify-center pt-3 pb-1">
             <div className="h-1 w-10 rounded-full bg-gray-300" />
@@ -593,7 +593,7 @@ function Settings() {
 
   /* ---------- Account ---------- */
   return (
-    <div className="relative h-[100dvh] bg-[#0b1120]">
+    <div className="relative h-[100dvh] bg-[#64748b]">
       <div className="sheet-up sheet-light absolute inset-x-0 bottom-0 top-[6dvh] overflow-y-auto rounded-t-[28px] bg-[#f5f6f8]">
       <div className="flex justify-center pt-3 pb-1">
         <div className="h-1 w-10 rounded-full bg-gray-300" />
