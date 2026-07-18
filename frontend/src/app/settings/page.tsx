@@ -199,10 +199,11 @@ function Settings() {
       {/* Background map */}
       <div className="pointer-events-none absolute inset-0">
         <MapDynamic center={[78.9629, 20.5937]} zoom={3.6} />
+        <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
       </div>
 
       {/* Main sheet */}
-      <div className="sheet-light absolute inset-x-0 bottom-0 top-[6dvh] overflow-hidden rounded-t-[28px] bg-white/85 backdrop-blur-2xl">
+      <div className="sheet-light absolute inset-x-0 bottom-0 top-[6dvh] overflow-hidden rounded-t-[28px] bg-white">
         {/* Settings menu — always visible behind cards */}
         <div className="flex h-full flex-col">
           <div className="flex justify-center pt-3 pb-1">
