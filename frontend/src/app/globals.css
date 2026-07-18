@@ -71,6 +71,11 @@ select {
   animation: page-enter 0.2s ease-out;
 }
 
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.6); }
+}
+
 /* Light-themed pages/sheets: native controls should render light */
 .sheet-light input,
 .sheet-light textarea,
