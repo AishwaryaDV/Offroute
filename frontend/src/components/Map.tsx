@@ -79,12 +79,12 @@ function bezierRoute(pts: [number, number][]): [number, number][] {
     const dx = x2 - x1;
     const dy = y2 - y1;
     const len = Math.sqrt(dx * dx + dy * dy);
-    if (len === 0) continue;
-    const off = len * 0.15;
+    if (len === 0) { out.push(pts[i + 1]); continue; }
+    const off = len * 0.3;
     const sign = i % 2 === 0 ? 1 : -1;
     const cx = (x1 + x2) / 2 + sign * (-dy / len) * off;
     const cy = (y1 + y2) / 2 + sign * (dx / len) * off;
-    const steps = 24;
+    const steps = 32;
     for (let t = 1; t <= steps; t++) {
       const s = t / steps;
       const u = 1 - s;
@@ -230,7 +230,7 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
           });
           map.addLayer({
             id: `${srcId}-line`, type: "line", source: srcId,
-            paint: { "line-color": route.color, "line-width": 2.5, "line-opacity": dimmed ? 0.15 : 0.8, "line-dasharray": [4, 3] },
+            paint: { "line-color": route.color, "line-width": 3, "line-opacity": dimmed ? 0.15 : 0.85, "line-dasharray": [4, 3] },
           });
         }
       });
