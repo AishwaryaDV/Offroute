@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useImperativeHandle, forwardRef, useState } from "react";
+import { useEffect, useRef, useImperativeHandle, forwardRef, useState, useCallback } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -70,32 +70,6 @@ const CATEGORY_COLORS: Record<string, string> = {
   other: "#3b82f6",
 };
 
-function smoothRoute(pts: [number, number][]): [number, number][] {
-  if (pts.length < 2) return pts;
-  if (pts.length === 2) {
-    return subdivideSegment(pts[0], pts[1], 16);
-  }
-  const out: [number, number][] = [pts[0]];
-  for (let i = 1; i < pts.length - 1; i++) {
-    out.push(...subdivideSegment(pts[i - 1], pts[i], 12).slice(1));
-  }
-  out.push(...subdivideSegment(pts[pts.length - 2], pts[pts.length - 1], 12).slice(1));
-  return out;
-}
-
-function subdivideSegment(
-  a: [number, number],
-  b: [number, number],
-  steps: number,
-): [number, number][] {
-  const result: [number, number][] = [];
-  for (let i = 0; i <= steps; i++) {
-    const t = i / steps;
-    result.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]);
-  }
-  return result;
-}
-
 function createPinElement(m: MapMarker, active = false): HTMLElement {
   const cat = m.category ?? "other";
   const color = CATEGORY_COLORS[cat] ?? CATEGORY_COLORS.other;
@@ -128,6 +102,14 @@ function createPinElement(m: MapMarker, active = false): HTMLElement {
   return wrapper;
 }
 
+interface RouteLine {
+  coordinates: [number, number][];
+  color: string;
+  width: number;
+  opacity: number;
+  dashed: boolean;
+}
+
 const Map = forwardRef<MapHandle, MapProps>(function Map(
   {
     className = "h-64 w-full",
@@ -152,7 +134,8 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markerEls = useRef<globalThis.Map<string, HTMLElement>>(new globalThis.Map());
   const markerObjs = useRef<maplibregl.Marker[]>([]);
-  const routeDataRef = useRef<[number, number][] | null>(null);
+  const svgRef = useRef<SVGSVGElement | null>(null);
+  const routeLinesRef = useRef<RouteLine[]>([]);
   const [mapLoaded, setMapLoaded] = useState(false);
 
   useImperativeHandle(ref, () => ({
@@ -160,6 +143,50 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
       mapRef.current?.flyTo({ center: [lng, lat], zoom: z ?? 14, duration: 800 });
     },
   }));
+
+  const redrawSVG = useCallback(() => {
+    const map = mapRef.current;
+    const svg = svgRef.current;
+    if (!map || !svg) return;
+
+    const canvas = map.getCanvas();
+    svg.setAttribute("width", String(canvas.clientWidth));
+    svg.setAttribute("height", String(canvas.clientHeight));
+
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+    for (const line of routeLinesRef.current) {
+      if (line.coordinates.length < 2) continue;
+
+      const points = line.coordinates.map((c) => {
+        const px = map.project(c as [number, number]);
+        return `${px.x},${px.y}`;
+      });
+
+      const outline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+      outline.setAttribute("points", points.join(" "));
+      outline.setAttribute("fill", "none");
+      outline.setAttribute("stroke", "#000000");
+      outline.setAttribute("stroke-width", String(line.width + 2));
+      outline.setAttribute("stroke-opacity", String(line.opacity * 0.25));
+      outline.setAttribute("stroke-linecap", "round");
+      outline.setAttribute("stroke-linejoin", "round");
+      svg.appendChild(outline);
+
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+      path.setAttribute("points", points.join(" "));
+      path.setAttribute("fill", "none");
+      path.setAttribute("stroke", line.color);
+      path.setAttribute("stroke-width", String(line.width));
+      path.setAttribute("stroke-opacity", String(line.opacity));
+      path.setAttribute("stroke-linecap", "round");
+      path.setAttribute("stroke-linejoin", "round");
+      if (line.dashed) {
+        path.setAttribute("stroke-dasharray", "8 6");
+      }
+      svg.appendChild(path);
+    }
+  }, []);
 
   useEffect(() => {
     markerEls.current.forEach((el, id) => {
@@ -198,62 +225,34 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
       markerObjs.current.push(marker);
     });
 
+    const lines: RouteLine[] = [];
+
     if (drawRoute && markers.length > 1) {
-      const raw = markers.map((m) => [m.lng, m.lat] as [number, number]);
-      const coords = smoothRoute(raw);
-      routeDataRef.current = coords;
-      addRouteToMap(map, coords);
-    } else if (map.getSource("route")) {
-      (map.getSource("route") as maplibregl.GeoJSONSource).setData({
-        type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: [] },
+      lines.push({
+        coordinates: markers.map((m) => [m.lng, m.lat] as [number, number]),
+        color: "#ffffff",
+        width: 2.5,
+        opacity: 0.85,
+        dashed: false,
       });
     }
 
     if (circuitRoutes && circuitRoutes.length > 0) {
-      circuitRoutes.forEach((route) => {
-        const srcId = `circuit-route-${route.id}`;
-        if (route.coordinates.length < 2) return;
-        const debugSrcId = `debug-pts-${route.id}`;
-        if (!map.getSource(debugSrcId)) {
-          map.addSource(debugSrcId, {
-            type: "geojson",
-            data: {
-              type: "FeatureCollection",
-              features: route.coordinates.map((c) => ({
-                type: "Feature" as const, properties: {},
-                geometry: { type: "Point" as const, coordinates: c },
-              })),
-            },
-          });
-          map.addLayer({
-            id: debugSrcId, type: "circle", source: debugSrcId,
-            paint: { "circle-radius": 10, "circle-color": "#ffff00", "circle-stroke-width": 2, "circle-stroke-color": "#000" },
-          });
-        }
-        const coords = smoothRoute(route.coordinates);
+      for (const route of circuitRoutes) {
+        if (route.coordinates.length < 2) continue;
         const dimmed = highlightCircuitId && highlightCircuitId !== route.id;
-        if (map.getSource(srcId)) {
-          (map.getSource(srcId) as maplibregl.GeoJSONSource).setData({
-            type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: coords },
-          });
-          map.setPaintProperty(`${srcId}-outline`, "line-opacity", dimmed ? 0.05 : 0.2);
-          map.setPaintProperty(`${srcId}-line`, "line-opacity", dimmed ? 0.15 : 0.8);
-        } else {
-          map.addSource(srcId, {
-            type: "geojson",
-            data: { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: coords } },
-          });
-          map.addLayer({
-            id: `${srcId}-outline`, type: "line", source: srcId,
-            paint: { "line-color": "#000000", "line-width": 4, "line-opacity": dimmed ? 0.05 : 0.2 },
-          });
-          map.addLayer({
-            id: `${srcId}-line`, type: "line", source: srcId,
-            paint: { "line-color": route.color, "line-width": 3, "line-opacity": dimmed ? 0.15 : 0.85, "line-dasharray": [4, 3] },
-          });
-        }
-      });
+        lines.push({
+          coordinates: route.coordinates,
+          color: route.color,
+          width: 3,
+          opacity: dimmed ? 0.15 : 0.85,
+          dashed: true,
+        });
+      }
     }
+
+    routeLinesRef.current = lines;
+    redrawSVG();
 
     if (markers.length > 0) {
       const lngs = markers.map((m) => m.lng);
@@ -268,43 +267,17 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [markers, drawRoute, circuitRoutes, highlightCircuitId, mapLoaded]);
-
-  function addRouteToMap(map: maplibregl.Map, coords: [number, number][]) {
-    if (map.getSource("route")) {
-      (map.getSource("route") as maplibregl.GeoJSONSource).setData({
-        type: "Feature",
-        properties: {},
-        geometry: { type: "LineString", coordinates: coords },
-      });
-      return;
-    }
-    map.addSource("route", {
-      type: "geojson",
-      data: {
-        type: "Feature",
-        properties: {},
-        geometry: { type: "LineString", coordinates: coords },
-      },
-    });
-    map.addLayer({
-      id: "route-outline",
-      type: "line",
-      source: "route",
-      paint: { "line-color": "#000000", "line-width": 5, "line-opacity": 0.25 },
-    });
-    map.addLayer({
-      id: "route-line",
-      type: "line",
-      source: "route",
-      paint: { "line-color": "#ffffff", "line-width": 2.5, "line-opacity": 0.85 },
-    });
-  }
+  }, [markers, drawRoute, circuitRoutes, highlightCircuitId, mapLoaded, redrawSVG]);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
     const savedStyle = localStorage.getItem(STYLE_KEY) ?? DEFAULT_STYLE;
+
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.style.cssText = "position:absolute;inset:0;pointer-events:none;z-index:1;overflow:visible";
+    containerRef.current.appendChild(svg);
+    svgRef.current = svg;
 
     const map = new maplibregl.Map({
       container: containerRef.current,
@@ -333,8 +306,9 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
       });
     }
 
+    map.on("render", () => redrawSVG());
+
     map.on("load", () => {
-      map.resize();
       setMapLoaded(true);
 
       if (userLocation) {
@@ -368,12 +342,13 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
     return () => {
       markerEls.current.clear();
       mapRef.current = null;
+      svgRef.current = null;
       map.remove();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return <div ref={containerRef} className={className} />;
+  return <div ref={containerRef} className={className} style={{ position: "relative" }} />;
 });
 
 export default Map;
