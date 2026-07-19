@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  CalendarDays,
+  Compass,
   Gem,
   Globe,
   Home,
@@ -41,18 +43,6 @@ const CATEGORY_ICONS: Record<string, IconComponent> = {
   culture: Landmark,
   hidden_gem: Gem,
   other: MapPin,
-};
-
-const CATEGORY_COLORS: Record<string, string> = {
-  food: "#ef4444",
-  drink: "#f59e0b",
-  stay: "#8b5cf6",
-  viewpoint: "#10b981",
-  activity: "#f97316",
-  nature: "#22c55e",
-  culture: "#6366f1",
-  hidden_gem: "#ec4899",
-  other: "#3b82f6",
 };
 
 const CIRCUIT_COLORS = [
@@ -105,11 +95,9 @@ function Activity() {
   }, [points, circuitColorMap]);
 
   type TimelineItem =
-    | { type: "date"; label: string; emoji: string }
+    | { type: "date"; label: string }
     | { type: "circuit"; title: string }
     | { type: "point"; point: WorldPoint };
-
-  const DAY_EMOJIS = ["☀️", "🌤️", "🌙", "⛅", "🌅", "🌄"];
 
   const timelineItems = useMemo(() => {
     const sorted = [...(points ?? [])].sort((a, b) => {
@@ -122,7 +110,6 @@ function Activity() {
     const items: TimelineItem[] = [];
     let currentDate = "";
     let currentCircuit = "";
-    let dayIndex = 0;
 
     for (const p of sorted) {
       const dateLabel = p.visited_at
@@ -135,12 +122,7 @@ function Activity() {
         : "Undated";
 
       if (dateLabel !== currentDate) {
-        items.push({
-          type: "date",
-          label: dateLabel,
-          emoji: DAY_EMOJIS[dayIndex % DAY_EMOJIS.length],
-        });
-        dayIndex++;
+        items.push({ type: "date", label: dateLabel });
         currentDate = dateLabel;
         currentCircuit = "";
       }
@@ -261,76 +243,84 @@ function Activity() {
           )}
 
           {timelineItems.length > 0 && (
-            <div className="relative px-5 pb-8">
-              {/* Vertical timeline line */}
-              <div className="absolute bottom-8 left-[2.125rem] top-0 w-0.5 bg-gray-200" />
-
+            <div className="flex flex-col items-center px-5 pb-8">
               {timelineItems.map((item, idx) => {
                 if (item.type === "date") {
                   return (
-                    <div key={`date-${idx}`} className="relative flex items-center gap-3 py-3">
-                      <div className="z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-base shadow-sm ring-1 ring-gray-100">
-                        {item.emoji}
+                    <div key={`date-${idx}`} className="flex w-full flex-col items-center">
+                      {idx > 0 && <div className="h-5 w-0.5 bg-gray-200" />}
+                      <div className="flex items-center gap-2.5 py-2">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-gray-100">
+                          <CalendarDays size={14} className="text-gray-400" />
+                        </div>
+                        <span className="text-xs font-bold uppercase tracking-wider text-[#0f1d32]">
+                          {item.label}
+                        </span>
                       </div>
-                      <span className="text-xs font-bold uppercase tracking-wider text-[#0f1d32]">
-                        {item.label}
-                      </span>
                     </div>
                   );
                 }
 
                 if (item.type === "circuit") {
                   return (
-                    <div key={`circuit-${idx}`} className="relative flex items-center gap-3 py-2">
-                      <div className="z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-xs shadow-sm ring-1 ring-gray-100">
-                        🗺️
+                    <div key={`circuit-${idx}`} className="flex w-full flex-col items-center">
+                      <div className="h-4 w-0.5 bg-gray-200" />
+                      <div className="flex items-center gap-2 py-1.5">
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-gray-100">
+                          <Compass size={11} className="text-gray-400" />
+                        </div>
+                        <span className="truncate text-[11px] font-semibold text-gray-400">
+                          {item.title}
+                        </span>
                       </div>
-                      <span className="truncate text-[11px] font-semibold text-gray-400">
-                        {item.title}
-                      </span>
                     </div>
                   );
                 }
 
                 const point = item.point;
                 const Icon = CATEGORY_ICONS[point.category ?? "other"] ?? MapPin;
-                const color = CATEGORY_COLORS[point.category ?? "other"] ?? "#3b82f6";
+                const circuitColor = circuitColorMap.get(point.circuit_id) ?? "#3b82f6";
 
                 return (
-                  <Link
-                    key={point.id}
-                    href={`/circuits/${point.circuit_id}/points/${point.id}`}
-                    className="relative ml-4 mb-2 flex gap-3 rounded-2xl bg-white p-3.5 active:bg-gray-50"
-                  >
-                    <div className="absolute -left-[1.375rem] top-1/2 h-px w-3 bg-gray-200" />
-                    <div
-                      className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
-                      style={{ backgroundColor: `${color}15` }}
+                  <div key={point.id} className="flex w-full flex-col items-center">
+                    <div className="h-3 w-0.5 bg-gray-200" />
+                    <Link
+                      href={`/circuits/${point.circuit_id}/points/${point.id}`}
+                      className="w-full rounded-2xl bg-white p-3.5 active:bg-gray-50"
                     >
-                      <Icon size={16} className="shrink-0" style={{ color }} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-[#0f1d32]">
-                        {point.title}
-                      </p>
-                      <p className="truncate text-xs text-gray-400">
-                        {point.circuit_title}
-                        {point.category && ` · ${point.category.replace("_", " ")}`}
-                      </p>
-                      {point.notes && (
-                        <p className="mt-1 line-clamp-2 text-xs text-gray-500">
-                          {point.notes}
-                        </p>
-                      )}
-                    </div>
-                    {point.rating && (
-                      <div className="shrink-0 self-start text-xs text-amber-500">
-                        {"★".repeat(point.rating)}
+                      <div className="flex gap-3">
+                        <div
+                          className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+                          style={{ backgroundColor: `${circuitColor}15` }}
+                        >
+                          <Icon size={16} className="shrink-0" style={{ color: circuitColor }} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold text-[#0f1d32]">
+                            {point.title}
+                          </p>
+                          <p className="truncate text-xs text-gray-400">
+                            {point.circuit_title}
+                            {point.category && ` · ${point.category.replace("_", " ")}`}
+                          </p>
+                          {point.notes && (
+                            <p className="mt-1 line-clamp-2 text-xs text-gray-500">
+                              {point.notes}
+                            </p>
+                          )}
+                        </div>
+                        {point.rating && (
+                          <div className="shrink-0 self-start text-xs text-amber-500">
+                            {"★".repeat(point.rating)}
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </Link>
+                    </Link>
+                  </div>
                 );
               })}
+              <div className="h-4 w-0.5 bg-gray-200" />
+              <div className="h-2 w-2 rounded-full bg-gray-200" />
             </div>
           )}
         </div>
