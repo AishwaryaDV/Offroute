@@ -79,7 +79,7 @@ function createPinElement(m: MapMarker, active = false): HTMLElement {
 
   const wrapper = document.createElement("div");
   wrapper.style.cssText =
-    "display:flex;flex-direction:column;align-items:center;cursor:pointer;transition:transform 0.2s";
+    "display:inline-flex;flex-direction:column;align-items:center;cursor:pointer;transition:transform 0.2s;width:fit-content";
 
   const circle = document.createElement("div");
   circle.style.cssText = `width:${size}px;height:${size}px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,0.35);border:2.5px solid ${color};transition:all 0.2s`;
@@ -233,7 +233,7 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
     if (drawRoute && markers.length > 1) {
       const dots = markers.map((m) => {
         const el = document.createElement("div");
-        el.style.cssText = "width:12px;height:12px;border-radius:50%;background:red;border:2px solid white";
+        el.style.cssText = "width:1px;height:1px;opacity:0";
         return new maplibregl.Marker({ element: el, anchor: "center" })
           .setLngLat([m.lng, m.lat])
           .addTo(map);
@@ -253,7 +253,7 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
         const dimmed = highlightCircuitId && highlightCircuitId !== route.id;
         const dots = route.coordinates.map((coord) => {
           const el = document.createElement("div");
-          el.style.cssText = "width:12px;height:12px;border-radius:50%;background:red;border:2px solid white";
+          el.style.cssText = "width:1px;height:1px;opacity:0";
           return new maplibregl.Marker({ element: el, anchor: "center" })
             .setLngLat(coord)
             .addTo(map);
@@ -269,23 +269,6 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
     }
 
     redrawLines();
-
-    requestAnimationFrame(() => {
-      const containerRect = containerRef.current?.getBoundingClientRect();
-      if (!containerRect) return;
-      markerObjs.current.forEach((m, i) => {
-        const rect = m.getElement().getBoundingClientRect();
-        const pos = m.getLngLat();
-        console.log(`[Pin ${i}] lngLat=${pos.lng.toFixed(4)},${pos.lat.toFixed(4)} screen=${(rect.left - containerRect.left).toFixed(0)},${(rect.top - containerRect.top).toFixed(0)} size=${rect.width.toFixed(0)}x${rect.height.toFixed(0)}`);
-      });
-      routeConfigs.current.forEach((r, ri) => {
-        r.dotMarkers.forEach((m, di) => {
-          const rect = m.getElement().getBoundingClientRect();
-          const pos = m.getLngLat();
-          console.log(`[Dot ${ri}-${di}] lngLat=${pos.lng.toFixed(4)},${pos.lat.toFixed(4)} screen=${(rect.left - containerRect.left).toFixed(0)},${(rect.top - containerRect.top).toFixed(0)} size=${rect.width.toFixed(0)}x${rect.height.toFixed(0)}`);
-        });
-      });
-    });
 
     if (markers.length > 0) {
       const lngs = markers.map((m) => m.lng);
