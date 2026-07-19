@@ -104,7 +104,14 @@ function Activity() {
     return [...map.entries()];
   }, [points, circuitColorMap]);
 
-  const groupedByDate = useMemo(() => {
+  type TimelineItem =
+    | { type: "date"; label: string; emoji: string }
+    | { type: "circuit"; title: string }
+    | { type: "point"; point: WorldPoint };
+
+  const DAY_EMOJIS = ["☀️", "🌤️", "🌙", "⛅", "🌅", "🌄"];
+
+  const timelineItems = useMemo(() => {
     const sorted = [...(points ?? [])].sort((a, b) => {
       if (!a.visited_at && !b.visited_at) return 0;
       if (!a.visited_at) return 1;
@@ -112,27 +119,41 @@ function Activity() {
       return new Date(b.visited_at).getTime() - new Date(a.visited_at).getTime();
     });
 
-    const groups: { label: string; points: WorldPoint[] }[] = [];
-    let currentLabel = "";
+    const items: TimelineItem[] = [];
+    let currentDate = "";
+    let currentCircuit = "";
+    let dayIndex = 0;
 
     for (const p of sorted) {
-      const label = p.visited_at
+      const dateLabel = p.visited_at
         ? new Date(p.visited_at).toLocaleDateString(undefined, {
             weekday: "short",
-            month: "short",
             day: "numeric",
+            month: "short",
             year: "numeric",
           })
         : "Undated";
 
-      if (label !== currentLabel) {
-        groups.push({ label, points: [] });
-        currentLabel = label;
+      if (dateLabel !== currentDate) {
+        items.push({
+          type: "date",
+          label: dateLabel,
+          emoji: DAY_EMOJIS[dayIndex % DAY_EMOJIS.length],
+        });
+        dayIndex++;
+        currentDate = dateLabel;
+        currentCircuit = "";
       }
-      groups[groups.length - 1].points.push(p);
+
+      if (p.circuit_id !== currentCircuit) {
+        items.push({ type: "circuit", title: p.circuit_title });
+        currentCircuit = p.circuit_id;
+      }
+
+      items.push({ type: "point", point: p });
     }
 
-    return groups;
+    return items;
   }, [points]);
 
   return (
@@ -197,95 +218,121 @@ function Activity() {
         </>
       )}
 
-      {/* Timeline tab: white sheet */}
+      {/* Timeline tab: sheet over dark peek */}
       {tab === "timeline" && (
-        <div className="flex h-full flex-col">
-          <div className="h-[max(env(safe-area-inset-top),2.75rem)] shrink-0" />
-          <div className="flex-1 overflow-y-auto rounded-t-[28px] bg-white">
-            <header className="flex items-start justify-between px-5 pt-5">
-              <h1 className="text-4xl font-bold tracking-tight text-[#0f1d32]">
-                Activity
-              </h1>
-              <button
-                onClick={() => router.push("/dashboard")}
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f5f6f8] active:bg-gray-200"
-                aria-label="Close"
-              >
-                <X size={22} className="text-[#0f1d32]" strokeWidth={2.5} />
-              </button>
-            </header>
-
-            {isLoading && (
-              <div className="flex justify-center py-20">
-                <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-[#0f1d32]" />
-              </div>
-            )}
-
-            {!isLoading && groupedByDate.length === 0 && (
-              <div className="px-5 py-20 text-center">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#f5f6f8]">
-                  <Timer size={28} className="text-gray-400" />
-                </div>
-                <p className="mt-4 text-lg font-semibold text-[#0f1d32]">
-                  No points yet
-                </p>
-                <p className="mt-1 text-base text-gray-500">
-                  Add points to your circuits to build your timeline.
-                </p>
-              </div>
-            )}
-
-            {groupedByDate.length > 0 && (
-              <div className="px-5 pb-28 pt-5">
-                {groupedByDate.map((group) => (
-                  <div key={group.label} className="mb-6">
-                    <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
-                      {group.label}
-                    </p>
-                    <div className="relative border-l-2 border-gray-200 pl-5">
-                      {group.points.map((point) => {
-                        const Icon = CATEGORY_ICONS[point.category ?? "other"] ?? MapPin;
-                        const color = CATEGORY_COLORS[point.category ?? "other"] ?? "#3b82f6";
-                        return (
-                          <Link
-                            key={point.id}
-                            href={`/circuits/${point.circuit_id}/points/${point.id}`}
-                            className="relative -ml-[1.625rem] mb-3 flex gap-3 rounded-2xl bg-[#f5f6f8] p-4 active:bg-gray-100"
-                          >
-                            <div
-                              className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
-                              style={{ backgroundColor: `${color}15` }}
-                            >
-                              <Icon size={16} className="shrink-0" style={{ color }} />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-semibold text-[#0f1d32]">
-                                {point.title}
-                              </p>
-                              <p className="truncate text-xs text-gray-400">
-                                {point.circuit_title}
-                                {point.category && ` · ${point.category.replace("_", " ")}`}
-                              </p>
-                              {point.notes && (
-                                <p className="mt-1 line-clamp-2 text-xs text-gray-500">
-                                  {point.notes}
-                                </p>
-                              )}
-                            </div>
-                            {point.rating && (
-                              <div className="shrink-0 self-start text-xs text-amber-500">
-                                {"★".repeat(point.rating)}
-                              </div>
-                            )}
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+        <div
+          className="sheet-up sheet-light absolute inset-x-0 bottom-0 top-[6dvh] overflow-y-auto rounded-t-[28px] bg-[#f5f6f8]"
+          style={{ paddingBottom: "calc(80px + max(0.75rem, env(safe-area-inset-bottom)))" }}
+        >
+          <div className="flex justify-center pt-3 pb-1">
+            <div className="h-1 w-10 rounded-full bg-gray-300" />
           </div>
+          <header className="flex items-start justify-between px-5 pt-2 pb-4">
+            <h1 className="text-4xl font-bold tracking-tight text-[#0f1d32]">
+              Activity
+            </h1>
+            <button
+              onClick={() => router.back()}
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-white active:bg-gray-100"
+              aria-label="Close"
+            >
+              <X size={22} className="text-[#0f1d32]" strokeWidth={2.5} />
+            </button>
+          </header>
+
+          {isLoading && (
+            <div className="flex justify-center py-20">
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-[#0f1d32]" />
+            </div>
+          )}
+
+          {!isLoading && timelineItems.length === 0 && (
+            <div className="px-5 py-20 text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-white">
+                <Timer size={28} className="text-gray-400" />
+              </div>
+              <p className="mt-4 text-lg font-semibold text-[#0f1d32]">
+                No points yet
+              </p>
+              <p className="mt-1 text-base text-gray-500">
+                Add points to your circuits to build your timeline.
+              </p>
+            </div>
+          )}
+
+          {timelineItems.length > 0 && (
+            <div className="relative px-5 pb-8">
+              {/* Vertical timeline line */}
+              <div className="absolute bottom-8 left-[2.125rem] top-0 w-0.5 bg-gray-200" />
+
+              {timelineItems.map((item, idx) => {
+                if (item.type === "date") {
+                  return (
+                    <div key={`date-${idx}`} className="relative flex items-center gap-3 py-3">
+                      <div className="z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-base shadow-sm ring-1 ring-gray-100">
+                        {item.emoji}
+                      </div>
+                      <span className="text-xs font-bold uppercase tracking-wider text-[#0f1d32]">
+                        {item.label}
+                      </span>
+                    </div>
+                  );
+                }
+
+                if (item.type === "circuit") {
+                  return (
+                    <div key={`circuit-${idx}`} className="relative flex items-center gap-3 py-2">
+                      <div className="z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-xs shadow-sm ring-1 ring-gray-100">
+                        🗺️
+                      </div>
+                      <span className="truncate text-[11px] font-semibold text-gray-400">
+                        {item.title}
+                      </span>
+                    </div>
+                  );
+                }
+
+                const point = item.point;
+                const Icon = CATEGORY_ICONS[point.category ?? "other"] ?? MapPin;
+                const color = CATEGORY_COLORS[point.category ?? "other"] ?? "#3b82f6";
+
+                return (
+                  <Link
+                    key={point.id}
+                    href={`/circuits/${point.circuit_id}/points/${point.id}`}
+                    className="relative ml-4 mb-2 flex gap-3 rounded-2xl bg-white p-3.5 active:bg-gray-50"
+                  >
+                    <div className="absolute -left-[1.375rem] top-1/2 h-px w-3 bg-gray-200" />
+                    <div
+                      className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+                      style={{ backgroundColor: `${color}15` }}
+                    >
+                      <Icon size={16} className="shrink-0" style={{ color }} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-[#0f1d32]">
+                        {point.title}
+                      </p>
+                      <p className="truncate text-xs text-gray-400">
+                        {point.circuit_title}
+                        {point.category && ` · ${point.category.replace("_", " ")}`}
+                      </p>
+                      {point.notes && (
+                        <p className="mt-1 line-clamp-2 text-xs text-gray-500">
+                          {point.notes}
+                        </p>
+                      )}
+                    </div>
+                    {point.rating && (
+                      <div className="shrink-0 self-start text-xs text-amber-500">
+                        {"★".repeat(point.rating)}
+                      </div>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
