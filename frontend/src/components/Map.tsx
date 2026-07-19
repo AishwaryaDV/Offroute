@@ -270,6 +270,23 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
 
     redrawLines();
 
+    requestAnimationFrame(() => {
+      const containerRect = containerRef.current?.getBoundingClientRect();
+      if (!containerRect) return;
+      markerObjs.current.forEach((m, i) => {
+        const rect = m.getElement().getBoundingClientRect();
+        const pos = m.getLngLat();
+        console.log(`[Pin ${i}] lngLat=${pos.lng.toFixed(4)},${pos.lat.toFixed(4)} screen=${(rect.left - containerRect.left).toFixed(0)},${(rect.top - containerRect.top).toFixed(0)} size=${rect.width.toFixed(0)}x${rect.height.toFixed(0)}`);
+      });
+      routeConfigs.current.forEach((r, ri) => {
+        r.dotMarkers.forEach((m, di) => {
+          const rect = m.getElement().getBoundingClientRect();
+          const pos = m.getLngLat();
+          console.log(`[Dot ${ri}-${di}] lngLat=${pos.lng.toFixed(4)},${pos.lat.toFixed(4)} screen=${(rect.left - containerRect.left).toFixed(0)},${(rect.top - containerRect.top).toFixed(0)} size=${rect.width.toFixed(0)}x${rect.height.toFixed(0)}`);
+        });
+      });
+    });
+
     if (markers.length > 0) {
       const lngs = markers.map((m) => m.lng);
       const lats = markers.map((m) => m.lat);
