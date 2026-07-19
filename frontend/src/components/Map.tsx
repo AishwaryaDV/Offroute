@@ -70,25 +70,40 @@ const CATEGORY_COLORS: Record<string, string> = {
   other: "#3b82f6",
 };
 
-function bezierRoute(pts: [number, number][]): [number, number][] {
+function smoothRoute(pts: [number, number][]): [number, number][] {
   if (pts.length < 2) return pts;
-  const out: [number, number][] = [pts[0]];
+  if (pts.length === 2) {
+    const out: [number, number][] = [];
+    for (let t = 0; t <= 20; t++) {
+      const s = t / 20;
+      out.push([pts[0][0] + s * (pts[1][0] - pts[0][0]), pts[0][1] + s * (pts[1][1] - pts[0][1])]);
+    }
+    return out;
+  }
+  const out: [number, number][] = [];
+  const tension = 0.4;
   for (let i = 0; i < pts.length - 1; i++) {
-    const [x1, y1] = pts[i];
-    const [x2, y2] = pts[i + 1];
-    const dx = x2 - x1;
-    const dy = y2 - y1;
-    const len = Math.sqrt(dx * dx + dy * dy);
-    if (len === 0) { out.push(pts[i + 1]); continue; }
-    const off = len * 0.3;
-    const sign = i % 2 === 0 ? 1 : -1;
-    const cx = (x1 + x2) / 2 + sign * (-dy / len) * off;
-    const cy = (y1 + y2) / 2 + sign * (dx / len) * off;
-    const steps = 32;
-    for (let t = 1; t <= steps; t++) {
+    const p0 = pts[Math.max(0, i - 1)];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = pts[Math.min(pts.length - 1, i + 2)];
+    const steps = 24;
+    for (let t = 0; t <= steps; t++) {
+      if (t === 0 && i > 0) continue;
       const s = t / steps;
-      const u = 1 - s;
-      out.push([u * u * x1 + 2 * u * s * cx + s * s * x2, u * u * y1 + 2 * u * s * cy + s * s * y2]);
+      const s2 = s * s;
+      const s3 = s2 * s;
+      const x =
+        0.5 * ((2 * p1[0]) +
+          (-p0[0] + p2[0]) * tension * s +
+          (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * tension * s2 +
+          (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * tension * s3);
+      const y =
+        0.5 * ((2 * p1[1]) +
+          (-p0[1] + p2[1]) * tension * s +
+          (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * tension * s2 +
+          (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * tension * s3);
+      out.push([x, y]);
     }
   }
   return out;
@@ -198,7 +213,7 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
 
     if (drawRoute && markers.length > 1) {
       const raw = markers.map((m) => [m.lng, m.lat] as [number, number]);
-      const coords = bezierRoute(raw);
+      const coords = smoothRoute(raw);
       routeDataRef.current = coords;
       addRouteToMap(map, coords);
     } else if (map.getSource("route")) {
@@ -208,11 +223,10 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
     }
 
     if (circuitRoutes && circuitRoutes.length > 0) {
-      console.log("[DEBUG Map] drawing circuitRoutes:", circuitRoutes.map(r => ({ id: r.id, coordCount: r.coordinates.length, coords: r.coordinates })));
       circuitRoutes.forEach((route) => {
         const srcId = `circuit-route-${route.id}`;
         if (route.coordinates.length < 2) return;
-        const coords = bezierRoute(route.coordinates);
+        const coords = smoothRoute(route.coordinates);
         const dimmed = highlightCircuitId && highlightCircuitId !== route.id;
         if (map.getSource(srcId)) {
           (map.getSource(srcId) as maplibregl.GeoJSONSource).setData({
