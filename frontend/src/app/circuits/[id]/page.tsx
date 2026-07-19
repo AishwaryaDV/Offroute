@@ -71,6 +71,18 @@ const CATEGORY_COLORS: Record<string, string> = {
   other: "#3b82f6",
 };
 
+const CATEGORY_IMAGES: Record<string, string> = {
+  food: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=320&h=200&fit=crop",
+  drink: "https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=320&h=200&fit=crop",
+  stay: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=320&h=200&fit=crop",
+  viewpoint: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=320&h=200&fit=crop",
+  activity: "https://images.unsplash.com/photo-1551632811-561732d1e306?w=320&h=200&fit=crop",
+  nature: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=320&h=200&fit=crop",
+  culture: "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=320&h=200&fit=crop",
+  hidden_gem: "https://images.unsplash.com/photo-1528164344705-47542687000d?w=320&h=200&fit=crop",
+  other: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=320&h=200&fit=crop",
+};
+
 function CircuitDetail() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -459,11 +471,16 @@ function CircuitDetail() {
                           ? "ring-2 ring-white/40 scale-[1.02]"
                           : "ring-1 ring-white/10"
                       }`}
-                      style={{ background: `linear-gradient(135deg, ${color}cc, ${color}55)` }}
                     >
+                      <img
+                        src={CATEGORY_IMAGES[cat] ?? CATEGORY_IMAGES.other}
+                        alt=""
+                        className="absolute inset-0 h-full w-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
                       <div className="relative z-10 p-3">
                         <div className="flex items-center justify-between">
-                          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/20">
+                          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/20 backdrop-blur-sm">
                             <Icon size={14} className="text-white" />
                           </div>
                           <span className="text-[10px] font-bold text-white/50">
