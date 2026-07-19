@@ -146,10 +146,9 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
 
   const redrawLines = useCallback(() => {
     const svg = svgRef.current;
-    const container = containerRef.current;
-    if (!svg || !container) return;
+    if (!svg || !svg.parentElement) return;
 
-    const containerRect = container.getBoundingClientRect();
+    const containerRect = svg.parentElement.getBoundingClientRect();
     svg.setAttribute("width", String(containerRect.width));
     svg.setAttribute("height", String(containerRect.height));
 
@@ -234,7 +233,7 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
     if (drawRoute && markers.length > 1) {
       const dots = markers.map((m) => {
         const el = document.createElement("div");
-        el.style.cssText = "width:1px;height:1px;opacity:0";
+        el.style.cssText = "width:12px;height:12px;border-radius:50%;background:red;border:2px solid white";
         return new maplibregl.Marker({ element: el, anchor: "center" })
           .setLngLat([m.lng, m.lat])
           .addTo(map);
@@ -254,7 +253,7 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
         const dimmed = highlightCircuitId && highlightCircuitId !== route.id;
         const dots = route.coordinates.map((coord) => {
           const el = document.createElement("div");
-          el.style.cssText = "width:1px;height:1px;opacity:0";
+          el.style.cssText = "width:12px;height:12px;border-radius:50%;background:red;border:2px solid white";
           return new maplibregl.Marker({ element: el, anchor: "center" })
             .setLngLat(coord)
             .addTo(map);
