@@ -213,8 +213,23 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
       circuitRoutes.forEach((route) => {
         const srcId = `circuit-route-${route.id}`;
         if (route.coordinates.length < 2) return;
-        console.log(`[Map] circuit ${route.id} raw coords:`, route.coordinates);
-        console.log(`[Map] markers:`, markers.map(m => [m.lng, m.lat]));
+        const debugSrcId = `debug-pts-${route.id}`;
+        if (!map.getSource(debugSrcId)) {
+          map.addSource(debugSrcId, {
+            type: "geojson",
+            data: {
+              type: "FeatureCollection",
+              features: route.coordinates.map((c) => ({
+                type: "Feature" as const, properties: {},
+                geometry: { type: "Point" as const, coordinates: c },
+              })),
+            },
+          });
+          map.addLayer({
+            id: debugSrcId, type: "circle", source: debugSrcId,
+            paint: { "circle-radius": 10, "circle-color": "#ffff00", "circle-stroke-width": 2, "circle-stroke-color": "#000" },
+          });
+        }
         const coords = smoothRoute(route.coordinates);
         const dimmed = highlightCircuitId && highlightCircuitId !== route.id;
         if (map.getSource(srcId)) {
@@ -319,6 +334,7 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
     }
 
     map.on("load", () => {
+      map.resize();
       setMapLoaded(true);
 
       if (userLocation) {
