@@ -446,10 +446,8 @@ function CircuitDetail() {
       )}
 
       {/* Bottom carousel */}
-      <div className="absolute inset-x-0 bottom-0 z-10">
-        <div className="pointer-events-none h-24 bg-gradient-to-t from-black/50 to-transparent" />
-
-        <div className="bg-gradient-to-t from-black/30 to-transparent pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/60 via-black/30 to-transparent pt-16 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <div>
           {pointsLoading ? null : points && points.length > 0 ? (
             <div className="flex items-stretch gap-3 overflow-x-auto px-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {points.map((point: Point, i: number) => {
@@ -467,10 +465,10 @@ function CircuitDetail() {
                       onKeyDown={(e) => {
                         if (e.key === "Enter") handleSelectPoint(point);
                       }}
-                      className={`relative min-w-[140px] max-w-[160px] shrink-0 overflow-hidden rounded-2xl text-left transition-all ${
+                      className={`relative min-w-[120px] max-w-[140px] shrink-0 overflow-hidden rounded-xl text-left transition-all ${
                         isActive
                           ? "ring-2 ring-white/40 scale-[1.02]"
-                          : "ring-1 ring-white/10"
+                          : ""
                       }`}
                     >
                       <img
@@ -478,21 +476,13 @@ function CircuitDetail() {
                         alt=""
                         className="absolute inset-0 h-full w-full object-cover"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
-                      <div className="relative z-10 p-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/20 backdrop-blur-sm">
-                            <Icon size={14} className="text-white" />
-                          </div>
-                          <span className="text-[10px] font-bold text-white/50">
-                            {i + 1}
-                          </span>
-                        </div>
-                        <p className="mt-2 truncate text-sm font-bold text-white">
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                      <div className="relative z-10 px-2.5 pb-2 pt-6">
+                        <p className="truncate text-xs font-bold text-white">
                           {point.title}
                         </p>
                         {point.category && (
-                          <p className="mt-0.5 truncate text-[10px] capitalize text-white/60">
+                          <p className="mt-0.5 truncate text-[9px] capitalize text-white/60">
                             {point.category.replace("_", " ")}
                           </p>
                         )}
