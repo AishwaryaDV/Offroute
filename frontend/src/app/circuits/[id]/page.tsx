@@ -93,7 +93,7 @@ function CircuitDetail() {
     queryFn: () => getCircuit(id),
   });
 
-  const { data: points } = useQuery({
+  const { data: points, isLoading: pointsLoading } = useQuery({
     queryKey: ["points", id],
     queryFn: () => getPoints(id),
   });
@@ -437,7 +437,7 @@ function CircuitDetail() {
         <div className="pointer-events-none h-24 bg-gradient-to-t from-black/50 to-transparent" />
 
         <div className="bg-gradient-to-t from-black/30 to-transparent pb-[max(1rem,env(safe-area-inset-bottom))]">
-          {points && points.length > 0 ? (
+          {pointsLoading ? null : points && points.length > 0 ? (
             <div className="flex items-stretch gap-3 overflow-x-auto px-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {points.map((point: Point, i: number) => {
                 const cat = point.category ?? "other";
@@ -454,55 +454,31 @@ function CircuitDetail() {
                       onKeyDown={(e) => {
                         if (e.key === "Enter") handleSelectPoint(point);
                       }}
-                      className={`min-w-[200px] shrink-0 rounded-2xl p-3.5 text-left backdrop-blur-xl transition-all ${
+                      className={`relative min-w-[140px] max-w-[160px] shrink-0 overflow-hidden rounded-2xl text-left transition-all ${
                         isActive
-                          ? "bg-white/15 ring-2 ring-white/30 scale-[1.02]"
-                          : "bg-white/10 ring-1 ring-white/10"
+                          ? "ring-2 ring-white/40 scale-[1.02]"
+                          : "ring-1 ring-white/10"
                       }`}
+                      style={{ background: `linear-gradient(135deg, ${color}cc, ${color}55)` }}
                     >
-                      <div className="mb-2 flex items-center justify-between">
-                        <div
-                          className="flex h-9 w-9 items-center justify-center rounded-xl"
-                          style={{ background: `${color}20` }}
-                        >
-                          <Icon size={18} style={{ color }} />
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-white/40">
+                      <div className="relative z-10 p-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/20">
+                            <Icon size={14} className="text-white" />
+                          </div>
+                          <span className="text-[10px] font-bold text-white/50">
                             {i + 1}
                           </span>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setShowDeleteConfirm(point.id);
-                            }}
-                            className="p-1 text-zinc-600 active:text-red-400"
-                            aria-label="Delete point"
-                          >
-                            <Trash2 size={14} />
-                          </button>
                         </div>
-                      </div>
-                      <p className="truncate text-base font-bold text-white">
-                        {point.title}
-                      </p>
-                      <div className="mt-1 flex items-center gap-2 text-sm text-zinc-400">
-                        {point.category && (
-                          <span className="capitalize">
-                            {point.category.replace("_", " ")}
-                          </span>
-                        )}
-                        {point.rating && (
-                          <span className="text-amber-400">
-                            {"★".repeat(point.rating)}
-                          </span>
-                        )}
-                      </div>
-                      {point.notes && (
-                        <p className="mt-1.5 line-clamp-1 text-sm text-zinc-500">
-                          {point.notes}
+                        <p className="mt-2 truncate text-sm font-bold text-white">
+                          {point.title}
                         </p>
-                      )}
+                        {point.category && (
+                          <p className="mt-0.5 truncate text-[10px] capitalize text-white/60">
+                            {point.category.replace("_", " ")}
+                          </p>
+                        )}
+                      </div>
                     </div>
 
                     <Link
