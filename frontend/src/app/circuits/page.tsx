@@ -241,6 +241,13 @@ function CircuitsList() {
                   Circuits
                 </h1>
                 <div className="flex gap-2">
+                  <Link
+                    href="/circuits/new"
+                    className="flex h-11 w-11 items-center justify-center rounded-full bg-[#0f1d32] active:bg-[#0f1d32]/80"
+                    aria-label="New circuit"
+                  >
+                    <Plus size={20} className="text-white" />
+                  </Link>
                   <button
                     onClick={() => setShowTrips(true)}
                     className="flex h-11 w-11 items-center justify-center rounded-full bg-white active:bg-gray-100"
