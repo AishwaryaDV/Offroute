@@ -477,7 +477,7 @@ function CircuitDetail() {
                         className="absolute inset-0 h-full w-full object-cover"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                      <div className="relative z-10 px-2.5 pb-2 pt-6">
+                      <div className="relative z-10 p-3">
                         <p className="truncate text-xs font-bold text-white">
                           {point.title}
                         </p>
