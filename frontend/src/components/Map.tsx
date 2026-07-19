@@ -72,34 +72,28 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 function smoothRoute(pts: [number, number][]): [number, number][] {
   if (pts.length < 2) return pts;
-  const out: [number, number][] = [];
-  const tension = 0.5;
-  for (let i = 0; i < pts.length - 1; i++) {
-    const p0 = pts[Math.max(0, i - 1)];
-    const p1 = pts[i];
-    const p2 = pts[i + 1];
-    const p3 = pts[Math.min(pts.length - 1, i + 2)];
-    const t1x = tension * (p2[0] - p0[0]);
-    const t1y = tension * (p2[1] - p0[1]);
-    const t2x = tension * (p3[0] - p1[0]);
-    const t2y = tension * (p3[1] - p1[1]);
-    const steps = 24;
-    for (let t = 0; t <= steps; t++) {
-      if (t === 0 && i > 0) continue;
-      const s = t / steps;
-      const s2 = s * s;
-      const s3 = s2 * s;
-      const h1 = 2 * s3 - 3 * s2 + 1;
-      const h2 = s3 - 2 * s2 + s;
-      const h3 = -2 * s3 + 3 * s2;
-      const h4 = s3 - s2;
-      out.push([
-        h1 * p1[0] + h2 * t1x + h3 * p2[0] + h4 * t2x,
-        h1 * p1[1] + h2 * t1y + h3 * p2[1] + h4 * t2y,
-      ]);
-    }
+  if (pts.length === 2) {
+    return subdivideSegment(pts[0], pts[1], 16);
   }
+  const out: [number, number][] = [pts[0]];
+  for (let i = 1; i < pts.length - 1; i++) {
+    out.push(...subdivideSegment(pts[i - 1], pts[i], 12).slice(1));
+  }
+  out.push(...subdivideSegment(pts[pts.length - 2], pts[pts.length - 1], 12).slice(1));
   return out;
+}
+
+function subdivideSegment(
+  a: [number, number],
+  b: [number, number],
+  steps: number,
+): [number, number][] {
+  const result: [number, number][] = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    result.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]);
+  }
+  return result;
 }
 
 function createPinElement(m: MapMarker, active = false): HTMLElement {
@@ -219,6 +213,8 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
       circuitRoutes.forEach((route) => {
         const srcId = `circuit-route-${route.id}`;
         if (route.coordinates.length < 2) return;
+        console.log(`[Map] circuit ${route.id} raw coords:`, route.coordinates);
+        console.log(`[Map] markers:`, markers.map(m => [m.lng, m.lat]));
         const coords = smoothRoute(route.coordinates);
         const dimmed = highlightCircuitId && highlightCircuitId !== route.id;
         if (map.getSource(srcId)) {
