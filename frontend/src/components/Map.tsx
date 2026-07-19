@@ -102,8 +102,8 @@ function createPinElement(m: MapMarker, active = false): HTMLElement {
   return wrapper;
 }
 
-interface RouteLine {
-  coordinates: [number, number][];
+interface RouteConfig {
+  dotMarkers: maplibregl.Marker[];
   color: string;
   width: number;
   opacity: number;
@@ -134,8 +134,8 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markerEls = useRef<globalThis.Map<string, HTMLElement>>(new globalThis.Map());
   const markerObjs = useRef<maplibregl.Marker[]>([]);
+  const routeConfigs = useRef<RouteConfig[]>([]);
   const svgRef = useRef<SVGSVGElement | null>(null);
-  const routeLinesRef = useRef<RouteLine[]>([]);
   const [mapLoaded, setMapLoaded] = useState(false);
 
   useImperativeHandle(ref, () => ({
@@ -144,47 +144,50 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
     },
   }));
 
-  const redrawSVG = useCallback(() => {
-    const map = mapRef.current;
+  const redrawLines = useCallback(() => {
     const svg = svgRef.current;
-    if (!map || !svg) return;
+    const container = containerRef.current;
+    if (!svg || !container) return;
 
-    const canvas = map.getCanvas();
-    svg.setAttribute("width", String(canvas.clientWidth));
-    svg.setAttribute("height", String(canvas.clientHeight));
+    const containerRect = container.getBoundingClientRect();
+    svg.setAttribute("width", String(containerRect.width));
+    svg.setAttribute("height", String(containerRect.height));
 
     while (svg.firstChild) svg.removeChild(svg.firstChild);
 
-    for (const line of routeLinesRef.current) {
-      if (line.coordinates.length < 2) continue;
+    for (const route of routeConfigs.current) {
+      if (route.dotMarkers.length < 2) continue;
 
-      const points = line.coordinates.map((c) => {
-        const px = map.project(c as [number, number]);
-        return `${px.x},${px.y}`;
+      const points = route.dotMarkers.map((m) => {
+        const el = m.getElement();
+        const rect = el.getBoundingClientRect();
+        const x = rect.left + rect.width / 2 - containerRect.left;
+        const y = rect.top + rect.height / 2 - containerRect.top;
+        return `${x},${y}`;
       });
 
       const outline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
       outline.setAttribute("points", points.join(" "));
       outline.setAttribute("fill", "none");
       outline.setAttribute("stroke", "#000000");
-      outline.setAttribute("stroke-width", String(line.width + 2));
-      outline.setAttribute("stroke-opacity", String(line.opacity * 0.25));
+      outline.setAttribute("stroke-width", String(route.width + 2));
+      outline.setAttribute("stroke-opacity", String(route.opacity * 0.25));
       outline.setAttribute("stroke-linecap", "round");
       outline.setAttribute("stroke-linejoin", "round");
       svg.appendChild(outline);
 
-      const path = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
-      path.setAttribute("points", points.join(" "));
-      path.setAttribute("fill", "none");
-      path.setAttribute("stroke", line.color);
-      path.setAttribute("stroke-width", String(line.width));
-      path.setAttribute("stroke-opacity", String(line.opacity));
-      path.setAttribute("stroke-linecap", "round");
-      path.setAttribute("stroke-linejoin", "round");
-      if (line.dashed) {
-        path.setAttribute("stroke-dasharray", "8 6");
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+      line.setAttribute("points", points.join(" "));
+      line.setAttribute("fill", "none");
+      line.setAttribute("stroke", route.color);
+      line.setAttribute("stroke-width", String(route.width));
+      line.setAttribute("stroke-opacity", String(route.opacity));
+      line.setAttribute("stroke-linecap", "round");
+      line.setAttribute("stroke-linejoin", "round");
+      if (route.dashed) {
+        line.setAttribute("stroke-dasharray", "8 6");
       }
-      svg.appendChild(path);
+      svg.appendChild(line);
     }
   }, []);
 
@@ -207,6 +210,9 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
     markerObjs.current = [];
     markerEls.current.clear();
 
+    routeConfigs.current.forEach((r) => r.dotMarkers.forEach((m) => m.remove()));
+    routeConfigs.current = [];
+
     markers.forEach((m) => {
       const el = createPinElement(m);
       markerEls.current.set(m.id, el);
@@ -225,11 +231,16 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
       markerObjs.current.push(marker);
     });
 
-    const lines: RouteLine[] = [];
-
     if (drawRoute && markers.length > 1) {
-      lines.push({
-        coordinates: markers.map((m) => [m.lng, m.lat] as [number, number]),
+      const dots = markers.map((m) => {
+        const el = document.createElement("div");
+        el.style.cssText = "width:1px;height:1px;opacity:0";
+        return new maplibregl.Marker({ element: el, anchor: "center" })
+          .setLngLat([m.lng, m.lat])
+          .addTo(map);
+      });
+      routeConfigs.current.push({
+        dotMarkers: dots,
         color: "#ffffff",
         width: 2.5,
         opacity: 0.85,
@@ -241,8 +252,15 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
       for (const route of circuitRoutes) {
         if (route.coordinates.length < 2) continue;
         const dimmed = highlightCircuitId && highlightCircuitId !== route.id;
-        lines.push({
-          coordinates: route.coordinates,
+        const dots = route.coordinates.map((coord) => {
+          const el = document.createElement("div");
+          el.style.cssText = "width:1px;height:1px;opacity:0";
+          return new maplibregl.Marker({ element: el, anchor: "center" })
+            .setLngLat(coord)
+            .addTo(map);
+        });
+        routeConfigs.current.push({
+          dotMarkers: dots,
           color: route.color,
           width: 3,
           opacity: dimmed ? 0.15 : 0.85,
@@ -251,8 +269,7 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
       }
     }
 
-    routeLinesRef.current = lines;
-    redrawSVG();
+    redrawLines();
 
     if (markers.length > 0) {
       const lngs = markers.map((m) => m.lng);
@@ -267,17 +284,12 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [markers, drawRoute, circuitRoutes, highlightCircuitId, mapLoaded, redrawSVG]);
+  }, [markers, drawRoute, circuitRoutes, highlightCircuitId, mapLoaded, redrawLines]);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
     const savedStyle = localStorage.getItem(STYLE_KEY) ?? DEFAULT_STYLE;
-
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.style.cssText = "position:absolute;inset:0;pointer-events:none;z-index:1;overflow:visible";
-    containerRef.current.appendChild(svg);
-    svgRef.current = svg;
 
     const map = new maplibregl.Map({
       container: containerRef.current,
@@ -306,9 +318,12 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
       });
     }
 
-    map.on("render", () => redrawSVG());
-
     map.on("load", () => {
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.style.cssText = "position:absolute;inset:0;pointer-events:none;z-index:0;overflow:visible";
+      map.getCanvasContainer().appendChild(svg);
+      svgRef.current = svg;
+
       setMapLoaded(true);
 
       if (userLocation) {
@@ -329,6 +344,8 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
       }
     });
 
+    map.on("render", () => redrawLines());
+
     if (onReady) {
       const signalReady = () => {
         if (map.areTilesLoaded()) {
@@ -340,6 +357,8 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
     }
 
     return () => {
+      routeConfigs.current.forEach((r) => r.dotMarkers.forEach((m) => m.remove()));
+      routeConfigs.current = [];
       markerEls.current.clear();
       mapRef.current = null;
       svgRef.current = null;
@@ -348,7 +367,7 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return <div ref={containerRef} className={className} style={{ position: "relative" }} />;
+  return <div ref={containerRef} className={className} />;
 });
 
 export default Map;
