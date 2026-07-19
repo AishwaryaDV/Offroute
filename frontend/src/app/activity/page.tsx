@@ -200,8 +200,13 @@ function Activity() {
         </>
       )}
 
-      {/* Timeline tab: sheet over dark peek */}
+      {/* Timeline tab: sheet over map peek */}
       {tab === "timeline" && (
+        <>
+        <div className="pointer-events-none absolute inset-0">
+          <MapDynamic center={[78.9629, 20.5937]} zoom={3.6} />
+          <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
+        </div>
         <div
           className="sheet-up sheet-light absolute inset-x-0 bottom-0 top-[6dvh] overflow-y-auto rounded-t-[28px] bg-[#f5f6f8]"
           style={{ paddingBottom: "calc(80px + max(0.75rem, env(safe-area-inset-bottom)))" }}
@@ -324,6 +329,7 @@ function Activity() {
             </div>
           )}
         </div>
+        </>
       )}
 
       {/* Tab switcher — floating at bottom */}
