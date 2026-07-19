@@ -166,7 +166,6 @@ function Activity() {
       if (dateLabel !== currentDate) {
         items.push({ type: "date", label: dateLabel });
         currentDate = dateLabel;
-        currentCircuit = "";
       }
 
       if (p.circuit_id !== currentCircuit) {
@@ -285,7 +284,7 @@ function Activity() {
           <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
         </div>
         <div
-          className="sheet-up sheet-light absolute inset-x-0 bottom-0 top-[6dvh] overflow-y-auto rounded-t-[28px] bg-[#f5f6f8]"
+          className="sheet-up sheet-light absolute inset-x-0 bottom-0 top-[6dvh] overflow-y-auto rounded-t-[28px] bg-white"
           style={{ paddingBottom: "calc(80px + max(0.75rem, env(safe-area-inset-bottom)))" }}
         >
           <div className="flex justify-center pt-3 pb-1">
@@ -368,7 +367,7 @@ function Activity() {
                     <div className="h-3 w-0.5 bg-gray-200" />
                     <Link
                       href={`/circuits/${point.circuit_id}/points/${point.id}`}
-                      className="w-full rounded-2xl bg-white p-3.5 active:bg-gray-50"
+                      className="w-full rounded-2xl bg-[#f5f6f8] p-3.5 active:bg-gray-100"
                     >
                       <div className="flex gap-3">
                         <div
