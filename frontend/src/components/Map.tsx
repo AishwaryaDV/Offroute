@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useImperativeHandle, forwardRef } from "react";
+import { useEffect, useRef, useImperativeHandle, forwardRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -149,7 +149,9 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markerEls = useRef<globalThis.Map<string, HTMLElement>>(new globalThis.Map());
+  const markerObjs = useRef<maplibregl.Marker[]>([]);
   const routeDataRef = useRef<[number, number][] | null>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
 
   useImperativeHandle(ref, () => ({
     flyTo: (lng: number, lat: number, z?: number) => {
@@ -167,6 +169,87 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
         : "none";
     });
   }, [activeMarkerId]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapLoaded) return;
+
+    markerObjs.current.forEach((m) => m.remove());
+    markerObjs.current = [];
+    markerEls.current.clear();
+
+    markers.forEach((m) => {
+      const el = createPinElement(m);
+      markerEls.current.set(m.id, el);
+      if (onMarkerClick) {
+        el.addEventListener("click", (e) => { e.stopPropagation(); onMarkerClick(m.id); });
+      }
+      const marker = new maplibregl.Marker({ element: el, draggable: m.draggable ?? false, anchor: "bottom" })
+        .setLngLat([m.lng, m.lat])
+        .addTo(map);
+      if (m.draggable && onMarkerDragEnd) {
+        marker.on("dragend", () => {
+          const pos = marker.getLngLat();
+          onMarkerDragEnd(m.id, { lng: pos.lng, lat: pos.lat });
+        });
+      }
+      markerObjs.current.push(marker);
+    });
+
+    if (drawRoute && markers.length > 1) {
+      const raw = markers.map((m) => [m.lng, m.lat] as [number, number]);
+      const coords = bezierRoute(raw);
+      routeDataRef.current = coords;
+      addRouteToMap(map, coords);
+    } else if (map.getSource("route")) {
+      (map.getSource("route") as maplibregl.GeoJSONSource).setData({
+        type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: [] },
+      });
+    }
+
+    if (circuitRoutes && circuitRoutes.length > 0) {
+      circuitRoutes.forEach((route) => {
+        const srcId = `circuit-route-${route.id}`;
+        if (route.coordinates.length < 2) return;
+        const coords = bezierRoute(route.coordinates);
+        const dimmed = highlightCircuitId && highlightCircuitId !== route.id;
+        if (map.getSource(srcId)) {
+          (map.getSource(srcId) as maplibregl.GeoJSONSource).setData({
+            type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: coords },
+          });
+          map.setPaintProperty(`${srcId}-outline`, "line-opacity", dimmed ? 0.05 : 0.2);
+          map.setPaintProperty(`${srcId}-line`, "line-opacity", dimmed ? 0.15 : 0.8);
+        } else {
+          map.addSource(srcId, {
+            type: "geojson",
+            data: { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: coords } },
+          });
+          map.addLayer({
+            id: `${srcId}-outline`, type: "line", source: srcId,
+            paint: { "line-color": "#000000", "line-width": 4, "line-opacity": dimmed ? 0.05 : 0.2 },
+          });
+          map.addLayer({
+            id: `${srcId}-line`, type: "line", source: srcId,
+            paint: { "line-color": route.color, "line-width": 2.5, "line-opacity": dimmed ? 0.15 : 0.8, "line-dasharray": [4, 3] },
+          });
+        }
+      });
+    }
+
+    if (markers.length > 0) {
+      const lngs = markers.map((m) => m.lng);
+      const lats = markers.map((m) => m.lat);
+      if (markers.length === 1) {
+        map.flyTo({ center: [lngs[0], lats[0]], zoom: 14, duration: 800 });
+      } else {
+        map.fitBounds(
+          [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
+          { padding: 80, maxZoom: 15 }
+        );
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [markers, drawRoute, circuitRoutes, highlightCircuitId, mapLoaded]);
 
   function addRouteToMap(map: maplibregl.Map, coords: [number, number][]) {
     if (map.getSource("route")) {
@@ -232,6 +315,8 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
     }
 
     map.on("load", () => {
+      setMapLoaded(true);
+
       if (userLocation) {
         const dot = document.createElement("div");
         dot.style.cssText =
@@ -247,95 +332,6 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
         new maplibregl.Marker({ element: dot })
           .setLngLat([userLocation.lng, userLocation.lat])
           .addTo(map);
-      }
-
-      markers.forEach((m) => {
-        const el = createPinElement(m);
-        markerEls.current.set(m.id, el);
-
-        if (onMarkerClick) {
-          el.addEventListener("click", (e) => {
-            e.stopPropagation();
-            onMarkerClick(m.id);
-          });
-        }
-
-        const marker = new maplibregl.Marker({
-          element: el,
-          draggable: m.draggable ?? false,
-          anchor: "bottom",
-        })
-          .setLngLat([m.lng, m.lat])
-          .addTo(map);
-
-        if (m.draggable && onMarkerDragEnd) {
-          marker.on("dragend", () => {
-            const pos = marker.getLngLat();
-            onMarkerDragEnd(m.id, { lng: pos.lng, lat: pos.lat });
-          });
-        }
-      });
-
-      if (drawRoute && markers.length > 1) {
-        const raw = markers.map((m) => [m.lng, m.lat] as [number, number]);
-        const coords = bezierRoute(raw);
-        routeDataRef.current = coords;
-        addRouteToMap(map, coords);
-      }
-
-      if (circuitRoutes && circuitRoutes.length > 0) {
-        circuitRoutes.forEach((route) => {
-          if (route.coordinates.length < 2) return;
-          const coords = bezierRoute(route.coordinates);
-          const srcId = `circuit-route-${route.id}`;
-          const dimmed = highlightCircuitId && highlightCircuitId !== route.id;
-          map.addSource(srcId, {
-            type: "geojson",
-            data: {
-              type: "Feature",
-              properties: {},
-              geometry: { type: "LineString", coordinates: coords },
-            },
-          });
-          map.addLayer({
-            id: `${srcId}-outline`,
-            type: "line",
-            source: srcId,
-            paint: {
-              "line-color": "#000000",
-              "line-width": 4,
-              "line-opacity": dimmed ? 0.05 : 0.2,
-            },
-          });
-          map.addLayer({
-            id: `${srcId}-line`,
-            type: "line",
-            source: srcId,
-            paint: {
-              "line-color": route.color,
-              "line-width": 2.5,
-              "line-opacity": dimmed ? 0.15 : 0.8,
-              "line-dasharray": [4, 3],
-            },
-          });
-        });
-      }
-
-      if (markers.length > 0) {
-        const lngs = markers.map((m) => m.lng);
-        const lats = markers.map((m) => m.lat);
-        if (markers.length === 1) {
-          map.setCenter([lngs[0], lats[0]]);
-          map.setZoom(14);
-        } else {
-          map.fitBounds(
-            [
-              [Math.min(...lngs), Math.min(...lats)],
-              [Math.max(...lngs), Math.max(...lats)],
-            ],
-            { padding: 80, maxZoom: 15 }
-          );
-        }
       }
     });
 

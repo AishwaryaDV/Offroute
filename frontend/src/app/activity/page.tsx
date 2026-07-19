@@ -3,6 +3,7 @@
 import {
   CalendarDays,
   Compass,
+  Flag,
   Gem,
   Globe,
   Home,
@@ -138,7 +139,8 @@ function Activity() {
 
   type TimelineItem =
     | { type: "date"; label: string }
-    | { type: "circuit"; title: string }
+    | { type: "circuit-start"; title: string }
+    | { type: "circuit-end"; title: string }
     | { type: "point"; point: WorldPoint };
 
   const timelineItems = useMemo(() => {
@@ -169,11 +171,21 @@ function Activity() {
       }
 
       if (p.circuit_id !== currentCircuit) {
-        items.push({ type: "circuit", title: p.circuit_title });
+        items.push({ type: "circuit-start", title: p.circuit_title });
         currentCircuit = p.circuit_id;
       }
 
       items.push({ type: "point", point: p });
+    }
+
+    const lastIdx = new globalThis.Map<string, number>();
+    items.forEach((item, i) => {
+      if (item.type === "point") lastIdx.set(item.point.circuit_id, i);
+    });
+    const inserts = [...lastIdx.entries()].sort(([, a], [, b]) => b - a);
+    for (const [circuitId, idx] of inserts) {
+      const p = (items[idx] as { type: "point"; point: WorldPoint }).point;
+      items.splice(idx + 1, 0, { type: "circuit-end", title: p.circuit_title });
     }
 
     return items;
@@ -342,13 +354,29 @@ function Activity() {
                   );
                 }
 
-                if (item.type === "circuit") {
+                if (item.type === "circuit-start") {
                   return (
-                    <div key={`circuit-${idx}`} className="flex w-full flex-col items-center">
+                    <div key={`cs-${idx}`} className="flex w-full flex-col items-center">
                       <div className="h-4 w-0.5 bg-gray-200" />
                       <div className="flex items-center gap-2 py-1.5">
                         <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-gray-100">
                           <Compass size={11} className="text-gray-400" />
+                        </div>
+                        <span className="truncate text-[11px] font-semibold text-gray-400">
+                          {item.title}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                }
+
+                if (item.type === "circuit-end") {
+                  return (
+                    <div key={`ce-${idx}`} className="flex w-full flex-col items-center">
+                      <div className="h-4 w-0.5 bg-gray-200" />
+                      <div className="flex items-center gap-2 py-1.5">
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-gray-100">
+                          <Flag size={11} className="text-gray-400" />
                         </div>
                         <span className="truncate text-[11px] font-semibold text-gray-400">
                           {item.title}
