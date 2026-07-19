@@ -71,17 +71,18 @@ const CATEGORY_COLORS: Record<string, string> = {
   other: "#3b82f6",
 };
 
-const CATEGORY_IMAGES: Record<string, string> = {
-  food: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=320&h=200&fit=crop",
-  drink: "https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=320&h=200&fit=crop",
-  stay: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=320&h=200&fit=crop",
-  viewpoint: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=320&h=200&fit=crop",
-  activity: "https://images.unsplash.com/photo-1551632811-561732d1e306?w=320&h=200&fit=crop",
-  nature: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=320&h=200&fit=crop",
-  culture: "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=320&h=200&fit=crop",
-  hidden_gem: "https://images.unsplash.com/photo-1528164344705-47542687000d?w=320&h=200&fit=crop",
-  other: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=320&h=200&fit=crop",
-};
+const POINT_PLACEHOLDER_IMAGES = [
+  "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=320&h=200&fit=crop",
+  "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=320&h=200&fit=crop",
+  "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=320&h=200&fit=crop",
+  "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=320&h=200&fit=crop",
+  "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=320&h=200&fit=crop",
+  "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=320&h=200&fit=crop",
+  "https://images.unsplash.com/photo-1528164344705-47542687000d?w=320&h=200&fit=crop",
+  "https://images.unsplash.com/photo-1551632811-561732d1e306?w=320&h=200&fit=crop",
+  "https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=320&h=200&fit=crop",
+  "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=320&h=200&fit=crop",
+];
 
 function CircuitDetail() {
   const { id } = useParams<{ id: string }>();
@@ -473,7 +474,7 @@ function CircuitDetail() {
                       }`}
                     >
                       <img
-                        src={CATEGORY_IMAGES[cat] ?? CATEGORY_IMAGES.other}
+                        src={POINT_PLACEHOLDER_IMAGES[i % POINT_PLACEHOLDER_IMAGES.length]}
                         alt=""
                         className="absolute inset-0 h-full w-full object-cover"
                       />
