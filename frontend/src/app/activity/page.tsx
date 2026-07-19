@@ -106,6 +106,7 @@ function Activity() {
     const routes: CircuitRoute[] = [];
     grouped.forEach((pts, circuitId) => {
       const sorted = [...pts].sort((a, b) => a.order_index - b.order_index);
+      console.log("[DEBUG circuitRoute]", circuitId, sorted.map(p => ({ title: p.title, order: p.order_index, lng: p.longitude, lat: p.latitude })));
       if (sorted.length >= 2) {
         routes.push({
           id: circuitId,
@@ -114,6 +115,7 @@ function Activity() {
         });
       }
     });
+    console.log("[DEBUG circuitRoutes]", routes.map(r => ({ id: r.id, coords: r.coordinates.length })));
     return routes;
   }, [points, circuitColorMap]);
 

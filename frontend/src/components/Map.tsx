@@ -208,6 +208,7 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
     }
 
     if (circuitRoutes && circuitRoutes.length > 0) {
+      console.log("[DEBUG Map] drawing circuitRoutes:", circuitRoutes.map(r => ({ id: r.id, coordCount: r.coordinates.length, coords: r.coordinates })));
       circuitRoutes.forEach((route) => {
         const srcId = `circuit-route-${route.id}`;
         if (route.coordinates.length < 2) return;
