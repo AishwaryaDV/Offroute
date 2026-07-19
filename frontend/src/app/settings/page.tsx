@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AuthGuard } from "@/components/AuthGuard";
+import MapDynamic from "@/components/MapDynamic";
 import { deleteMe, getMe, updateMe } from "@/lib/me";
 import {
   isPushSupported,
@@ -193,7 +194,10 @@ function Settings() {
 
   return (
     <div className="relative h-[100dvh]">
-      {/* Main sheet — no map background, body's #0b1120 shows in the peek area */}
+      <div className="pointer-events-none absolute inset-0">
+        <MapDynamic center={[78.9629, 20.5937]} zoom={3.6} />
+        <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
+      </div>
       <div className="sheet-light absolute inset-x-0 bottom-0 top-[6dvh] overflow-hidden rounded-t-[28px] bg-white">
         {/* Settings menu — always visible behind cards */}
         <div className="flex h-full flex-col">
