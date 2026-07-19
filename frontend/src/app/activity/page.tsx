@@ -16,6 +16,7 @@ import {
   Utensils,
   Wine,
   X,
+  ArrowLeft,
   Zap,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -207,6 +208,13 @@ function Activity() {
             onMarkerClick={handleMarkerClick}
             onMapClick={() => setSelectedCircuitId(null)}
           />
+
+          <button
+            onClick={() => router.back()}
+            className="absolute left-4 top-[max(1rem,env(safe-area-inset-top))] z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 shadow-lg backdrop-blur-sm active:bg-white"
+          >
+            <ArrowLeft size={20} className="text-[#0f1d32]" />
+          </button>
 
           {isLoading && (
             <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#0b1120]/80">
