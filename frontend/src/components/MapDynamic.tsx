@@ -1,5 +1,5 @@
 import dynamic from "next/dynamic";
-import type { MapProps, MapMarker, MapHandle } from "./Map";
+import type { MapProps, MapMarker, MapHandle, CircuitRoute } from "./Map";
 
 const MapDynamic = dynamic(() => import("./Map"), {
   ssr: false,
@@ -7,4 +7,4 @@ const MapDynamic = dynamic(() => import("./Map"), {
 });
 
 export default MapDynamic;
-export type { MapProps, MapMarker, MapHandle };
+export type { MapProps, MapMarker, MapHandle, CircuitRoute };

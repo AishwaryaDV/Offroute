@@ -20,10 +20,10 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { AuthGuard } from "@/components/AuthGuard";
 import MapDynamic from "@/components/MapDynamic";
-import type { MapMarker } from "@/components/MapDynamic";
+import type { MapMarker, CircuitRoute } from "@/components/MapDynamic";
 import { getAllPoints } from "@/lib/points";
 import type { WorldPoint } from "@/types/api";
 
@@ -94,6 +94,48 @@ function Activity() {
     return [...map.entries()];
   }, [points, circuitColorMap]);
 
+  const [selectedCircuitId, setSelectedCircuitId] = useState<string | null>(null);
+
+  const circuitRoutes: CircuitRoute[] = useMemo(() => {
+    const grouped = new globalThis.Map<string, WorldPoint[]>();
+    (points ?? []).forEach((p) => {
+      if (!grouped.has(p.circuit_id)) grouped.set(p.circuit_id, []);
+      grouped.get(p.circuit_id)!.push(p);
+    });
+    const routes: CircuitRoute[] = [];
+    grouped.forEach((pts, circuitId) => {
+      const sorted = [...pts].sort((a, b) => a.order_index - b.order_index);
+      if (sorted.length >= 2) {
+        routes.push({
+          id: circuitId,
+          color: circuitColorMap.get(circuitId) ?? "#3b82f6",
+          coordinates: sorted.map((p) => [p.longitude, p.latitude] as [number, number]),
+        });
+      }
+    });
+    return routes;
+  }, [points, circuitColorMap]);
+
+  const selectedCircuit = useMemo(() => {
+    if (!selectedCircuitId) return null;
+    const info = circuits.find(([id]) => id === selectedCircuitId);
+    if (!info) return null;
+    const circuitPoints = (points ?? [])
+      .filter((p) => p.circuit_id === selectedCircuitId)
+      .sort((a, b) => a.order_index - b.order_index);
+    return { id: info[0], title: info[1].title, color: info[1].color, points: circuitPoints };
+  }, [selectedCircuitId, circuits, points]);
+
+  const handleMarkerClick = useCallback(
+    (markerId: string) => {
+      const point = (points ?? []).find((p) => p.id === markerId);
+      if (point) {
+        setSelectedCircuitId(point.circuit_id);
+      }
+    },
+    [points],
+  );
+
   type TimelineItem =
     | { type: "date"; label: string }
     | { type: "circuit"; title: string }
@@ -146,9 +188,13 @@ function Activity() {
           <MapDynamic
             className="absolute inset-0 h-full w-full"
             markers={mapMarkers}
+            circuitRoutes={circuitRoutes}
+            highlightCircuitId={selectedCircuitId ?? undefined}
             interactive
             center={[78.9629, 20.5937]}
             zoom={3}
+            onMarkerClick={handleMarkerClick}
+            onMapClick={() => setSelectedCircuitId(null)}
           />
 
           {isLoading && (
@@ -159,14 +205,14 @@ function Activity() {
 
           {!isLoading && (!points || points.length === 0) && (
             <div className="absolute inset-0 z-10 flex items-center justify-center">
-              <div className="mx-6 rounded-2xl bg-[#111a2e]/90 p-6 text-center backdrop-blur-xl ring-1 ring-white/10">
-                <p className="text-lg font-semibold text-white">No points yet</p>
-                <p className="mt-1 text-sm text-zinc-400">
+              <div className="mx-6 rounded-2xl bg-white/95 p-6 text-center shadow-xl backdrop-blur-xl">
+                <p className="text-lg font-semibold text-[#0f1d32]">No points yet</p>
+                <p className="mt-1 text-sm text-gray-500">
                   Create a circuit and add points to see them on the world map.
                 </p>
                 <Link
                   href="/circuits/new"
-                  className="mt-4 inline-block rounded-full bg-blue-500 px-6 py-2.5 text-sm font-semibold text-white"
+                  className="mt-4 inline-block rounded-full bg-[#0f1d32] px-6 py-2.5 text-sm font-semibold text-white"
                 >
                   Create circuit
                 </Link>
@@ -174,26 +220,57 @@ function Activity() {
             </div>
           )}
 
-          {circuits.length > 0 && (
-            <div className="absolute bottom-24 left-4 z-10 rounded-xl bg-[#111a2e]/90 px-3 py-2 backdrop-blur-xl ring-1 ring-white/10">
-              <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
-                Circuits
-              </p>
-              <div className="flex flex-col gap-1">
-                {circuits.map(([circuitId, { title, color, count }]) => (
-                  <Link
-                    key={circuitId}
-                    href={`/circuits/${circuitId}`}
-                    className="flex items-center gap-2 rounded-lg px-1 py-0.5 active:bg-white/10"
-                  >
+          {/* Bottom circuit card — appears when a point is tapped */}
+          {selectedCircuit && (
+            <div className="absolute inset-x-0 bottom-[calc(56px+max(0.75rem,env(safe-area-inset-bottom)))] z-10 px-4">
+              <div className="rounded-2xl bg-[#f5f6f8] p-4 shadow-xl">
+                <div className="mb-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
                     <div
-                      className="h-2.5 w-2.5 rounded-full"
-                      style={{ backgroundColor: color }}
+                      className="h-3 w-3 rounded-full"
+                      style={{ backgroundColor: selectedCircuit.color }}
                     />
-                    <span className="text-xs text-zinc-300">{title}</span>
-                    <span className="text-[10px] text-zinc-500">{count}</span>
-                  </Link>
-                ))}
+                    <Link
+                      href={`/circuits/${selectedCircuit.id}`}
+                      className="text-base font-bold text-[#0f1d32] active:opacity-70"
+                    >
+                      {selectedCircuit.title}
+                    </Link>
+                  </div>
+                  <button
+                    onClick={() => setSelectedCircuitId(null)}
+                    className="flex h-8 w-8 items-center justify-center rounded-full bg-white active:bg-gray-100"
+                  >
+                    <X size={16} className="text-[#0f1d32]" />
+                  </button>
+                </div>
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {selectedCircuit.points.map((p) => {
+                    const Icon = CATEGORY_ICONS[p.category ?? "other"] ?? MapPin;
+                    return (
+                      <Link
+                        key={p.id}
+                        href={`/circuits/${p.circuit_id}/points/${p.id}`}
+                        className="flex min-w-[140px] shrink-0 gap-2.5 rounded-xl bg-white p-3 active:bg-gray-50"
+                      >
+                        <div
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+                          style={{ backgroundColor: `${selectedCircuit.color}15` }}
+                        >
+                          <Icon size={14} style={{ color: selectedCircuit.color }} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-xs font-semibold text-[#0f1d32]">
+                            {p.title}
+                          </p>
+                          <p className="truncate text-[10px] text-gray-400">
+                            {p.category?.replace("_", " ") ?? "point"}
+                          </p>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           )}

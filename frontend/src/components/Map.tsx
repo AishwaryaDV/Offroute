@@ -22,6 +22,12 @@ export interface MapHandle {
   flyTo: (lng: number, lat: number, zoom?: number) => void;
 }
 
+export interface CircuitRoute {
+  id: string;
+  color: string;
+  coordinates: [number, number][];
+}
+
 export interface MapProps {
   className?: string;
   center?: [number, number];
@@ -29,6 +35,8 @@ export interface MapProps {
   markers?: MapMarker[];
   activeMarkerId?: string;
   drawRoute?: boolean;
+  circuitRoutes?: CircuitRoute[];
+  highlightCircuitId?: string;
   interactive?: boolean;
   userLocation?: { lng: number; lat: number };
   onReady?: () => void;
@@ -126,6 +134,8 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
     markers = [],
     activeMarkerId,
     drawRoute = false,
+    circuitRoutes,
+    highlightCircuitId,
     interactive = true,
     userLocation,
     onReady,
@@ -271,6 +281,44 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
         const coords = bezierRoute(raw);
         routeDataRef.current = coords;
         addRouteToMap(map, coords);
+      }
+
+      if (circuitRoutes && circuitRoutes.length > 0) {
+        circuitRoutes.forEach((route) => {
+          if (route.coordinates.length < 2) return;
+          const coords = bezierRoute(route.coordinates);
+          const srcId = `circuit-route-${route.id}`;
+          const dimmed = highlightCircuitId && highlightCircuitId !== route.id;
+          map.addSource(srcId, {
+            type: "geojson",
+            data: {
+              type: "Feature",
+              properties: {},
+              geometry: { type: "LineString", coordinates: coords },
+            },
+          });
+          map.addLayer({
+            id: `${srcId}-outline`,
+            type: "line",
+            source: srcId,
+            paint: {
+              "line-color": "#000000",
+              "line-width": 4,
+              "line-opacity": dimmed ? 0.05 : 0.2,
+            },
+          });
+          map.addLayer({
+            id: `${srcId}-line`,
+            type: "line",
+            source: srcId,
+            paint: {
+              "line-color": route.color,
+              "line-width": 2.5,
+              "line-opacity": dimmed ? 0.15 : 0.8,
+              "line-dasharray": [4, 3],
+            },
+          });
+        });
       }
 
       if (markers.length > 0) {
