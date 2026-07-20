@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Crosshair, MapPin, Navigation, Search, Settings, X } from "lucide-react";
+import { ArrowLeft, Calendar, Crosshair, FileText, MapPin, Navigation, Search, Settings, Star, Tag, Type, X } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -169,28 +169,32 @@ function AddPoint() {
         <div className="absolute left-4 top-[max(env(safe-area-inset-top),0.75rem)]">
           <Link
             href={`/circuits/${circuitId}`}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-black/50 backdrop-blur-md active:bg-black/70"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm active:bg-gray-100"
             aria-label="Back"
           >
-            <ArrowLeft size={20} className="text-white" />
+            <ArrowLeft size={20} className="text-[#0f1d32]" />
           </Link>
         </div>
       </div>
 
       {/* White sheet content */}
-      <div className="relative -mt-6 flex-1 rounded-t-[28px] bg-white pb-10">
-        <div className="flex justify-center pt-3">
+      <div className="sheet-up sheet-light relative -mt-6 flex-1 rounded-t-[28px] bg-white pb-10">
+        <div className="flex justify-center pt-3 pb-1">
           <div className="h-1 w-10 rounded-full bg-gray-300" />
         </div>
 
-        <main className="px-5 pt-4">
+        <h2 className="px-5 pb-4 pt-2 text-2xl font-bold tracking-tight text-[#0f1d32]">
+          New Point
+        </h2>
+
+        <main className="px-5">
           {/* GPS button + coordinates */}
           <div className="mb-5 flex gap-3">
             <button
               type="button"
               onClick={handleGpsClick}
               disabled={locatingGps}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-500 py-3.5 text-sm font-semibold text-white active:bg-blue-600 disabled:opacity-50"
+              className="flex flex-1 items-center justify-center gap-2 rounded-full bg-[#0f1d32] py-3.5 text-sm font-semibold text-white active:bg-[#162a46] disabled:opacity-50"
             >
               <Crosshair size={18} />
               {locatingGps ? "Locating…" : "Use GPS"}
@@ -212,11 +216,11 @@ function AddPoint() {
                 placeholder="Search for a place..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-xl bg-[#f5f6f8] py-3.5 pl-10 pr-4 text-sm text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ring-gray-200 focus:ring-blue-500"
+                className="w-full rounded-xl bg-[#f5f6f8] py-3.5 pl-10 pr-4 text-sm text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ring-gray-200 focus:ring-[#0f1d32]"
               />
               {searching && (
                 <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-200 border-t-blue-500" />
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-200 border-t-[#0f1d32]" />
                 </div>
               )}
             </div>
@@ -246,12 +250,16 @@ function AddPoint() {
 
           <form
             onSubmit={handleSubmit((data) => mutation.mutate(data))}
-            className="flex flex-col gap-4"
+            className="flex flex-col gap-5"
           >
             <div>
+              <div className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-500">
+                <Type size={14} />
+                <span>Point name</span>
+              </div>
               <input
                 type="text"
-                placeholder="Point name"
+                placeholder="e.g. Colosseum"
                 autoComplete="off"
                 {...register("title", {
                   required: "Give this point a name",
@@ -260,7 +268,7 @@ function AddPoint() {
                 className={`w-full rounded-xl bg-[#f5f6f8] px-4 py-3.5 text-base text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ${
                   errors.title
                     ? "ring-red-400 focus:ring-red-500"
-                    : "ring-gray-200 focus:ring-blue-500"
+                    : "ring-gray-200 focus:ring-[#0f1d32]"
                 }`}
               />
               {errors.title && (
@@ -268,49 +276,73 @@ function AddPoint() {
               )}
             </div>
 
-            <textarea
-              placeholder="Notes (optional)"
-              rows={2}
-              {...register("notes")}
-              className="w-full resize-none rounded-xl bg-[#f5f6f8] px-4 py-3.5 text-base text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ring-gray-200 focus:ring-blue-500"
-            />
+            <div>
+              <div className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-500">
+                <FileText size={14} />
+                <span>Notes</span>
+              </div>
+              <textarea
+                placeholder="What made this place special?"
+                rows={2}
+                {...register("notes")}
+                className="w-full resize-none rounded-xl bg-[#f5f6f8] px-4 py-3.5 text-base text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ring-gray-200 focus:ring-[#0f1d32]"
+              />
+            </div>
 
-            <select
-              {...register("category")}
-              className="w-full appearance-none rounded-xl bg-[#f5f6f8] px-4 py-3.5 text-base text-[#0f1d32] outline-none ring-1 ring-gray-200 focus:ring-blue-500"
-            >
-              <option value="">Category (optional)</option>
-              {CATEGORIES.map((c) => (
-                <option key={c.value} value={c.value}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
-
-            <div className="flex gap-3">
+            <div>
+              <div className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-500">
+                <Tag size={14} />
+                <span>Category</span>
+              </div>
               <select
-                {...register("rating")}
-                className="flex-1 appearance-none rounded-xl bg-[#f5f6f8] px-4 py-3.5 text-base text-[#0f1d32] outline-none ring-1 ring-gray-200 focus:ring-blue-500"
+                {...register("category")}
+                className="w-full appearance-none rounded-xl bg-[#f5f6f8] px-4 py-3.5 text-base text-[#0f1d32] outline-none ring-1 ring-gray-200 focus:ring-[#0f1d32]"
               >
-                <option value="">Rating</option>
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <option key={n} value={n}>
-                    {"★".repeat(n)}
+                <option value="">Select a category</option>
+                {CATEGORIES.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
                   </option>
                 ))}
               </select>
+            </div>
 
-              <input
-                type="date"
-                {...register("visited_at")}
-                className="flex-1 rounded-xl bg-[#f5f6f8] px-4 py-3.5 text-base text-[#0f1d32] outline-none ring-1 ring-gray-200 focus:ring-blue-500"
-              />
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <div className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-500">
+                  <Star size={14} />
+                  <span>Rating</span>
+                </div>
+                <select
+                  {...register("rating")}
+                  className="w-full appearance-none rounded-xl bg-[#f5f6f8] px-4 py-3.5 text-base text-[#0f1d32] outline-none ring-1 ring-gray-200 focus:ring-[#0f1d32]"
+                >
+                  <option value="">-</option>
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <option key={n} value={n}>
+                      {"★".repeat(n)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex-1">
+                <div className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-500">
+                  <Calendar size={14} />
+                  <span>Date visited</span>
+                </div>
+                <input
+                  type="date"
+                  {...register("visited_at")}
+                  className="w-full rounded-xl bg-[#f5f6f8] px-4 py-3.5 text-base text-[#0f1d32] outline-none ring-1 ring-gray-200 focus:ring-[#0f1d32]"
+                />
+              </div>
             </div>
 
             <button
               type="submit"
               disabled={mutation.isPending || !location}
-              className="mt-4 rounded-xl bg-blue-500 py-4 text-base font-semibold text-white active:bg-blue-600 disabled:opacity-50"
+              className="mt-4 rounded-full bg-[#0f1d32] py-4 text-base font-semibold text-white active:bg-[#162a46] disabled:opacity-50"
             >
               {mutation.isPending ? "Saving…" : "Save point"}
             </button>
@@ -338,8 +370,8 @@ function AddPoint() {
             </button>
 
             <div className="mb-5 flex justify-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-50">
-                <Navigation size={28} className="text-blue-500" />
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#0f1d32]/10">
+                <Navigation size={28} className="text-[#0f1d32]" />
               </div>
             </div>
 
@@ -355,7 +387,7 @@ function AddPoint() {
             <button
               type="button"
               onClick={requestLocation}
-              className="w-full rounded-xl bg-blue-500 py-4 text-base font-semibold text-white active:bg-blue-600"
+              className="w-full rounded-full bg-[#0f1d32] py-4 text-base font-semibold text-white active:bg-[#162a46]"
             >
               Allow Location
             </button>
@@ -428,7 +460,7 @@ function AddPoint() {
             <button
               type="button"
               onClick={requestLocation}
-              className="w-full rounded-xl bg-blue-500 py-4 text-base font-semibold text-white active:bg-blue-600"
+              className="w-full rounded-full bg-[#0f1d32] py-4 text-base font-semibold text-white active:bg-[#162a46]"
             >
               Try again
             </button>
