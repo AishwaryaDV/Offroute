@@ -186,10 +186,7 @@ export default function LandingPage() {
           height: min(360px, 85vw);
           z-index: 1;
           border-radius: 50%;
-          box-shadow:
-            0 0 60px 10px rgba(56, 189, 248, 0.25),
-            0 0 120px 40px rgba(56, 189, 248, 0.12),
-            inset 0 0 30px 5px rgba(56, 189, 248, 0.08);
+          overflow: hidden;
         }
         .globe-halo {
           position: absolute;
