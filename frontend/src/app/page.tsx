@@ -82,6 +82,11 @@ export default function LandingPage() {
     <div className="relative flex h-[100dvh] flex-col overflow-hidden bg-[#060d1b] text-white">
       {/* Star field background */}
       <div className="stars" />
+      <div className="twinkle-1" />
+      <div className="twinkle-2" />
+      <div className="twinkle-3" />
+      <div className="comet comet-1" />
+      <div className="comet comet-2" />
 
       {/* Branding — top */}
       <div className="relative z-10 flex items-center justify-center gap-2.5 pt-[max(env(safe-area-inset-top),2rem)]">
@@ -195,13 +200,69 @@ export default function LandingPage() {
           border-radius: 50%;
           background: radial-gradient(
             circle,
-            rgba(56, 189, 248, 0.18) 36%,
-            rgba(56, 189, 248, 0.12) 44%,
-            rgba(56, 189, 248, 0.05) 55%,
-            rgba(56, 189, 248, 0.02) 65%,
-            transparent 75%
+            rgba(56, 189, 248, 0.2) 34%,
+            rgba(56, 189, 248, 0.14) 42%,
+            rgba(56, 189, 248, 0.06) 52%,
+            rgba(56, 189, 248, 0.02) 62%,
+            transparent 72%
           );
           z-index: 0;
+        }
+        .twinkle-1, .twinkle-2, .twinkle-3 {
+          position: absolute;
+          border-radius: 50%;
+          background: white;
+        }
+        .twinkle-1 {
+          width: 3px; height: 3px;
+          top: 6%; left: 12%;
+          animation: twinkle 2s ease-in-out infinite;
+        }
+        .twinkle-2 {
+          width: 2.5px; height: 2.5px;
+          top: 14%; right: 8%;
+          animation: twinkle 2.5s ease-in-out 0.7s infinite;
+        }
+        .twinkle-3 {
+          width: 2px; height: 2px;
+          top: 3%; left: 55%;
+          animation: twinkle 3s ease-in-out 1.2s infinite;
+        }
+        @keyframes twinkle {
+          0%, 100% { opacity: 0.3; transform: scale(0.8); }
+          50% { opacity: 1; transform: scale(1.3); }
+        }
+        .comet {
+          position: absolute;
+          width: 2px;
+          height: 2px;
+          background: white;
+          border-radius: 50%;
+          box-shadow: 0 0 4px 1px rgba(255,255,255,0.6);
+        }
+        .comet::after {
+          content: '';
+          position: absolute;
+          top: 50%;
+          right: 100%;
+          width: 40px;
+          height: 1px;
+          background: linear-gradient(to left, rgba(255,255,255,0.6), transparent);
+          transform: translateY(-50%);
+        }
+        .comet-1 {
+          top: 10%; left: -10%;
+          animation: comet-streak 6s linear 2s infinite;
+        }
+        .comet-2 {
+          top: 28%; left: -10%;
+          animation: comet-streak 8s linear 5s infinite;
+        }
+        @keyframes comet-streak {
+          0% { transform: translate(-10%, 0); opacity: 0; }
+          10% { opacity: 1; }
+          70% { opacity: 1; }
+          100% { transform: translate(110vw, 20px); opacity: 0; }
         }
       `}</style>
     </div>
