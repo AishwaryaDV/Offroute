@@ -1,37 +1,73 @@
 "use client";
 
-import { Canvas, useFrame, useLoader } from "@react-three/fiber";
-import { useRef } from "react";
-import * as THREE from "three";
-
-function Earth() {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const texture = useLoader(THREE.TextureLoader, "/earth-texture.jpg");
-
-  useFrame((_state, delta) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.y += delta * 0.15;
-    }
-  });
-
-  return (
-    <mesh ref={meshRef} rotation={[0.3, 0, 0.1]}>
-      <sphereGeometry args={[2.2, 64, 64]} />
-      <meshStandardMaterial map={texture} />
-    </mesh>
-  );
-}
+import maplibregl from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
+import { useEffect, useRef } from "react";
 
 export function Globe() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<maplibregl.Map | null>(null);
+
+  useEffect(() => {
+    if (!containerRef.current || mapRef.current) return;
+
+    const map = new maplibregl.Map({
+      container: containerRef.current,
+      style: {
+        version: 8,
+        sources: {
+          satellite: {
+            type: "raster",
+            tiles: [
+              "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+            ],
+            tileSize: 256,
+            maxzoom: 6,
+          },
+        },
+        layers: [
+          {
+            id: "satellite",
+            type: "raster",
+            source: "satellite",
+          },
+        ],
+      },
+      center: [20, 20],
+      zoom: 1.3,
+      interactive: false,
+      attributionControl: false,
+      fadeDuration: 0,
+    });
+
+    map.on("load", () => {
+      map.setProjection({ type: "globe" });
+      let animFrame: number;
+      const speed = 0.04;
+
+      function rotate() {
+        const center = map.getCenter();
+        center.lng += speed;
+        map.setCenter(center);
+        animFrame = requestAnimationFrame(rotate);
+      }
+
+      animFrame = requestAnimationFrame(rotate);
+      map.once("remove", () => cancelAnimationFrame(animFrame));
+    });
+
+    mapRef.current = map;
+
+    return () => {
+      map.remove();
+      mapRef.current = null;
+    };
+  }, []);
+
   return (
-    <Canvas
-      camera={{ position: [0, 0, 5.5], fov: 45 }}
-      style={{ width: "100%", height: "100%" }}
-      gl={{ antialias: true, alpha: true }}
-    >
-      <ambientLight intensity={0.6} />
-      <directionalLight position={[5, 3, 5]} intensity={1.2} />
-      <Earth />
-    </Canvas>
+    <div
+      ref={containerRef}
+      className="globe-map-container h-full w-full overflow-hidden rounded-full"
+    />
   );
 }

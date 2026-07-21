@@ -76,6 +76,17 @@ select {
   50% { opacity: 0.5; transform: scale(0.6); }
 }
 
+/* Globe on landing page: hide MapLibre chrome, set dark canvas bg */
+.globe-map-container .maplibregl-ctrl-bottom-left,
+.globe-map-container .maplibregl-ctrl-bottom-right,
+.globe-map-container .maplibregl-ctrl-top-left,
+.globe-map-container .maplibregl-ctrl-top-right {
+  display: none;
+}
+.globe-map-container .maplibregl-canvas {
+  background: transparent !important;
+}
+
 /* Light-themed pages/sheets: native controls should render light */
 .sheet-light input,
 .sheet-light textarea,
