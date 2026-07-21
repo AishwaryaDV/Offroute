@@ -85,14 +85,14 @@ function AddPoint() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<FormValues>();
+  } = useForm<FormValues>({ mode: "onBlur" });
 
   const mutation = useMutation({
     mutationFn: (data: FormValues) => {
       if (!location) throw new Error("No location set");
       return createPoint(circuitId, {
-        title: data.title,
-        notes: data.notes || undefined,
+        title: data.title.trim(),
+        notes: data.notes?.trim() || undefined,
         latitude: location.lat,
         longitude: location.lng,
         category: (data.category as PointCategory) || undefined,
@@ -153,7 +153,7 @@ function AddPoint() {
       {/* Map with back button overlay */}
       <div className="relative">
         <MapDynamic
-          className="h-52 w-full"
+          className="h-40 w-full"
           markers={mapMarkers}
           center={location ? [location.lng, location.lat] : undefined}
           zoom={location ? 15 : 12}
@@ -161,15 +161,15 @@ function AddPoint() {
           key={location ? `${location.lat},${location.lng}` : "empty"}
         />
         {!location && (
-          <div className="absolute inset-0 flex items-center justify-center bg-[#111a2e]/80">
-            <p className="text-sm text-gray-400">Tap the map or use GPS below</p>
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-[#111a2e]/80">
+            <p className="text-sm text-gray-400">Use GPS or search for a place below</p>
           </div>
         )}
 
-        <div className="absolute left-4 top-[max(env(safe-area-inset-top),0.75rem)]">
+        <div className="absolute left-4 top-[max(env(safe-area-inset-top),1rem)] z-10">
           <Link
             href={`/circuits/${circuitId}`}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm active:bg-gray-100"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-lg active:bg-gray-100"
             aria-label="Back"
           >
             <ArrowLeft size={20} className="text-[#0f1d32]" />
@@ -178,23 +178,23 @@ function AddPoint() {
       </div>
 
       {/* White sheet content */}
-      <div className="sheet-up sheet-light relative -mt-6 flex-1 rounded-t-[28px] bg-white pb-10">
+      <div className="sheet-up sheet-light relative -mt-6 flex-1 rounded-t-[28px] bg-white pb-5">
         <div className="flex justify-center pt-3 pb-1">
           <div className="h-1 w-10 rounded-full bg-gray-300" />
         </div>
 
-        <h2 className="px-5 pb-4 pt-2 text-2xl font-bold tracking-tight text-[#0f1d32]">
+        <h2 className="px-5 pb-3 pt-2 text-2xl font-bold tracking-tight text-[#0f1d32]">
           New Point
         </h2>
 
         <main className="px-5">
           {/* GPS button + coordinates */}
-          <div className="mb-5 flex gap-3">
+          <div className="mb-4 flex gap-3">
             <button
               type="button"
               onClick={handleGpsClick}
               disabled={locatingGps}
-              className="flex flex-1 items-center justify-center gap-2 rounded-full bg-[#0f1d32] py-3.5 text-sm font-semibold text-white active:bg-[#162a46] disabled:opacity-50"
+              className="flex flex-1 items-center justify-center gap-2 rounded-full bg-[#0f1d32] py-3 text-sm font-semibold text-white active:bg-[#162a46] disabled:opacity-50"
             >
               <Crosshair size={18} />
               {locatingGps ? "Locating…" : "Use GPS"}
@@ -208,7 +208,7 @@ function AddPoint() {
           </div>
 
           {/* Place search */}
-          <div className="relative mb-5">
+          <div className="relative mb-4">
             <div className="relative">
               <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
@@ -216,7 +216,7 @@ function AddPoint() {
                 placeholder="Search for a place..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-xl bg-[#f5f6f8] py-3.5 pl-10 pr-4 text-sm text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ring-gray-200 focus:ring-[#0f1d32]"
+                className="w-full rounded-xl bg-[#f5f6f8] py-3 pl-10 pr-4 text-sm text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ring-gray-200 focus:ring-[#0f1d32]"
               />
               {searching && (
                 <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
@@ -250,7 +250,7 @@ function AddPoint() {
 
           <form
             onSubmit={handleSubmit((data) => mutation.mutate(data))}
-            className="flex flex-col gap-5"
+            className="flex flex-col gap-4"
           >
             <div>
               <div className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-500">
@@ -263,9 +263,12 @@ function AddPoint() {
                 autoComplete="off"
                 {...register("title", {
                   required: "Give this point a name",
+                  minLength: { value: 2, message: "At least 2 characters" },
                   maxLength: { value: 200, message: "200 characters max" },
+                  pattern: { value: /[a-zA-Z0-9]/, message: "Must contain at least one letter or number" },
+                  validate: (v) => v.trim().length > 0 || "Name cannot be only spaces",
                 })}
-                className={`w-full rounded-xl bg-[#f5f6f8] px-4 py-3.5 text-base text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ${
+                className={`w-full rounded-xl bg-[#f5f6f8] px-4 py-3 text-sm text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ${
                   errors.title
                     ? "ring-red-400 focus:ring-red-500"
                     : "ring-gray-200 focus:ring-[#0f1d32]"
@@ -284,9 +287,18 @@ function AddPoint() {
               <textarea
                 placeholder="What made this place special?"
                 rows={2}
-                {...register("notes")}
-                className="w-full resize-none rounded-xl bg-[#f5f6f8] px-4 py-3.5 text-base text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ring-gray-200 focus:ring-[#0f1d32]"
+                {...register("notes", {
+                  maxLength: { value: 2000, message: "2000 characters max" },
+                })}
+                className={`w-full resize-none rounded-xl bg-[#f5f6f8] px-4 py-3 text-sm text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ${
+                  errors.notes
+                    ? "ring-red-400 focus:ring-red-500"
+                    : "ring-gray-200 focus:ring-[#0f1d32]"
+                }`}
               />
+              {errors.notes && (
+                <p className="mt-1.5 text-sm text-red-500">{errors.notes.message}</p>
+              )}
             </div>
 
             <div>
@@ -296,7 +308,7 @@ function AddPoint() {
               </div>
               <select
                 {...register("category")}
-                className="w-full appearance-none rounded-xl bg-[#f5f6f8] px-4 py-3.5 text-base text-[#0f1d32] outline-none ring-1 ring-gray-200 focus:ring-[#0f1d32]"
+                className="w-full appearance-none rounded-xl bg-[#f5f6f8] px-4 py-3 text-sm text-[#0f1d32] outline-none ring-1 ring-gray-200 focus:ring-[#0f1d32]"
               >
                 <option value="">Select a category</option>
                 {CATEGORIES.map((c) => (
@@ -315,7 +327,7 @@ function AddPoint() {
                 </div>
                 <select
                   {...register("rating")}
-                  className="w-full appearance-none rounded-xl bg-[#f5f6f8] px-4 py-3.5 text-base text-[#0f1d32] outline-none ring-1 ring-gray-200 focus:ring-[#0f1d32]"
+                  className="w-full appearance-none rounded-xl bg-[#f5f6f8] px-4 py-3 text-sm text-[#0f1d32] outline-none ring-1 ring-gray-200 focus:ring-[#0f1d32]"
                 >
                   <option value="">-</option>
                   {[1, 2, 3, 4, 5].map((n) => (
@@ -333,8 +345,18 @@ function AddPoint() {
                 </div>
                 <input
                   type="date"
-                  {...register("visited_at")}
-                  className="w-full rounded-xl bg-[#f5f6f8] px-4 py-3.5 text-base text-[#0f1d32] outline-none ring-1 ring-gray-200 focus:ring-[#0f1d32]"
+                  {...register("visited_at", {
+                    validate: (v) => {
+                      if (!v) return true;
+                      return new Date(v) <= new Date() || "Date cannot be in the future";
+                    },
+                  })}
+                  max={new Date().toISOString().split("T")[0]}
+                  className={`w-full rounded-xl bg-[#f5f6f8] px-4 py-3 text-sm text-[#0f1d32] outline-none ring-1 ${
+                    errors.visited_at
+                      ? "ring-red-400 focus:ring-red-500"
+                      : "ring-gray-200 focus:ring-[#0f1d32]"
+                  }`}
                 />
               </div>
             </div>
@@ -342,7 +364,7 @@ function AddPoint() {
             <button
               type="submit"
               disabled={mutation.isPending || !location}
-              className="mt-4 rounded-full bg-[#0f1d32] py-4 text-base font-semibold text-white active:bg-[#162a46] disabled:opacity-50"
+              className="mt-2 rounded-full bg-[#0f1d32] py-3.5 text-base font-semibold text-white active:bg-[#162a46] disabled:opacity-50"
             >
               {mutation.isPending ? "Saving…" : "Save point"}
             </button>
