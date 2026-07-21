@@ -164,14 +164,14 @@ function Settings() {
       await supabase.auth.signOut();
       queryClient.clear();
       toast.success("Account deleted");
-      router.replace("/login");
+      router.replace("/");
     },
     onError: () => toast.error("Could not delete account — try again"),
   });
 
   async function logout() {
     await supabase.auth.signOut();
-    router.replace("/login");
+    router.replace("/");
   }
 
   function saveAccount() {
@@ -233,7 +233,6 @@ function Settings() {
               </span>
               <ChevronRight size={18} className="text-gray-300" />
             </button>
-            <div className="h-px bg-gray-100" />
             <button
               onClick={() => setView("account")}
               className="flex w-full items-center gap-4 py-4 active:opacity-70"
