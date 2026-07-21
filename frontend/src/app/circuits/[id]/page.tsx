@@ -16,6 +16,7 @@ import {
   MapPin,
   MoreVertical,
   Mountain,
+  Pencil,
   Plus,
   Share2,
   Star,
@@ -173,6 +174,12 @@ function CircuitDetail() {
   const mapHandleRef = useRef<MapHandle | null>(null);
   const [reordering, setReordering] = useState(false);
   const [reorderList, setReorderList] = useState<Point[]>([]);
+  const [showEditCircuit, setShowEditCircuit] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDesc, setEditDesc] = useState("");
+  const [editVisibility, setEditVisibility] = useState<"private" | "shared" | "public">("private");
+  const [editStartDate, setEditStartDate] = useState("");
+  const [editEndDate, setEditEndDate] = useState("");
 
   const touchSensor = useSensor(TouchSensor, {
     activationConstraint: { delay: 200, tolerance: 5 },
@@ -269,6 +276,34 @@ function CircuitDetail() {
     },
     onError: () => toast.error("Could not update tags"),
   });
+
+  const editCircuitMutation = useMutation({
+    mutationFn: () =>
+      updateCircuit(id, {
+        title: editTitle.trim() || undefined,
+        description: editDesc.trim() || undefined,
+        visibility: editVisibility,
+        start_date: editStartDate || undefined,
+        end_date: editEndDate || undefined,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["circuit", id] });
+      queryClient.invalidateQueries({ queryKey: ["circuits"] });
+      setShowEditCircuit(false);
+      toast.success("Circuit updated");
+    },
+    onError: () => toast.error("Could not update circuit"),
+  });
+
+  function openEditCircuit() {
+    setShowMenu(false);
+    setEditTitle(circuit?.title ?? "");
+    setEditDesc(circuit?.description ?? "");
+    setEditVisibility(circuit?.visibility ?? "private");
+    setEditStartDate(circuit?.start_date ?? "");
+    setEditEndDate(circuit?.end_date ?? "");
+    setShowEditCircuit(true);
+  }
 
   const starMutation = useMutation({
     mutationFn: () =>
@@ -492,6 +527,14 @@ function CircuitDetail() {
           />
           <div className="absolute right-4 top-[calc(max(env(safe-area-inset-top),0.75rem)+3rem)] z-30 w-48 overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5">
             <button
+              onClick={openEditCircuit}
+              className="flex w-full items-center gap-3 px-4 py-3.5 text-sm font-medium text-[#0f1d32] active:bg-gray-50"
+            >
+              <Pencil size={16} className="text-gray-400" />
+              Edit circuit
+            </button>
+            <div className="mx-4 h-px bg-gray-100" />
+            <button
               onClick={handleShare}
               className="flex w-full items-center gap-3 px-4 py-3.5 text-sm font-medium text-[#0f1d32] active:bg-gray-50"
             >
@@ -690,6 +733,93 @@ function CircuitDetail() {
           )}
         </div>
       </div>
+
+      {/* Edit circuit sheet */}
+      {showEditCircuit && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowEditCircuit(false);
+          }}
+        >
+          <div className="max-h-[85dvh] w-full max-w-sm overflow-y-auto rounded-t-3xl bg-white p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-gray-300" />
+            <div className="flex items-center justify-between pb-4">
+              <h2 className="text-2xl font-bold text-[#0f1d32]">Edit circuit</h2>
+              <button
+                onClick={() => editCircuitMutation.mutate()}
+                disabled={!editTitle.trim() || editCircuitMutation.isPending}
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0f1d32] active:bg-[#162a46] disabled:opacity-50"
+                aria-label="Save"
+              >
+                <Check size={20} className="text-white" strokeWidth={2.5} />
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-400">Title</label>
+                <input
+                  type="text"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="w-full rounded-xl bg-[#f5f6f8] px-4 py-3 text-base text-[#0f1d32] outline-none ring-1 ring-gray-200 focus:ring-blue-500"
+                  placeholder="Circuit title"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-400">Description</label>
+                <textarea
+                  value={editDesc}
+                  onChange={(e) => setEditDesc(e.target.value)}
+                  rows={3}
+                  maxLength={500}
+                  className="w-full resize-none rounded-xl bg-[#f5f6f8] px-4 py-3 text-base text-[#0f1d32] outline-none ring-1 ring-gray-200 focus:ring-blue-500"
+                  placeholder="What's this circuit about?"
+                />
+              </div>
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <label className="mb-1 block text-xs font-medium text-gray-400">Start date</label>
+                  <input
+                    type="date"
+                    value={editStartDate}
+                    onChange={(e) => setEditStartDate(e.target.value)}
+                    className="w-full rounded-xl bg-[#f5f6f8] px-4 py-3 text-sm text-[#0f1d32] outline-none ring-1 ring-gray-200 focus:ring-blue-500"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="mb-1 block text-xs font-medium text-gray-400">End date</label>
+                  <input
+                    type="date"
+                    value={editEndDate}
+                    onChange={(e) => setEditEndDate(e.target.value)}
+                    className="w-full rounded-xl bg-[#f5f6f8] px-4 py-3 text-sm text-[#0f1d32] outline-none ring-1 ring-gray-200 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-400">Visibility</label>
+                <div className="flex gap-2">
+                  {(["private", "shared", "public"] as const).map((v) => (
+                    <button
+                      key={v}
+                      onClick={() => setEditVisibility(v)}
+                      className={`flex-1 rounded-xl py-2.5 text-sm font-medium capitalize ring-1 transition-colors ${
+                        editVisibility === v
+                          ? "bg-[#0f1d32] text-white ring-[#0f1d32]"
+                          : "bg-white text-gray-600 ring-gray-200 active:bg-gray-50"
+                      }`}
+                    >
+                      {v}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Tag editor sheet */}
       {showTagEditor && (
