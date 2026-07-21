@@ -34,7 +34,7 @@ export function Globe() {
         ],
       },
       center: [20, 20],
-      zoom: 1.3,
+      zoom: 1.5,
       interactive: false,
       attributionControl: false,
       fadeDuration: 0,
