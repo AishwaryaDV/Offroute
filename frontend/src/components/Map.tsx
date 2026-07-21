@@ -113,7 +113,7 @@ interface RouteConfig {
 const Map = forwardRef<MapHandle, MapProps>(function Map(
   {
     className = "h-64 w-full",
-    center = [72.8777, 19.076],
+    center = [0, 20],
     zoom = 12,
     markers = [],
     activeMarkerId,

@@ -16,6 +16,7 @@ import {
   unsubscribeFromPush,
 } from "@/lib/push";
 import { supabase } from "@/lib/supabase";
+import { useUserLocation } from "@/hooks/useUserLocation";
 
 interface ProfileValues {
   username: string;
@@ -71,6 +72,7 @@ type View = "menu" | "profile" | "account" | "mapstyle" | "notifications";
 function Settings() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const userGeo = useUserLocation();
   const { data: me } = useQuery({ queryKey: ["me"], queryFn: getMe });
 
   const [view, setView] = useState<View>("menu");
@@ -195,7 +197,7 @@ function Settings() {
   return (
     <div className="relative h-[100dvh]">
       <div className="pointer-events-none absolute inset-0">
-        <MapDynamic center={[78.9629, 20.5937]} zoom={3.6} />
+        <MapDynamic center={userGeo.center} zoom={userGeo.zoom} />
         <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
       </div>
       <div className="sheet-light absolute inset-x-0 bottom-0 top-[6dvh] overflow-hidden rounded-t-[28px] bg-white">

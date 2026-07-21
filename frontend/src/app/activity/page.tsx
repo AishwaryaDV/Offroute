@@ -27,6 +27,7 @@ import { AuthGuard } from "@/components/AuthGuard";
 import MapDynamic from "@/components/MapDynamic";
 import type { MapMarker, CircuitRoute } from "@/components/MapDynamic";
 import { getAllPoints } from "@/lib/points";
+import { useUserLocation } from "@/hooks/useUserLocation";
 import type { WorldPoint } from "@/types/api";
 
 type IconComponent = React.ComponentType<{
@@ -54,6 +55,7 @@ const CIRCUIT_COLORS = [
 
 function Activity() {
   const router = useRouter();
+  const userGeo = useUserLocation();
   const [tab, setTab] = useState<"map" | "timeline">("timeline");
 
   const { data: points, isLoading } = useQuery({
@@ -203,7 +205,7 @@ function Activity() {
             circuitRoutes={circuitRoutes}
             highlightCircuitId={selectedCircuitId ?? undefined}
             interactive
-            center={[78.9629, 20.5937]}
+            center={userGeo.center}
             zoom={3}
             onMarkerClick={handleMarkerClick}
             onMapClick={() => setSelectedCircuitId(null)}
@@ -300,7 +302,7 @@ function Activity() {
       {tab === "timeline" && (
         <>
         <div className="pointer-events-none absolute inset-0">
-          <MapDynamic center={[78.9629, 20.5937]} zoom={3.6} />
+          <MapDynamic center={userGeo.center} zoom={userGeo.zoom} />
           <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
         </div>
         <div

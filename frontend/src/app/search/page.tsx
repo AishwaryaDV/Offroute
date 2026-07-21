@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { useUserLocation } from "@/hooks/useUserLocation";
 import { AuthGuard } from "@/components/AuthGuard";
 import MapDynamic from "@/components/MapDynamic";
 import { searchAll } from "@/lib/search";
@@ -34,6 +35,7 @@ function CategoryDot({ category }: { category: PointCategory | null }) {
 
 function SearchPage() {
   const router = useRouter();
+  const userGeo = useUserLocation();
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
@@ -61,7 +63,7 @@ function SearchPage() {
   return (
     <div className="relative h-[100dvh]">
       <div className="pointer-events-none absolute inset-0">
-        <MapDynamic center={[78.9629, 20.5937]} zoom={3.6} />
+        <MapDynamic center={userGeo.center} zoom={userGeo.zoom} />
         <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
       </div>
 

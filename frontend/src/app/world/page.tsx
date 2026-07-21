@@ -8,6 +8,7 @@ import { AuthGuard } from "@/components/AuthGuard";
 import MapDynamic from "@/components/MapDynamic";
 import type { MapMarker } from "@/components/MapDynamic";
 import { getAllPoints } from "@/lib/points";
+import { useUserLocation } from "@/hooks/useUserLocation";
 import type { WorldPoint } from "@/types/api";
 
 const CIRCUIT_COLORS = [
@@ -16,6 +17,7 @@ const CIRCUIT_COLORS = [
 ];
 
 function WorldMap() {
+  const userGeo = useUserLocation();
   const { data: points, isLoading } = useQuery({
     queryKey: ["world-points"],
     queryFn: getAllPoints,
@@ -62,7 +64,7 @@ function WorldMap() {
         className="absolute inset-0 h-full w-full"
         markers={mapMarkers}
         interactive
-        center={[78.9629, 20.5937]}
+        center={userGeo.center}
         zoom={3}
       />
 

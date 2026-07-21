@@ -12,6 +12,7 @@ import MapDynamic from "@/components/MapDynamic";
 import { getCircuits } from "@/lib/circuits";
 import { getMe } from "@/lib/me";
 import { getTrips, createTrip, deleteTrip } from "@/lib/trips";
+import { useUserLocation } from "@/hooks/useUserLocation";
 import type { Circuit, Trip } from "@/types/api";
 
 const PLACEHOLDER_COVERS = [
@@ -85,6 +86,7 @@ function CircuitCard({ circuit, index, tripName }: { circuit: Circuit; index: nu
 function CircuitsList() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const userGeo = useUserLocation();
   const { data: me } = useQuery({ queryKey: ["me"], queryFn: getMe });
   const { data: circuits, isLoading } = useQuery({
     queryKey: ["circuits"],
@@ -134,7 +136,7 @@ function CircuitsList() {
     <div className="relative h-[100dvh]">
       {/* Background map — same as dashboard peek */}
       <div className="pointer-events-none absolute inset-0">
-        <MapDynamic center={[78.9629, 20.5937]} zoom={3.6} />
+        <MapDynamic center={userGeo.center} zoom={userGeo.zoom} />
         <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
       </div>
 

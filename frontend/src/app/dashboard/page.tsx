@@ -30,6 +30,7 @@ import { getMe } from "@/lib/me";
 import { getCircuits, createCircuit } from "@/lib/circuits";
 import { getMyStats } from "@/lib/stats";
 import { getMyInvites, acceptInvite, declineInvite } from "@/lib/collaborators";
+import { useUserLocation } from "@/hooks/useUserLocation";
 import type { Invite } from "@/types/api";
 
 interface NewCircuitValues {
@@ -45,6 +46,7 @@ type SheetSnap = "collapsed" | "half" | "full";
 function Dashboard() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const userGeo = useUserLocation();
   const { data: me } = useQuery({ queryKey: ["me"], queryFn: getMe });
   const { data: circuits } = useQuery({
     queryKey: ["circuits"],
@@ -222,8 +224,8 @@ function Dashboard() {
       {/* Full-screen satellite map */}
       <MapDynamic
         className="absolute inset-0 h-full w-full"
-        center={[78.9629, 20.5937]}
-        zoom={3.6}
+        center={userGeo.center}
+        zoom={userGeo.zoom}
         interactive
         userLocation={userLoc ?? undefined}
         onReady={() => { setMapReady(true); sessionStorage.setItem("offroute-map-loaded", "1"); }}
