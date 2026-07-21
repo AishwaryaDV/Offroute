@@ -2,7 +2,7 @@
 
 import { Search } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 const NAV_ITEMS = [
@@ -54,6 +54,7 @@ const NAV_ITEMS = [
 
 export function BottomNav() {
   const pathname = usePathname();
+  const router = useRouter();
   const navRef = useRef<HTMLElement>(null);
   const itemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
   const [indicator, setIndicator] = useState({ left: 0, width: 0 });
@@ -117,9 +118,9 @@ export function BottomNav() {
 
       {/* Separated search icon */}
       <button
-        disabled
-        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#0f1d32]/8 shadow-lg ring-1 ring-black/5 backdrop-blur-xl text-[#0f1d32]/40"
-        aria-label="Search (coming soon)"
+        onClick={() => router.push("/search")}
+        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#0f1d32] shadow-lg text-white active:bg-[#162a46]"
+        aria-label="Search"
       >
         <Search size={20} />
       </button>
