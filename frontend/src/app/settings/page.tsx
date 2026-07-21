@@ -246,7 +246,6 @@ function Settings() {
               </span>
               <ChevronRight size={18} className="text-gray-300" />
             </button>
-            <div className="h-px bg-gray-100" />
             <button
               onClick={() => setView("mapstyle")}
               className="flex w-full items-center gap-4 py-4 active:opacity-70"
@@ -264,7 +263,6 @@ function Settings() {
                 <ChevronRight size={18} className="text-gray-300" />
               </div>
             </button>
-            <div className="h-px bg-gray-100" />
             <button
               onClick={() => setView("notifications")}
               className="flex w-full items-center gap-4 py-4 active:opacity-70"
@@ -284,7 +282,6 @@ function Settings() {
                 <ChevronRight size={18} className="text-gray-300" />
               </div>
             </button>
-            <div className="h-px bg-gray-100" />
             <button
               onClick={logout}
               className="flex w-full items-center gap-4 py-4 active:opacity-70"
