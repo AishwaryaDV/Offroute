@@ -89,7 +89,7 @@ export default function LandingPage() {
       <div className="comet comet-2" />
 
       {/* Branding — top */}
-      <div className="relative z-10 flex items-center justify-center gap-2.5 pt-[max(env(safe-area-inset-top),2rem)]">
+      <div className="relative z-10 flex items-center gap-2.5 px-6 pt-[max(env(safe-area-inset-top),2rem)]">
         <Compass size={24} className="text-white/80" />
         <h1 className="text-2xl font-bold tracking-tight text-white/90">
           Offroute
@@ -195,16 +195,18 @@ export default function LandingPage() {
         }
         .globe-halo {
           position: absolute;
-          width: min(440px, 105vw);
-          height: min(440px, 105vw);
+          width: min(500px, 120vw);
+          height: min(500px, 120vw);
           border-radius: 50%;
           background: radial-gradient(
             circle,
-            rgba(56, 189, 248, 0.2) 34%,
-            rgba(56, 189, 248, 0.14) 42%,
-            rgba(56, 189, 248, 0.06) 52%,
-            rgba(56, 189, 248, 0.02) 62%,
-            transparent 72%
+            rgba(56, 189, 248, 0.08) 30%,
+            rgba(56, 189, 248, 0.2) 38%,
+            rgba(56, 189, 248, 0.25) 42%,
+            rgba(56, 189, 248, 0.15) 50%,
+            rgba(56, 189, 248, 0.06) 60%,
+            rgba(56, 189, 248, 0.02) 70%,
+            transparent 80%
           );
           z-index: 0;
         }
