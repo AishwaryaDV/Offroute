@@ -3,10 +3,13 @@
 import { Fragment } from "react";
 import {
   ArrowLeft,
+  ArrowDownUp,
+  Check,
   Copy,
   Download,
   FolderOpen,
   Gem,
+  GripVertical,
   Home,
   Landmark,
   Leaf,
@@ -25,6 +28,22 @@ import {
   X,
   Zap,
 } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  TouchSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  useSortable,
+  arrayMove,
+  horizontalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -36,7 +55,7 @@ import type { MapMarker, MapHandle } from "@/components/MapDynamic";
 import { TagInput } from "@/components/TagInput";
 import { getCircuit, deleteCircuit, shareCircuit, updateCircuit, starCircuit, unstarCircuit } from "@/lib/circuits";
 import { getCollaborators, inviteCollaborator, removeCollaborator } from "@/lib/collaborators";
-import { getPoints, deletePoint } from "@/lib/points";
+import { getPoints, deletePoint, reorderPoints } from "@/lib/points";
 import { exportCircuitPdf } from "@/lib/exportPdf";
 import { getTrips, addCircuitToTrip, removeCircuitFromTrip } from "@/lib/trips";
 import { useUserLocation } from "@/hooks/useUserLocation";
@@ -85,6 +104,56 @@ const POINT_PLACEHOLDER_IMAGES = [
   "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=320&h=200&fit=crop",
 ];
 
+function SortablePointCard({
+  point,
+  index,
+}: {
+  point: Point;
+  index: number;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: point.id });
+
+  const cat = point.category ?? "other";
+  const Icon = CATEGORY_ICONS[cat] ?? MapPin;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+        zIndex: isDragging ? 50 : 0,
+      }}
+      className="flex shrink-0 flex-col items-center gap-1"
+    >
+      <div
+        {...attributes}
+        {...listeners}
+        className="relative h-[72px] w-[72px] overflow-hidden rounded-xl ring-1 ring-white/20"
+      >
+        <img
+          src={POINT_PLACEHOLDER_IMAGES[index % POINT_PLACEHOLDER_IMAGES.length]}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-black/40" />
+        <div className="relative z-10 flex h-full flex-col items-center justify-center">
+          <Icon size={16} className="text-white/80" />
+          <span className="mt-0.5 text-[10px] font-bold text-white/60">{index + 1}</span>
+        </div>
+        <div className="absolute right-0.5 top-0.5">
+          <GripVertical size={12} className="text-white/40" />
+        </div>
+      </div>
+      <p className="max-w-[72px] truncate text-center text-[10px] font-medium text-white/70">
+        {point.title}
+      </p>
+    </div>
+  );
+}
+
 function CircuitDetail() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -102,6 +171,16 @@ function CircuitDetail() {
   const [editTags, setEditTags] = useState<string[]>([]);
   const [activePointId, setActivePointId] = useState<string | null>(null);
   const mapHandleRef = useRef<MapHandle | null>(null);
+  const [reordering, setReordering] = useState(false);
+  const [reorderList, setReorderList] = useState<Point[]>([]);
+
+  const touchSensor = useSensor(TouchSensor, {
+    activationConstraint: { delay: 200, tolerance: 5 },
+  });
+  const pointerSensor = useSensor(PointerSensor, {
+    activationConstraint: { delay: 200, tolerance: 5 },
+  });
+  const sensors = useSensors(touchSensor, pointerSensor);
 
   const { data: circuit } = useQuery({
     queryKey: ["circuit", id],
@@ -226,6 +305,38 @@ function CircuitDetail() {
     },
     onError: () => toast.error("Could not remove collaborator"),
   });
+
+  const reorderMutation = useMutation({
+    mutationFn: (orderedPoints: Point[]) =>
+      reorderPoints(
+        id,
+        orderedPoints.map((p, i) => ({ id: p.id, order_index: i })),
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["points", id] });
+      setReordering(false);
+      toast.success("Order saved");
+    },
+    onError: () => toast.error("Could not save order"),
+  });
+
+  function startReorder() {
+    setShowMenu(false);
+    if (points && points.length > 1) {
+      setReorderList([...points]);
+      setReordering(true);
+    }
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    setReorderList((prev) => {
+      const oldIndex = prev.findIndex((p) => p.id === active.id);
+      const newIndex = prev.findIndex((p) => p.id === over.id);
+      return arrayMove(prev, oldIndex, newIndex);
+    });
+  }
 
   function handleSelectPoint(point: Point) {
     if (activePointId === point.id) {
@@ -411,6 +522,15 @@ function CircuitDetail() {
             </button>
             <div className="mx-4 h-px bg-gray-100" />
             <button
+              onClick={startReorder}
+              disabled={!points || points.length < 2}
+              className="flex w-full items-center gap-3 px-4 py-3.5 text-sm font-medium text-[#0f1d32] active:bg-gray-50 disabled:opacity-30"
+            >
+              <ArrowDownUp size={16} className="text-gray-400" />
+              Reorder points
+            </button>
+            <div className="mx-4 h-px bg-gray-100" />
+            <button
               onClick={() => {
                 setShowMenu(false);
                 setEditTags(circuit?.tags ?? []);
@@ -450,12 +570,47 @@ function CircuitDetail() {
       {/* Bottom carousel */}
       <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/60 via-black/30 to-transparent pt-16 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <div>
-          {pointsLoading ? null : points && points.length > 0 ? (
+          {pointsLoading ? null : reordering && reorderList.length > 1 ? (
+            <div className="px-4">
+              <div className="flex items-center justify-between mb-3">
+                <button
+                  onClick={() => setReordering(false)}
+                  className="rounded-full bg-white/15 px-4 py-2 text-xs font-semibold text-white backdrop-blur-md active:bg-white/25"
+                >
+                  Cancel
+                </button>
+                <p className="text-xs font-semibold text-white/60">Hold & drag to reorder</p>
+                <button
+                  onClick={() => reorderMutation.mutate(reorderList)}
+                  disabled={reorderMutation.isPending}
+                  className="flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-xs font-semibold text-[#0f1d32] active:bg-gray-100 disabled:opacity-50"
+                >
+                  <Check size={14} />
+                  {reorderMutation.isPending ? "Saving…" : "Done"}
+                </button>
+              </div>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={reorderList.map((p) => p.id)}
+                  strategy={horizontalListSortingStrategy}
+                >
+                  <div className="flex items-start gap-2.5 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    {reorderList.map((point, i) => (
+                      <SortablePointCard key={point.id} point={point} index={i} />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
+            </div>
+          ) : points && points.length > 0 ? (
             <div className="flex items-stretch gap-3 overflow-x-auto px-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {points.map((point: Point, i: number) => {
                 const cat = point.category ?? "other";
                 const Icon = CATEGORY_ICONS[cat] ?? MapPin;
-                const color = CATEGORY_COLORS[cat] ?? "#3b82f6";
                 const isActive = activePointId === point.id;
 
                 return (
