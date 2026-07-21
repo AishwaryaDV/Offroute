@@ -513,22 +513,24 @@ function CircuitDetail() {
             </div>
           ) : (
             <div className="px-5">
-              <Link
-                href={`/circuits/${id}/points/new`}
-                className="flex items-center gap-4 rounded-2xl bg-white/10 px-5 py-4 ring-1 ring-white/10 backdrop-blur-xl active:bg-white/15"
-              >
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-rose-500">
-                  <Plus size={22} strokeWidth={2.5} className="text-white" />
+              <div className="rounded-2xl bg-white/10 px-5 py-5 text-center ring-1 ring-white/10 backdrop-blur-xl">
+                <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-rose-500 shadow-lg shadow-pink-500/25">
+                  <Plus size={28} strokeWidth={2.5} className="text-white" />
                 </div>
-                <div>
-                  <p className="text-sm font-bold text-white">
-                    Add your first point
-                  </p>
-                  <p className="mt-0.5 text-xs text-zinc-400">
-                    Mark a location with notes and details
-                  </p>
-                </div>
-              </Link>
+                <p className="text-base font-bold text-white">
+                  Add your first point
+                </p>
+                <p className="mx-auto mt-1 max-w-[220px] text-xs text-zinc-400">
+                  Mark a location on the map and bring it to life with notes and details.
+                </p>
+                <Link
+                  href={`/circuits/${id}/points/new`}
+                  className="mt-4 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#0f1d32] active:bg-zinc-200"
+                >
+                  <Plus size={16} strokeWidth={2.5} />
+                  Add
+                </Link>
+              </div>
             </div>
           )}
         </div>
