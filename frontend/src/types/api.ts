@@ -209,6 +209,39 @@ export interface Notification {
   created_at: string;
 }
 
+// --- Search ---
+
+export interface SearchCircuitResult {
+  id: string;
+  title: string;
+  description: string | null;
+  tags: string[] | null;
+  point_count: number;
+  start_date: string | null;
+  visibility: "private" | "shared" | "public";
+  created_at: string;
+}
+
+export interface SearchPointResult {
+  id: string;
+  circuit_id: string;
+  order_index: number;
+  title: string;
+  notes: string | null;
+  latitude: number;
+  longitude: number;
+  visited_at: string | null;
+  category: PointCategory | null;
+  rating: number | null;
+  created_at: string;
+  circuit_title: string;
+}
+
+export interface SearchResponse {
+  circuits: SearchCircuitResult[];
+  points: SearchPointResult[];
+}
+
 // --- Media ---
 
 export interface Media {
