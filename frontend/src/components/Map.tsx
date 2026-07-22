@@ -137,6 +137,7 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
   const routeConfigs = useRef<RouteConfig[]>([]);
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [tilesReady, setTilesReady] = useState(false);
 
   useImperativeHandle(ref, () => ({
     flyTo: (lng: number, lat: number, z?: number) => {
@@ -345,15 +346,14 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
 
     map.on("render", () => redrawLines());
 
-    if (onReady) {
-      const signalReady = () => {
-        if (map.areTilesLoaded()) {
-          map.off("idle", signalReady);
-          onReady();
-        }
-      };
-      map.on("idle", signalReady);
-    }
+    const signalReady = () => {
+      if (map.areTilesLoaded()) {
+        map.off("idle", signalReady);
+        setTilesReady(true);
+        onReady?.();
+      }
+    };
+    map.on("idle", signalReady);
 
     return () => {
       routeConfigs.current.forEach((r) => r.dotMarkers.forEach((m) => m.remove()));
@@ -366,7 +366,13 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return <div ref={containerRef} className={className} />;
+  return (
+    <div
+      ref={containerRef}
+      className={className}
+      style={{ opacity: tilesReady ? 1 : 0, transition: "opacity 0.4s ease-in" }}
+    />
+  );
 });
 
 export default Map;
