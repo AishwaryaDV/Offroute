@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
+import { MobileOnly } from "@/components/MobileOnly";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorker";
 import { Providers } from "./providers";
 
@@ -46,7 +47,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icons/icon-180.png" />
       </head>
       <body className="min-h-full flex flex-col bg-[#0b1120] text-white">
-        <Providers>{children}</Providers>
+        <Providers><MobileOnly>{children}</MobileOnly></Providers>
         <ServiceWorkerRegistration />
         <Toaster
           richColors
