@@ -665,32 +665,29 @@ function CircuitDetail() {
                       onKeyDown={(e) => {
                         if (e.key === "Enter") handleSelectPoint(point);
                       }}
-                      className={`relative min-w-[140px] max-w-[160px] shrink-0 overflow-hidden rounded-2xl text-left transition-all ${
+                      className={`flex min-w-[160px] max-w-[180px] shrink-0 gap-2.5 overflow-hidden rounded-2xl bg-white/15 p-2.5 text-left backdrop-blur-md transition-all ${
                         isActive
-                          ? "ring-2 ring-white/40 scale-[1.02]"
+                          ? "ring-2 ring-white/50 scale-[1.02]"
                           : "ring-1 ring-white/10"
                       }`}
                     >
                       <img
                         src={POINT_PLACEHOLDER_IMAGES[i % POINT_PLACEHOLDER_IMAGES.length]}
                         alt=""
-                        className="absolute inset-0 h-full w-full object-cover"
+                        className="h-14 w-14 shrink-0 rounded-xl object-cover"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
-                      <div className="relative z-10 p-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/20 backdrop-blur-sm">
-                            <Icon size={14} className="text-white" />
-                          </div>
-                          <span className="text-[10px] font-bold text-white/50">
+                      <div className="min-w-0 flex-1 py-0.5">
+                        <div className="flex items-center gap-1.5">
+                          <Icon size={12} className="shrink-0 text-white/60" />
+                          <span className="text-[10px] font-bold text-white/40">
                             {i + 1}
                           </span>
                         </div>
-                        <p className="mt-2 truncate text-sm font-bold text-white">
+                        <p className="mt-1 truncate text-xs font-bold text-white">
                           {point.title}
                         </p>
                         {point.category && (
-                          <p className="mt-0.5 truncate text-[10px] capitalize text-white/60">
+                          <p className="truncate text-[10px] capitalize text-white/50">
                             {point.category.replace("_", " ")}
                           </p>
                         )}
