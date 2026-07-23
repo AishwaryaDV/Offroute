@@ -42,7 +42,6 @@ interface SignupValues {
   display_name: string;
   email: string;
   password: string;
-  confirm_password: string;
 }
 
 function PasswordInput({
@@ -208,11 +207,8 @@ function SignupForm({ onSwitch }: { onSwitch: () => void }) {
   const {
     register,
     handleSubmit,
-    watch,
     formState: { isSubmitting, errors },
   } = useForm<SignupValues>();
-
-  const passwordValue = watch("password");
 
   async function onSubmit({ email, password, display_name }: SignupValues) {
     const { data, error } = await supabase.auth.signUp({
@@ -293,17 +289,6 @@ function SignupForm({ onSwitch }: { onSwitch: () => void }) {
           />
           <p className="mt-1 text-[10px] text-gray-400">{PASSWORD_HINT}</p>
         </div>
-
-        <PasswordInput
-          id="signup-confirm"
-          placeholder="Confirm password"
-          autoComplete="new-password"
-          error={errors.confirm_password?.message}
-          registration={register("confirm_password", {
-            required: "Please confirm your password",
-            validate: (val) => val === passwordValue || "Passwords don't match",
-          })}
-        />
 
         <button
           type="submit"
