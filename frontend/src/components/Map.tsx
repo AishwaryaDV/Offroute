@@ -78,27 +78,31 @@ function createPinElement(m: MapMarker, active = false): HTMLElement {
   const iconSize = active ? 22 : 18;
 
   const wrapper = document.createElement("div");
-  wrapper.style.cssText =
-    "display:inline-flex;flex-direction:column;align-items:center;cursor:pointer;transition:transform 0.2s;width:fit-content";
+  wrapper.style.cssText = "line-height:0;font-size:0";
+
+  const inner = document.createElement("div");
+  inner.className = "pin-inner";
+  inner.style.cssText =
+    "position:relative;display:flex;flex-direction:column;align-items:center;cursor:pointer;transition:transform 0.2s,filter 0.2s;transform-origin:bottom center";
 
   const circle = document.createElement("div");
-  circle.style.cssText = `width:${size}px;height:${size}px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,0.35);border:2.5px solid ${color};transition:all 0.2s`;
+  circle.style.cssText = `width:${size}px;height:${size}px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,0.35);border:2.5px solid ${color}`;
   circle.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${iconPaths}</svg>`;
-  wrapper.appendChild(circle);
+  inner.appendChild(circle);
 
   const tail = document.createElement("div");
   tail.style.cssText = `width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:9px solid ${color};margin-top:-2px`;
-  wrapper.appendChild(tail);
+  inner.appendChild(tail);
 
   if (m.label) {
     const badge = document.createElement("div");
     badge.style.cssText =
       "position:absolute;top:-5px;right:-5px;min-width:20px;height:20px;border-radius:10px;background:#0f1d32;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 5px;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.3)";
     badge.textContent = m.label;
-    wrapper.appendChild(badge);
+    inner.appendChild(badge);
   }
 
-  wrapper.style.position = "relative";
+  wrapper.appendChild(inner);
   return wrapper;
 }
 
@@ -145,27 +149,30 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
     },
   }));
 
-  const PIN_CENTER_OFFSET = 28;
-
   function smoothPath(pts: { x: number; y: number }[]): string {
     if (pts.length < 2) return "";
     if (pts.length === 2) {
       const dx = pts[1].x - pts[0].x;
       const dy = pts[1].y - pts[0].y;
-      const mx = (pts[0].x + pts[1].x) / 2 - dy * 0.15;
-      const my = (pts[0].y + pts[1].y) / 2 + dx * 0.15;
+      const len = Math.sqrt(dx * dx + dy * dy);
+      const off = Math.max(len * 0.25, 20);
+      const nx = -dy / (len || 1);
+      const ny = dx / (len || 1);
+      const mx = (pts[0].x + pts[1].x) / 2 + nx * off;
+      const my = (pts[0].y + pts[1].y) / 2 + ny * off;
       return `M${pts[0].x},${pts[0].y} Q${mx},${my} ${pts[1].x},${pts[1].y}`;
     }
+    const t = 0.4;
     let d = `M${pts[0].x},${pts[0].y}`;
     for (let i = 0; i < pts.length - 1; i++) {
       const p0 = pts[Math.max(0, i - 1)];
       const p1 = pts[i];
       const p2 = pts[i + 1];
       const p3 = pts[Math.min(pts.length - 1, i + 2)];
-      const cp1x = p1.x + (p2.x - p0.x) / 6;
-      const cp1y = p1.y + (p2.y - p0.y) / 6;
-      const cp2x = p2.x - (p3.x - p1.x) / 6;
-      const cp2y = p2.y - (p3.y - p1.y) / 6;
+      const cp1x = p1.x + (p2.x - p0.x) * t;
+      const cp1y = p1.y + (p2.y - p0.y) * t;
+      const cp2x = p2.x - (p3.x - p1.x) * t;
+      const cp2y = p2.y - (p3.y - p1.y) * t;
       d += ` C${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2.y}`;
     }
     return d;
@@ -187,7 +194,7 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
 
       const pts = route.coordinates.map(([lng, lat]) => {
         const px = map.project([lng, lat]);
-        return { x: px.x, y: px.y - PIN_CENTER_OFFSET };
+        return { x: px.x, y: px.y };
       });
 
       const d = smoothPath(pts);
@@ -214,17 +221,31 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
         line.setAttribute("stroke-dasharray", "8 6");
       }
       svg.appendChild(line);
+
+      for (const pt of pts) {
+        const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        dot.setAttribute("cx", String(pt.x));
+        dot.setAttribute("cy", String(pt.y));
+        dot.setAttribute("r", "4");
+        dot.setAttribute("fill", route.color);
+        dot.setAttribute("stroke", "#ffffff");
+        dot.setAttribute("stroke-width", "1.5");
+        dot.setAttribute("opacity", String(route.opacity));
+        svg.appendChild(dot);
+      }
     }
   }, []);
 
   useEffect(() => {
     markerEls.current.forEach((el, id) => {
+      const inner = el.querySelector(".pin-inner") as HTMLElement | null;
+      if (!inner) return;
       const isActive = id === activeMarkerId;
-      el.style.transform = isActive ? "scale(1.15)" : "scale(1)";
-      el.style.zIndex = isActive ? "10" : "1";
-      el.style.filter = isActive
+      inner.style.transform = isActive ? "scale(1.15)" : "";
+      inner.style.filter = isActive
         ? "drop-shadow(0 0 6px rgba(255,255,255,0.5))"
-        : "none";
+        : "";
+      el.style.zIndex = isActive ? "10" : "1";
     });
   }, [activeMarkerId]);
 
@@ -272,10 +293,10 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
         const dimmed = highlightCircuitId && highlightCircuitId !== route.id;
         routeConfigs.current.push({
           coordinates: route.coordinates,
-          color: route.color,
-          width: 3,
+          color: "#ffffff",
+          width: 2.5,
           opacity: dimmed ? 0.15 : 0.85,
-          dashed: true,
+          dashed: false,
         });
       }
     }
@@ -357,7 +378,9 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
       }
     });
 
-    map.on("render", () => redrawLines());
+    map.on("render", () => {
+      try { redrawLines(); } catch { /* map may be mid-teardown */ }
+    });
 
     if (onReady) {
       const signalReady = () => {
