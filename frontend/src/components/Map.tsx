@@ -136,6 +136,7 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
   const markerObjs = useRef<maplibregl.Marker[]>([]);
   const routeConfigs = useRef<RouteConfig[]>([]);
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const hasInitialFit = useRef(false);
   const [mapLoaded, setMapLoaded] = useState(false);
 
   useImperativeHandle(ref, () => ({
@@ -149,8 +150,10 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
   function smoothPath(pts: { x: number; y: number }[]): string {
     if (pts.length < 2) return "";
     if (pts.length === 2) {
-      const mx = (pts[0].x + pts[1].x) / 2;
-      const my = Math.min(pts[0].y, pts[1].y) - 30;
+      const dx = pts[1].x - pts[0].x;
+      const dy = pts[1].y - pts[0].y;
+      const mx = (pts[0].x + pts[1].x) / 2 - dy * 0.15;
+      const my = (pts[0].y + pts[1].y) / 2 + dx * 0.15;
       return `M${pts[0].x},${pts[0].y} Q${mx},${my} ${pts[1].x},${pts[1].y}`;
     }
     let d = `M${pts[0].x},${pts[0].y}`;
@@ -280,14 +283,16 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
     redrawLines();
 
     if (markers.length > 0) {
+      const animate = hasInitialFit.current;
+      hasInitialFit.current = true;
       const lngs = markers.map((m) => m.lng);
       const lats = markers.map((m) => m.lat);
       if (markers.length === 1) {
-        map.flyTo({ center: [lngs[0], lats[0]], zoom: 14, duration: 800 });
+        map.flyTo({ center: [lngs[0], lats[0]], zoom: 14, duration: animate ? 800 : 0 });
       } else {
         map.fitBounds(
           [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
-          { padding: 80, maxZoom: 15 }
+          { padding: 80, maxZoom: 15, duration: animate ? undefined : 0 }
         );
       }
     }
@@ -328,8 +333,8 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
 
     map.on("load", () => {
       const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      svg.style.cssText = "position:absolute;inset:0;pointer-events:none;z-index:0;overflow:visible";
-      map.getCanvasContainer().appendChild(svg);
+      svg.style.cssText = "position:absolute;inset:0;pointer-events:none;z-index:1;overflow:visible";
+      map.getContainer().appendChild(svg);
       svgRef.current = svg;
 
       setMapLoaded(true);
