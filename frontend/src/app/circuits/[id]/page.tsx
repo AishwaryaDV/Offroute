@@ -665,10 +665,10 @@ function CircuitDetail() {
                       onKeyDown={(e) => {
                         if (e.key === "Enter") handleSelectPoint(point);
                       }}
-                      className={`flex min-w-[160px] max-w-[180px] shrink-0 gap-2.5 overflow-hidden rounded-2xl bg-white/15 p-2.5 text-left backdrop-blur-md transition-all ${
+                      className={`flex min-w-[160px] max-w-[180px] shrink-0 gap-2.5 overflow-hidden rounded-2xl bg-black/40 p-2.5 text-left backdrop-blur-xl transition-all border ${
                         isActive
-                          ? "ring-2 ring-white/50 scale-[1.02]"
-                          : "ring-1 ring-white/10"
+                          ? "border-white/50 ring-2 ring-white/30 scale-[1.02]"
+                          : "border-white/20"
                       }`}
                     >
                       <img
