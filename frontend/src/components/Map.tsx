@@ -108,6 +108,7 @@ interface RouteConfig {
   width: number;
   opacity: number;
   dashed: boolean;
+  usePin?: boolean;
 }
 
 const Map = forwardRef<MapHandle, MapProps>(function Map(
@@ -160,6 +161,13 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
 
       const points = route.dotMarkers.map((m) => {
         const el = m.getElement();
+        if (route.usePin) {
+          const circle = el.firstElementChild as HTMLElement;
+          if (circle) {
+            const r = circle.getBoundingClientRect();
+            return `${r.left + r.width / 2 - containerRect.left},${r.top + r.height / 2 - containerRect.top}`;
+          }
+        }
         const rect = el.getBoundingClientRect();
         const x = rect.left + rect.width / 2 - containerRect.left;
         const y = rect.top + rect.height / 2 - containerRect.top;
@@ -210,7 +218,7 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
     markerObjs.current = [];
     markerEls.current.clear();
 
-    routeConfigs.current.forEach((r) => r.dotMarkers.forEach((m) => m.remove()));
+    routeConfigs.current.forEach((r) => { if (!r.usePin) r.dotMarkers.forEach((m) => m.remove()); });
     routeConfigs.current = [];
 
     markers.forEach((m) => {
@@ -232,19 +240,13 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
     });
 
     if (drawRoute && markers.length > 1) {
-      const dots = markers.map((m) => {
-        const el = document.createElement("div");
-        el.style.cssText = "width:1px;height:1px;opacity:0";
-        return new maplibregl.Marker({ element: el, anchor: "center" })
-          .setLngLat([m.lng, m.lat])
-          .addTo(map);
-      });
       routeConfigs.current.push({
-        dotMarkers: dots,
+        dotMarkers: [...markerObjs.current],
         color: "#ffffff",
         width: 2.5,
         opacity: 0.85,
         dashed: false,
+        usePin: true,
       });
     }
 
@@ -356,7 +358,7 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
     map.on("idle", signalReady);
 
     return () => {
-      routeConfigs.current.forEach((r) => r.dotMarkers.forEach((m) => m.remove()));
+      routeConfigs.current.forEach((r) => { if (!r.usePin) r.dotMarkers.forEach((m) => m.remove()); });
       routeConfigs.current = [];
       markerEls.current.clear();
       mapRef.current = null;
