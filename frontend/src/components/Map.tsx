@@ -103,12 +103,11 @@ function createPinElement(m: MapMarker, active = false): HTMLElement {
 }
 
 interface RouteConfig {
-  dotMarkers: maplibregl.Marker[];
+  coordinates: [number, number][];
   color: string;
   width: number;
   opacity: number;
   dashed: boolean;
-  usePin?: boolean;
 }
 
 const Map = forwardRef<MapHandle, MapProps>(function Map(
@@ -138,7 +137,6 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
   const routeConfigs = useRef<RouteConfig[]>([]);
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
-  const [tilesReady, setTilesReady] = useState(false);
 
   useImperativeHandle(ref, () => ({
     flyTo: (lng: number, lat: number, z?: number) => {
@@ -146,9 +144,34 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
     },
   }));
 
+  const PIN_CENTER_OFFSET = 28;
+
+  function smoothPath(pts: { x: number; y: number }[]): string {
+    if (pts.length < 2) return "";
+    if (pts.length === 2) {
+      const mx = (pts[0].x + pts[1].x) / 2;
+      const my = Math.min(pts[0].y, pts[1].y) - 30;
+      return `M${pts[0].x},${pts[0].y} Q${mx},${my} ${pts[1].x},${pts[1].y}`;
+    }
+    let d = `M${pts[0].x},${pts[0].y}`;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[Math.max(0, i - 1)];
+      const p1 = pts[i];
+      const p2 = pts[i + 1];
+      const p3 = pts[Math.min(pts.length - 1, i + 2)];
+      const cp1x = p1.x + (p2.x - p0.x) / 6;
+      const cp1y = p1.y + (p2.y - p0.y) / 6;
+      const cp2x = p2.x - (p3.x - p1.x) / 6;
+      const cp2y = p2.y - (p3.y - p1.y) / 6;
+      d += ` C${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2.y}`;
+    }
+    return d;
+  }
+
   const redrawLines = useCallback(() => {
+    const map = mapRef.current;
     const svg = svgRef.current;
-    if (!svg || !svg.parentElement) return;
+    if (!map || !svg || !svg.parentElement) return;
 
     const containerRect = svg.parentElement.getBoundingClientRect();
     svg.setAttribute("width", String(containerRect.width));
@@ -157,25 +180,17 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
     while (svg.firstChild) svg.removeChild(svg.firstChild);
 
     for (const route of routeConfigs.current) {
-      if (route.dotMarkers.length < 2) continue;
+      if (route.coordinates.length < 2) continue;
 
-      const points = route.dotMarkers.map((m) => {
-        const el = m.getElement();
-        if (route.usePin) {
-          const circle = el.firstElementChild as HTMLElement;
-          if (circle) {
-            const r = circle.getBoundingClientRect();
-            return `${r.left + r.width / 2 - containerRect.left},${r.top + r.height / 2 - containerRect.top}`;
-          }
-        }
-        const rect = el.getBoundingClientRect();
-        const x = rect.left + rect.width / 2 - containerRect.left;
-        const y = rect.top + rect.height / 2 - containerRect.top;
-        return `${x},${y}`;
+      const pts = route.coordinates.map(([lng, lat]) => {
+        const px = map.project([lng, lat]);
+        return { x: px.x, y: px.y - PIN_CENTER_OFFSET };
       });
 
-      const outline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
-      outline.setAttribute("points", points.join(" "));
+      const d = smoothPath(pts);
+
+      const outline = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      outline.setAttribute("d", d);
       outline.setAttribute("fill", "none");
       outline.setAttribute("stroke", "#000000");
       outline.setAttribute("stroke-width", String(route.width + 2));
@@ -184,8 +199,8 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
       outline.setAttribute("stroke-linejoin", "round");
       svg.appendChild(outline);
 
-      const line = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
-      line.setAttribute("points", points.join(" "));
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      line.setAttribute("d", d);
       line.setAttribute("fill", "none");
       line.setAttribute("stroke", route.color);
       line.setAttribute("stroke-width", String(route.width));
@@ -218,7 +233,6 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
     markerObjs.current = [];
     markerEls.current.clear();
 
-    routeConfigs.current.forEach((r) => { if (!r.usePin) r.dotMarkers.forEach((m) => m.remove()); });
     routeConfigs.current = [];
 
     markers.forEach((m) => {
@@ -241,12 +255,11 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
 
     if (drawRoute && markers.length > 1) {
       routeConfigs.current.push({
-        dotMarkers: [...markerObjs.current],
+        coordinates: markers.map((m) => [m.lng, m.lat] as [number, number]),
         color: "#ffffff",
         width: 2.5,
         opacity: 0.85,
         dashed: false,
-        usePin: true,
       });
     }
 
@@ -254,15 +267,8 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
       for (const route of circuitRoutes) {
         if (route.coordinates.length < 2) continue;
         const dimmed = highlightCircuitId && highlightCircuitId !== route.id;
-        const dots = route.coordinates.map((coord) => {
-          const el = document.createElement("div");
-          el.style.cssText = "width:1px;height:1px;opacity:0";
-          return new maplibregl.Marker({ element: el, anchor: "center" })
-            .setLngLat(coord)
-            .addTo(map);
-        });
         routeConfigs.current.push({
-          dotMarkers: dots,
+          coordinates: route.coordinates,
           color: route.color,
           width: 3,
           opacity: dimmed ? 0.15 : 0.85,
@@ -348,17 +354,17 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
 
     map.on("render", () => redrawLines());
 
-    const signalReady = () => {
-      if (map.areTilesLoaded()) {
-        map.off("idle", signalReady);
-        setTilesReady(true);
-        onReady?.();
-      }
-    };
-    map.on("idle", signalReady);
+    if (onReady) {
+      const signalReady = () => {
+        if (map.areTilesLoaded()) {
+          map.off("idle", signalReady);
+          onReady();
+        }
+      };
+      map.on("idle", signalReady);
+    }
 
     return () => {
-      routeConfigs.current.forEach((r) => { if (!r.usePin) r.dotMarkers.forEach((m) => m.remove()); });
       routeConfigs.current = [];
       markerEls.current.clear();
       mapRef.current = null;
@@ -368,13 +374,7 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return (
-    <div
-      ref={containerRef}
-      className={className}
-      style={{ opacity: tilesReady ? 1 : 0, transition: "opacity 0.4s ease-in" }}
-    />
-  );
+  return <div ref={containerRef} className={className} />;
 });
 
 export default Map;
