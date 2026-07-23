@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { AuthGuard } from "@/components/AuthGuard";
 import MapDynamic from "@/components/MapDynamic";
+import { StepLoader } from "@/components/StepLoader";
 import { searchAll } from "@/lib/search";
 import type { PointCategory } from "@/types/api";
 
@@ -46,7 +47,8 @@ function SearchPage() {
   }, [query]);
 
   useEffect(() => {
-    inputRef.current?.focus();
+    const t = setTimeout(() => inputRef.current?.focus(), 100);
+    return () => clearTimeout(t);
   }, []);
 
   const { data, isLoading } = useQuery({
@@ -86,43 +88,40 @@ function SearchPage() {
         </div>
 
         {/* Search input */}
-        <div className="relative px-5 pb-5">
-          <Search
-            size={16}
-            className="absolute left-8.5 top-1/2 -translate-y-1/2 text-gray-400"
-          />
-          <input
-            ref={inputRef}
-            type="text"
-            placeholder="Search circuits and points..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="w-full rounded-xl bg-[#f5f6f8] py-3.5 pl-10 pr-10 text-sm text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ring-gray-200 focus:ring-[#0f1d32]"
-          />
-          {query && (
-            <button
-              onClick={() => {
-                setQuery("");
-                inputRef.current?.focus();
-              }}
-              className="absolute right-8 top-1/2 -translate-y-1/2 p-1 text-gray-400 active:text-gray-600"
-              aria-label="Clear"
-            >
-              <X size={16} />
-            </button>
-          )}
+        <div className="px-5 pb-5">
+          <div className="relative">
+            <Search
+              size={16}
+              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+            />
+            <input
+              ref={inputRef}
+              type="text"
+              placeholder="Search circuits and points..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="w-full rounded-2xl bg-[#f5f6f8] py-3.5 pl-10 pr-10 text-sm text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ring-gray-200/80 transition-shadow focus:ring-2 focus:ring-[#0f1d32]/30 focus:bg-white"
+            />
+            {query && (
+              <button
+                onClick={() => {
+                  setQuery("");
+                  inputRef.current?.focus();
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 text-gray-500 active:bg-gray-300"
+                aria-label="Clear"
+              >
+                <X size={12} />
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="px-5 pb-10">
           {/* Loading */}
           {isLoading && debouncedQuery.length > 0 && (
-            <div className="flex flex-col gap-3 pt-4">
-              {[1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="h-16 animate-pulse rounded-2xl bg-gray-100"
-                />
-              ))}
+            <div className="flex justify-center py-16">
+              <StepLoader variant="light" />
             </div>
           )}
 
