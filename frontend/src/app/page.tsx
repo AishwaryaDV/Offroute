@@ -5,13 +5,14 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { StepLoader } from "@/components/StepLoader";
 import { supabase } from "@/lib/supabase";
 
 const Globe = dynamic(() => import("@/components/Globe").then((m) => m.Globe), {
   ssr: false,
   loading: () => (
     <div className="flex h-full w-full items-center justify-center">
-      <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/20 border-t-white/80" />
+      <StepLoader variant="dark" />
     </div>
   ),
 });
@@ -71,7 +72,7 @@ export default function LandingPage() {
   if (checking) {
     return (
       <div className="flex h-[100dvh] items-center justify-center bg-[#060d1b]">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-700 border-t-blue-500" />
+        <StepLoader variant="dark" />
       </div>
     );
   }

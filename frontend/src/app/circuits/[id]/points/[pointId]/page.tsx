@@ -27,6 +27,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AuthGuard } from "@/components/AuthGuard";
 import MapDynamic from "@/components/MapDynamic";
+import { StepLoader } from "@/components/StepLoader";
 import { getPoint, getPoints, deletePoint, updatePoint } from "@/lib/points";
 import { getCircuit } from "@/lib/circuits";
 import { getMedia } from "@/lib/media";
@@ -177,7 +178,7 @@ function PointDetail() {
       <div className="flex h-[100dvh] flex-col bg-[#0b1120]">
         <div className="h-72 bg-[#111a2e]" />
         <div className="flex flex-1 items-center justify-center rounded-t-[28px] bg-white -mt-4">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-200 border-t-blue-500" />
+          <StepLoader variant="light" />
         </div>
       </div>
     );

@@ -20,6 +20,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { toast } from "sonner";
 import MapDynamic from "@/components/MapDynamic";
+import { StepLoader } from "@/components/StepLoader";
 import type { MapMarker } from "@/components/MapDynamic";
 import { getSharedCircuit, cloneCircuit } from "@/lib/circuits";
 import type { SharedPoint } from "@/types/api";
@@ -110,7 +111,7 @@ export default function SharedCircuitPage() {
   if (isLoading) {
     return (
       <div className="flex min-h-[100dvh] items-center justify-center bg-[#f5f6f8]">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-200 border-t-blue-500" />
+        <StepLoader variant="light" />
       </div>
     );
   }

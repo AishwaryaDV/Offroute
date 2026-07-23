@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { AuthGuard } from "@/components/AuthGuard";
 import { BottomNav } from "@/components/BottomNav";
 import MapDynamic from "@/components/MapDynamic";
+import { StepLoader } from "@/components/StepLoader";
 import { getCircuits } from "@/lib/circuits";
 import { getMe } from "@/lib/me";
 import { getTrips, createTrip, deleteTrip } from "@/lib/trips";
@@ -283,10 +284,8 @@ function CircuitsList() {
 
             <main className="px-5 pb-6">
               {isLoading ? (
-                <div className="grid grid-cols-2 gap-3">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="aspect-[4/3] animate-pulse rounded-2xl bg-gray-200" />
-                  ))}
+                <div className="flex justify-center py-20">
+                  <StepLoader variant="light" />
                 </div>
               ) : allCircuits.length > 0 ? (
                 <div className="grid grid-cols-2 gap-3">

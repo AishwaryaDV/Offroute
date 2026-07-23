@@ -9,7 +9,6 @@ import {
   Eye,
   Globe2,
   Lock,
-  Map,
   MapPin,
   Plus,
   Star,
@@ -26,6 +25,7 @@ import { toast } from "sonner";
 import { AuthGuard } from "@/components/AuthGuard";
 import { BottomNav } from "@/components/BottomNav";
 import MapDynamic from "@/components/MapDynamic";
+import { StepLoader } from "@/components/StepLoader";
 import { getMe } from "@/lib/me";
 import { getCircuits, createCircuit } from "@/lib/circuits";
 import { getMyStats } from "@/lib/stats";
@@ -87,20 +87,6 @@ function Dashboard() {
   const [userLoc, setUserLoc] = useState<{ lng: number; lat: number } | null>(
     null
   );
-  const [loaderStep, setLoaderStep] = useState(0);
-
-  const LOADER_STEPS = [
-    { Icon: Compass, text: "Getting your bearings…" },
-    { Icon: Map, text: "Mapping your world…" },
-    { Icon: MapPin, text: "Plotting your adventures…" },
-    { Icon: Globe2, text: "Almost there…" },
-  ];
-
-  useEffect(() => {
-    if (mapReady) return;
-    const id = setInterval(() => setLoaderStep((s) => (s + 1) % 4), 2500);
-    return () => clearInterval(id);
-  }, [mapReady]);
 
   // Draggable sheet state
   const [snap, setSnap] = useState<SheetSnap>("half");
@@ -233,19 +219,11 @@ function Dashboard() {
 
       {/* Loading overlay — translucent with cycling icons */}
       <div
-        className={`absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/40 backdrop-blur-xl transition-opacity duration-700 ${
+        className={`absolute inset-0 z-30 flex items-center justify-center bg-black/40 backdrop-blur-xl transition-opacity duration-700 ${
           mapReady ? "pointer-events-none opacity-0" : "opacity-100"
         }`}
       >
-        {(() => {
-          const { Icon, text } = LOADER_STEPS[loaderStep];
-          return (
-            <>
-              <Icon size={36} strokeWidth={1.6} className="mb-4 animate-spin text-white/80" style={{ animationDuration: "3s" }} />
-              <p className="text-sm text-white/60">{text}</p>
-            </>
-          );
-        })()}
+        <StepLoader variant="dark" />
       </div>
 
       {/* Header: Offroute branding */}

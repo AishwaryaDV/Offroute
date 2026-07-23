@@ -6,13 +6,14 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { StepLoader } from "@/components/StepLoader";
 import { supabase } from "@/lib/supabase";
 
 const Globe = dynamic(() => import("@/components/Globe").then((m) => m.Globe), {
   ssr: false,
   loading: () => (
     <div className="flex h-full w-full items-center justify-center">
-      <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/20 border-t-white/80" />
+      <StepLoader variant="dark" />
     </div>
   ),
 });

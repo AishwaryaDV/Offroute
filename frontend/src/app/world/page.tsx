@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AuthGuard } from "@/components/AuthGuard";
 import MapDynamic from "@/components/MapDynamic";
+import { StepLoader } from "@/components/StepLoader";
 import type { MapMarker, MapHandle, CircuitRoute } from "@/components/MapDynamic";
 import { getAllPoints } from "@/lib/points";
 import { useUserLocation } from "@/hooks/useUserLocation";
@@ -118,7 +119,7 @@ function WorldMap() {
       </div>
 
       {/* Zoom controls */}
-      <div className="absolute right-4 top-[calc(max(env(safe-area-inset-top),0.75rem)+3.5rem)] z-10 flex flex-col gap-2">
+      <div className="absolute bottom-[calc(max(1rem,env(safe-area-inset-bottom))+1rem)] right-4 z-10 flex flex-col gap-2">
         <button
           onClick={() => mapHandleRef.current?.zoomIn()}
           className="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-md active:bg-black/60"
@@ -137,7 +138,7 @@ function WorldMap() {
 
       {isLoading && (
         <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#0b1120]/80">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-700 border-t-blue-500" />
+          <StepLoader variant="dark" />
         </div>
       )}
 

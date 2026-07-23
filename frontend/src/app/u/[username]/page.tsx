@@ -4,6 +4,7 @@ import { Compass, Globe, MapPin, Tag } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { StepLoader } from "@/components/StepLoader";
 import { getPublicProfile, getPublicCircuits } from "@/lib/profiles";
 import type { PublicCircuit } from "@/types/api";
 
@@ -24,7 +25,7 @@ function PublicProfile() {
   if (isLoading) {
     return (
       <div className="flex min-h-[100dvh] items-center justify-center bg-white">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-[#0f1d32]" />
+        <StepLoader variant="light" />
       </div>
     );
   }
