@@ -313,6 +313,9 @@ function CircuitsList() {
                 </div>
               )}
             </main>
+            <p className="px-5 pb-4 pt-6 text-center text-[10px] text-gray-300">
+              Offroute &middot; {new Date().getFullYear()}
+            </p>
           </div>
           <BottomNav />
         </>

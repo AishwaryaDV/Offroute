@@ -445,6 +445,10 @@ function Dashboard() {
             </div>
           </div>
         )}
+
+        <p className="px-6 pb-4 pt-10 text-center text-[10px] text-gray-300">
+          Offroute &middot; {new Date().getFullYear()}
+        </p>
         </div>
       </div>
 
