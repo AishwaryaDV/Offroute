@@ -20,6 +20,8 @@ export interface MapMarker {
 
 export interface MapHandle {
   flyTo: (lng: number, lat: number, zoom?: number) => void;
+  zoomIn: () => void;
+  zoomOut: () => void;
 }
 
 export interface CircuitRoute {
@@ -142,6 +144,7 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
   const markerObjs = useRef<maplibregl.Marker[]>([]);
   const routeConfigs = useRef<RouteConfig[]>([]);
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const locationMarker = useRef<maplibregl.Marker | null>(null);
   const hasInitialFit = useRef(false);
   const [mapLoaded, setMapLoaded] = useState(false);
 
@@ -149,6 +152,8 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
     flyTo: (lng: number, lat: number, z?: number) => {
       mapRef.current?.flyTo({ center: [lng, lat], zoom: z ?? 14, duration: 800 });
     },
+    zoomIn: () => { mapRef.current?.zoomIn({ duration: 300 }); },
+    zoomOut: () => { mapRef.current?.zoomOut({ duration: 300 }); },
   }));
 
   function smoothPath(pts: { x: number; y: number }[]): string {
@@ -253,6 +258,25 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
 
   useEffect(() => {
     const map = mapRef.current;
+    if (!map || !mapLoaded || !userLocation) return;
+    if (locationMarker.current) locationMarker.current.remove();
+    const dot = document.createElement("div");
+    dot.style.cssText = "position:relative;width:22px;height:22px;cursor:default";
+    const pulse = document.createElement("div");
+    pulse.style.cssText =
+      "position:absolute;inset:-9px;border-radius:50%;background:rgba(66,133,244,0.18);animation:loc-pulse 2s ease-out infinite";
+    const core = document.createElement("div");
+    core.style.cssText =
+      "position:absolute;inset:0;border-radius:50%;background:#4285f4;border:2.5px solid #fff;box-shadow:0 0 6px rgba(66,133,244,0.5)";
+    dot.appendChild(pulse);
+    dot.appendChild(core);
+    locationMarker.current = new maplibregl.Marker({ element: dot })
+      .setLngLat([userLocation.lng, userLocation.lat])
+      .addTo(map);
+  }, [userLocation, mapLoaded]);
+
+  useEffect(() => {
+    const map = mapRef.current;
     if (!map || !mapLoaded) return;
 
     markerObjs.current.forEach((m) => m.remove());
@@ -351,6 +375,8 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
         flyTo: (lng: number, lat: number, z?: number) => {
           map.flyTo({ center: [lng, lat], zoom: z ?? 14, duration: 800 });
         },
+        zoomIn: () => { map.zoomIn({ duration: 300 }); },
+        zoomOut: () => { map.zoomOut({ duration: 300 }); },
       });
     }
 
@@ -361,23 +387,6 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
       svgRef.current = svg;
 
       setMapLoaded(true);
-
-      if (userLocation) {
-        const dot = document.createElement("div");
-        dot.style.cssText =
-          "position:relative;width:22px;height:22px;cursor:default";
-        const pulse = document.createElement("div");
-        pulse.style.cssText =
-          "position:absolute;inset:-9px;border-radius:50%;background:rgba(66,133,244,0.18);animation:loc-pulse 2s ease-out infinite";
-        const core = document.createElement("div");
-        core.style.cssText =
-          "position:absolute;inset:0;border-radius:50%;background:#4285f4;border:2.5px solid #fff;box-shadow:0 0 6px rgba(66,133,244,0.5)";
-        dot.appendChild(pulse);
-        dot.appendChild(core);
-        new maplibregl.Marker({ element: dot })
-          .setLngLat([userLocation.lng, userLocation.lat])
-          .addTo(map);
-      }
     });
 
     map.on("render", () => {

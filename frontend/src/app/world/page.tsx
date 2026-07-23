@@ -1,12 +1,12 @@
 "use client";
 
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Minus, Plus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AuthGuard } from "@/components/AuthGuard";
 import MapDynamic from "@/components/MapDynamic";
-import type { MapMarker, CircuitRoute } from "@/components/MapDynamic";
+import type { MapMarker, MapHandle, CircuitRoute } from "@/components/MapDynamic";
 import { getAllPoints } from "@/lib/points";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import type { WorldPoint } from "@/types/api";
@@ -18,6 +18,17 @@ const CIRCUIT_COLORS = [
 
 function WorldMap() {
   const userGeo = useUserLocation();
+  const mapHandleRef = useRef<MapHandle | null>(null);
+  const [userLoc, setUserLoc] = useState<{ lng: number; lat: number } | null>(null);
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setUserLoc({ lng: pos.coords.longitude, lat: pos.coords.latitude }),
+      () => {},
+      { enableHighAccuracy: false, timeout: 8000 }
+    );
+  }, []);
+
   const { data: points, isLoading } = useQuery({
     queryKey: ["world-points"],
     queryFn: getAllPoints,
@@ -86,8 +97,10 @@ function WorldMap() {
         circuitRoutes={circuitRoutes}
         fitToMarkers={false}
         interactive
+        userLocation={userLoc ?? undefined}
         center={[0, 20]}
         zoom={1.5}
+        onMapInit={(handle) => { mapHandleRef.current = handle; }}
       />
 
       {/* Top bar */}
@@ -102,6 +115,24 @@ function WorldMap() {
         <h1 className="text-sm font-semibold text-white [text-shadow:0_1px_4px_rgba(0,0,0,.6)]">
           World Map
         </h1>
+      </div>
+
+      {/* Zoom controls */}
+      <div className="absolute right-4 top-[calc(max(env(safe-area-inset-top),0.75rem)+3.5rem)] z-10 flex flex-col gap-2">
+        <button
+          onClick={() => mapHandleRef.current?.zoomIn()}
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-md active:bg-black/60"
+          aria-label="Zoom in"
+        >
+          <Plus size={18} className="text-white" />
+        </button>
+        <button
+          onClick={() => mapHandleRef.current?.zoomOut()}
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-md active:bg-black/60"
+          aria-label="Zoom out"
+        >
+          <Minus size={18} className="text-white" />
+        </button>
       </div>
 
       {isLoading && (

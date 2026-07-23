@@ -17,15 +17,17 @@ import {
   Wine,
   X,
   ArrowLeft,
+  Minus,
+  Plus,
   Zap,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AuthGuard } from "@/components/AuthGuard";
 import MapDynamic from "@/components/MapDynamic";
-import type { MapMarker, CircuitRoute } from "@/components/MapDynamic";
+import type { MapMarker, MapHandle, CircuitRoute } from "@/components/MapDynamic";
 import { getAllPoints } from "@/lib/points";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import type { WorldPoint } from "@/types/api";
@@ -56,7 +58,18 @@ const CIRCUIT_COLORS = [
 function Activity() {
   const router = useRouter();
   const userGeo = useUserLocation();
+  const mapHandleRef = useRef<MapHandle | null>(null);
   const [tab, setTab] = useState<"map" | "timeline">("timeline");
+
+  const [userLoc, setUserLoc] = useState<{ lng: number; lat: number } | null>(null);
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setUserLoc({ lng: pos.coords.longitude, lat: pos.coords.latitude }),
+      () => {},
+      { enableHighAccuracy: false, timeout: 8000 }
+    );
+  }, []);
 
   const { data: points, isLoading } = useQuery({
     queryKey: ["world-points"],
@@ -206,10 +219,12 @@ function Activity() {
             highlightCircuitId={selectedCircuitId ?? undefined}
             fitToMarkers={false}
             interactive
+            userLocation={userLoc ?? undefined}
             center={[0, 20]}
             zoom={1.5}
             onMarkerClick={handleMarkerClick}
             onMapClick={() => setSelectedCircuitId(null)}
+            onMapInit={(handle) => { mapHandleRef.current = handle; }}
           />
 
           <button
@@ -218,6 +233,24 @@ function Activity() {
           >
             <ArrowLeft size={20} className="text-[#0f1d32]" />
           </button>
+
+          {/* Zoom controls */}
+          <div className="absolute right-4 top-[calc(max(env(safe-area-inset-top),0.75rem)+3.5rem)] z-10 flex flex-col gap-2">
+            <button
+              onClick={() => mapHandleRef.current?.zoomIn()}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-md active:bg-black/60"
+              aria-label="Zoom in"
+            >
+              <Plus size={18} className="text-white" />
+            </button>
+            <button
+              onClick={() => mapHandleRef.current?.zoomOut()}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-md active:bg-black/60"
+              aria-label="Zoom out"
+            >
+              <Minus size={18} className="text-white" />
+            </button>
+          </div>
 
           {isLoading && (
             <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#0b1120]/80">
