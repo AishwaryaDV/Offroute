@@ -210,6 +210,14 @@ function SignupForm({ onSwitch }: { onSwitch: () => void }) {
     formState: { isSubmitting, errors },
   } = useForm<SignupValues>();
 
+  async function signUpWithGoogle() {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/dashboard` },
+    });
+    if (error) toast.error(error.message);
+  }
+
   async function onSubmit({ email, password, display_name }: SignupValues) {
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -298,6 +306,22 @@ function SignupForm({ onSwitch }: { onSwitch: () => void }) {
           {isSubmitting ? "Creating account…" : "Create account"}
         </button>
       </form>
+
+      <div className="my-4 flex items-center gap-3">
+        <div className="h-px flex-1 bg-gray-200" />
+        <span className="text-[10px] text-gray-400">or</span>
+        <div className="h-px flex-1 bg-gray-200" />
+      </div>
+
+      <div className="flex justify-center">
+        <button
+          onClick={signUpWithGoogle}
+          className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-50 ring-1 ring-gray-200 active:bg-gray-100"
+          aria-label="Sign up with Google"
+        >
+          <GoogleIcon />
+        </button>
+      </div>
 
       <p className="mt-5 text-center text-xs text-gray-500">
         Already have an account?{" "}
