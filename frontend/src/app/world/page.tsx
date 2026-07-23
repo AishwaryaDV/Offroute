@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { AuthGuard } from "@/components/AuthGuard";
 import MapDynamic from "@/components/MapDynamic";
-import type { MapMarker } from "@/components/MapDynamic";
+import type { MapMarker, CircuitRoute } from "@/components/MapDynamic";
 import { getAllPoints } from "@/lib/points";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import type { WorldPoint } from "@/types/api";
@@ -58,14 +58,35 @@ function WorldMap() {
     return [...map.entries()];
   }, [points, circuitColorMap]);
 
+  const circuitRoutes: CircuitRoute[] = useMemo(() => {
+    const grouped = new globalThis.Map<string, WorldPoint[]>();
+    (points ?? []).forEach((p) => {
+      if (!grouped.has(p.circuit_id)) grouped.set(p.circuit_id, []);
+      grouped.get(p.circuit_id)!.push(p);
+    });
+    const routes: CircuitRoute[] = [];
+    grouped.forEach((pts, circuitId) => {
+      const sorted = [...pts].sort((a, b) => a.order_index - b.order_index);
+      if (sorted.length >= 2) {
+        routes.push({
+          id: circuitId,
+          color: circuitColorMap.get(circuitId) ?? "#3b82f6",
+          coordinates: sorted.map((p) => [p.longitude, p.latitude] as [number, number]),
+        });
+      }
+    });
+    return routes;
+  }, [points, circuitColorMap]);
+
   return (
     <div className="relative h-[100dvh] overflow-hidden bg-[#0b1120]">
       <MapDynamic
         className="absolute inset-0 h-full w-full"
         markers={mapMarkers}
+        circuitRoutes={circuitRoutes}
         interactive
-        center={userGeo.center}
-        zoom={3}
+        center={[0, 20]}
+        zoom={1.5}
       />
 
       {/* Top bar */}
