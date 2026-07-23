@@ -1,9 +1,9 @@
 "use client";
 
-import { Bell, Check, ChevronRight, LogOut, Map, Shield, User, X } from "lucide-react";
+import { Bell, Camera, Check, ChevronRight, LogOut, Map, Shield, User, X } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AuthGuard } from "@/components/AuthGuard";
@@ -18,8 +18,30 @@ import {
 import { supabase } from "@/lib/supabase";
 import { useUserLocation } from "@/hooks/useUserLocation";
 
+const MAX_AVATAR_SIZE = 2 * 1024 * 1024; // 2 MB
+const AVATAR_MAX_DIM = 512;
+
+function resizeImage(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      let w = img.width;
+      let h = img.height;
+      const scale = Math.min(AVATAR_MAX_DIM / w, AVATAR_MAX_DIM / h, 1);
+      w = Math.round(w * scale);
+      h = Math.round(h * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL("image/jpeg", 0.85));
+    };
+    img.onerror = () => reject(new Error("Could not read image"));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
 interface ProfileValues {
-  username: string;
   display_name: string;
   nationality: string;
   profile_bio: string;
@@ -121,9 +143,34 @@ function Settings() {
     }
   }
 
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (me?.avatar_url) setAvatarPreview(me.avatar_url);
+  }, [me?.avatar_url]);
+
+  const handleAvatarPick = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+    if (file.size > MAX_AVATAR_SIZE) {
+      toast.error("Image must be under 2 MB");
+      return;
+    }
+    try {
+      const dataUrl = await resizeImage(file);
+      setAvatarPreview(dataUrl);
+    } catch {
+      toast.error("Could not process image");
+    }
+  }, []);
+
   const profileForm = useForm<ProfileValues>({
     values: {
-      username: me?.username ?? "",
       display_name: me?.display_name ?? "",
       nationality: me?.nationality ?? "",
       profile_bio: me?.profile_bio ?? "",
@@ -133,7 +180,7 @@ function Settings() {
   const pwForm = useForm<PasswordValues>();
 
   const profileMutation = useMutation({
-    mutationFn: updateMe,
+    mutationFn: (data: Partial<ProfileValues> & { avatar_url?: string }) => updateMe(data),
     onSuccess: (updated) => {
       queryClient.setQueryData(["me"], updated);
       toast.success("Profile saved");
@@ -197,7 +244,7 @@ function Settings() {
   return (
     <div className="relative h-[100dvh]">
       <div className="pointer-events-none absolute inset-0">
-        <MapDynamic center={userGeo.center} zoom={userGeo.zoom} />
+        <MapDynamic center={userGeo.center} zoom={Math.min(userGeo.zoom, 3)} />
         <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
       </div>
       <div className="sheet-light absolute inset-x-0 bottom-0 top-[6dvh] overflow-hidden rounded-t-[28px] bg-white">
@@ -294,12 +341,9 @@ function Settings() {
             </button>
           </div>
 
-          <footer className="mt-auto px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-8 text-center">
-            <p className="text-xs text-gray-400">Offroute v1.0</p>
-            <p className="mt-1 text-[10px] text-gray-300">
-              &copy; {new Date().getFullYear()} &middot; Made with care for travelers
-            </p>
-          </footer>
+          <p className="mt-auto px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-8 text-center text-[10px] text-gray-300">
+            Offroute &middot; {new Date().getFullYear()}
+          </p>
         </div>
 
         {/* Dim overlay when card is open */}
@@ -330,10 +374,10 @@ function Settings() {
                 <button
                   onClick={profileForm.handleSubmit((data) =>
                     profileMutation.mutate({
-                      username: data.username || undefined,
                       display_name: data.display_name || undefined,
                       nationality: data.nationality || undefined,
                       profile_bio: data.profile_bio || undefined,
+                      avatar_url: avatarPreview || undefined,
                     })
                   )}
                   disabled={profileMutation.isPending}
@@ -345,23 +389,36 @@ function Settings() {
               </div>
 
               <div className="flex items-center gap-4 py-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#0f1d32]/10 text-lg font-bold text-[#0f1d32]">
-                  {(me?.display_name?.[0] ?? me?.email[0] ?? "?").toUpperCase()}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="group relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#0f1d32]/10 active:opacity-80"
+                >
+                  {avatarPreview ? (
+                    <img src={avatarPreview} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-xl font-bold text-[#0f1d32]">
+                      {(me?.display_name?.[0] ?? me?.email[0] ?? "?").toUpperCase()}
+                    </span>
+                  )}
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-active:opacity-100">
+                    <Camera size={18} className="text-white" />
+                  </div>
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleAvatarPick}
+                  className="hidden"
+                />
+                <div>
+                  <p className="text-sm font-medium text-[#0f1d32]">Profile photo</p>
+                  <p className="text-xs text-gray-400">JPG, PNG, or WebP. Max 2 MB.</p>
                 </div>
-                <p className="text-sm text-gray-400">Profile photos coming soon</p>
               </div>
 
               <div className="mt-2">
-                <div className="flex items-center gap-4 py-3">
-                  <label htmlFor="username" className="w-24 shrink-0 text-sm text-gray-400">Username</label>
-                  <input
-                    id="username"
-                    placeholder="your_username"
-                    {...profileForm.register("username")}
-                    className="flex-1 bg-transparent text-base font-medium text-[#0f1d32] placeholder-gray-300 outline-none"
-                  />
-                </div>
-                <div className="h-px bg-gray-100" />
                 <div className="flex items-center gap-4 py-3">
                   <label htmlFor="display_name" className="w-24 shrink-0 text-sm text-gray-400">Name</label>
                   <input
