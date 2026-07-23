@@ -37,6 +37,7 @@ export interface MapProps {
   drawRoute?: boolean;
   circuitRoutes?: CircuitRoute[];
   highlightCircuitId?: string;
+  fitToMarkers?: boolean;
   interactive?: boolean;
   userLocation?: { lng: number; lat: number };
   onReady?: () => void;
@@ -124,6 +125,7 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
     drawRoute = false,
     circuitRoutes,
     highlightCircuitId,
+    fitToMarkers = true,
     interactive = true,
     userLocation,
     onReady,
@@ -303,7 +305,7 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
 
     redrawLines();
 
-    if (markers.length > 0) {
+    if (fitToMarkers && markers.length > 0) {
       const animate = hasInitialFit.current;
       hasInitialFit.current = true;
       const lngs = markers.map((m) => m.lng);

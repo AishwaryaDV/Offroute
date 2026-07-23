@@ -84,6 +84,7 @@ function WorldMap() {
         className="absolute inset-0 h-full w-full"
         markers={mapMarkers}
         circuitRoutes={circuitRoutes}
+        fitToMarkers={false}
         interactive
         center={[0, 20]}
         zoom={1.5}

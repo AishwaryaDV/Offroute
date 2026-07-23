@@ -204,6 +204,7 @@ function Activity() {
             markers={mapMarkers}
             circuitRoutes={circuitRoutes}
             highlightCircuitId={selectedCircuitId ?? undefined}
+            fitToMarkers={false}
             interactive
             center={[0, 20]}
             zoom={1.5}
@@ -302,7 +303,7 @@ function Activity() {
       {tab === "timeline" && (
         <>
         <div className="pointer-events-none absolute inset-0">
-          <MapDynamic center={userGeo.center} zoom={userGeo.zoom} />
+          <MapDynamic center={userGeo.center} zoom={Math.min(userGeo.zoom, 3)} />
           <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
         </div>
         <div

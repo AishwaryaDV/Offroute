@@ -225,7 +225,7 @@ function Dashboard() {
       <MapDynamic
         className="absolute inset-0 h-full w-full"
         center={userGeo.center}
-        zoom={userGeo.zoom}
+        zoom={Math.min(userGeo.zoom, 3)}
         interactive
         userLocation={userLoc ?? undefined}
         onReady={() => { setMapReady(true); sessionStorage.setItem("offroute-map-loaded", "1"); }}
