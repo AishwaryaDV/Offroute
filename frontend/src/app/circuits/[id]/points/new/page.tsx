@@ -116,8 +116,10 @@ function AddPoint() {
     setLocatingGps(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setLocation(loc);
         setLocatingGps(false);
+        mapHandleRef.current?.flyTo(loc.lng, loc.lat, 15);
       },
       (err) => {
         setLocatingGps(false);
@@ -144,8 +146,10 @@ function AddPoint() {
     requestLocation();
   }
 
+  const mapHandleRef = useRef<import("@/components/MapDynamic").MapHandle | null>(null);
+
   const mapMarkers = location
-    ? [{ id: "new", lng: location.lng, lat: location.lat }]
+    ? [{ id: "new", lng: location.lng, lat: location.lat, draggable: true }]
     : [];
 
   return (
@@ -153,16 +157,18 @@ function AddPoint() {
       {/* Map with back button overlay */}
       <div className="relative">
         <MapDynamic
-          className="h-40 w-full"
+          className="h-52 w-full"
           markers={mapMarkers}
           center={location ? [location.lng, location.lat] : undefined}
           zoom={location ? 15 : 12}
+          interactive
           onMapClick={(lngLat) => setLocation({ lat: lngLat.lat, lng: lngLat.lng })}
-          key={location ? `${location.lat},${location.lng}` : "empty"}
+          onMarkerDragEnd={(_id, lngLat) => setLocation({ lat: lngLat.lat, lng: lngLat.lng })}
+          onMapInit={(handle) => { mapHandleRef.current = handle; }}
         />
         {!location && (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-[#111a2e]/80">
-            <p className="text-sm text-gray-400">Use GPS or search for a place below</p>
+            <p className="text-sm text-gray-400">Tap the map, use GPS, or search below</p>
           </div>
         )}
 
@@ -200,9 +206,12 @@ function AddPoint() {
               {locatingGps ? "Locating…" : "Use GPS"}
             </button>
             {location && (
-              <div className="flex items-center gap-1.5 rounded-xl bg-emerald-50 px-3 text-xs text-emerald-600 ring-1 ring-emerald-200">
-                <MapPin size={14} />
-                {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
+              <div className="flex flex-col items-end gap-0.5">
+                <div className="flex items-center gap-1.5 rounded-xl bg-emerald-50 px-3 py-2 text-xs text-emerald-600 ring-1 ring-emerald-200">
+                  <MapPin size={14} />
+                  {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
+                </div>
+                <span className="text-[10px] text-gray-400">Drag pin to adjust</span>
               </div>
             )}
           </div>
@@ -232,9 +241,11 @@ function AddPoint() {
                     key={r.place_id}
                     type="button"
                     onClick={() => {
-                      setLocation({ lat: parseFloat(r.lat), lng: parseFloat(r.lon) });
+                      const loc = { lat: parseFloat(r.lat), lng: parseFloat(r.lon) };
+                      setLocation(loc);
                       setSearchQuery("");
                       setSearchResults([]);
+                      mapHandleRef.current?.flyTo(loc.lng, loc.lat, 15);
                     }}
                     className="flex w-full items-start gap-2.5 px-4 py-2.5 text-left active:bg-[#f5f6f8]"
                   >
