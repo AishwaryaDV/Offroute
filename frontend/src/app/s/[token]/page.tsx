@@ -63,7 +63,7 @@ export default function SharedCircuitPage() {
     mutationFn: () => cloneCircuit(token),
     onSuccess: (cloned) => {
       toast.success("Circuit cloned to your account");
-      router.push(`/circuits/${cloned.id}`);
+      router.push(`/circuits/${cloned.slug ?? cloned.id}`);
     },
     onError: (err: Error) =>
       toast.error(

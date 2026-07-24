@@ -21,19 +21,19 @@ router = APIRouter(tags=["collaborators"])
     status_code=201,
 )
 async def invite_collaborator(
-    circuit_id: uuid.UUID,
+    circuit_id: str,
     data: CollaboratorInvite,
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    circuit = await circuits_service.get_circuit(db, circuit_id)
+    circuit = await circuits_service.resolve_circuit(db, circuit_id)
     circuits_service.assert_owner(circuit, user.id)
-    result = await collab_service.invite(db, circuit_id, user.id, data.email, data.role)
+    result = await collab_service.invite(db, circuit.id, user.id, data.email, data.role)
     inviter_name = user.display_name or user.email
     await notif_service.create(
         db, result["user_id"], "invite",
         f"{inviter_name} invited you to collaborate on \"{circuit.title}\"",
-        circuit_id=circuit_id, actor_id=user.id,
+        circuit_id=circuit.id, actor_id=user.id,
     )
     return result
 
@@ -43,23 +43,23 @@ async def invite_collaborator(
     response_model=list[CollaboratorResponse],
 )
 async def list_collaborators(
-    circuit_id: uuid.UUID,
+    circuit_id: str,
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    circuit = await circuits_service.get_circuit(db, circuit_id)
+    circuit = await circuits_service.resolve_circuit(db, circuit_id)
     circuits_service.assert_owner(circuit, user.id)
-    return await collab_service.list_collaborators(db, circuit_id)
+    return await collab_service.list_collaborators(db, circuit.id)
 
 
 @router.delete("/circuits/{circuit_id}/collaborators/{collab_id}", status_code=204)
 async def remove_collaborator(
-    circuit_id: uuid.UUID,
+    circuit_id: str,
     collab_id: uuid.UUID,
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    circuit = await circuits_service.get_circuit(db, circuit_id)
+    circuit = await circuits_service.resolve_circuit(db, circuit_id)
     circuits_service.assert_owner(circuit, user.id)
     await collab_service.remove_collaborator(db, collab_id)
 

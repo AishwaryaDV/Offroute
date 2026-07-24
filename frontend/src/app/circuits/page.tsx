@@ -45,7 +45,7 @@ function CircuitCard({ circuit, index, tripName }: { circuit: Circuit; index: nu
 
   return (
     <Link
-      href={`/circuits/${circuit.id}`}
+      href={`/circuits/${circuit.slug ?? circuit.id}`}
       className="relative aspect-[4/3] overflow-hidden rounded-2xl active:opacity-90"
     >
       <img src={coverUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />

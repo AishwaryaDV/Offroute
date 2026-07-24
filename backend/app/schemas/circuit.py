@@ -56,6 +56,7 @@ class CircuitResponse(BaseModel):
     id: uuid.UUID
     owner_id: uuid.UUID
     title: str
+    slug: str | None = None
     description: str | None
     cover_media_id: uuid.UUID | None
     visibility: str

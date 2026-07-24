@@ -50,6 +50,7 @@ export interface Circuit {
   id: string;
   owner_id: string;
   title: string;
+  slug: string | null;
   description: string | null;
   cover_media_id: string | null;
   visibility: "private" | "shared" | "public";
@@ -148,6 +149,7 @@ export interface PointCreate {
 
 export interface WorldPoint extends Point {
   circuit_title: string;
+  circuit_slug: string | null;
 }
 
 export interface PointUpdate {
@@ -214,6 +216,7 @@ export interface Notification {
 export interface SearchCircuitResult {
   id: string;
   title: string;
+  slug: string | null;
   description: string | null;
   tags: string[] | null;
   point_count: number;

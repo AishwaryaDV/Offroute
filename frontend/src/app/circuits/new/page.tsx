@@ -34,7 +34,7 @@ function NewCircuit() {
       }),
     onSuccess: (circuit) => {
       toast.success("Circuit created");
-      router.push(`/circuits/${circuit.id}`);
+      router.push(`/circuits/${circuit.slug ?? circuit.id}`);
     },
     onError: () => toast.error("Could not create circuit — try again"),
   });

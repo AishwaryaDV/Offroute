@@ -51,3 +51,4 @@ class PointResponse(BaseModel):
 
 class WorldPointResponse(PointResponse):
     circuit_title: str
+    circuit_slug: str | None = None

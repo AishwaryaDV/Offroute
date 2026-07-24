@@ -59,6 +59,7 @@ async def search(
             {
                 "id": c.id,
                 "title": c.title,
+                "slug": c.slug,
                 "description": c.description,
                 "tags": c.tags,
                 "point_count": 0,

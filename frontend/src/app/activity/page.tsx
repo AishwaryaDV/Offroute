@@ -98,11 +98,12 @@ function Activity() {
   );
 
   const circuits = useMemo(() => {
-    const map = new globalThis.Map<string, { title: string; color: string; count: number }>();
+    const map = new globalThis.Map<string, { title: string; slug: string | null; color: string; count: number }>();
     (points ?? []).forEach((p) => {
       if (!map.has(p.circuit_id)) {
         map.set(p.circuit_id, {
           title: p.circuit_title,
+          slug: p.circuit_slug,
           color: circuitColorMap.get(p.circuit_id) ?? "#3b82f6",
           count: 0,
         });
@@ -141,7 +142,7 @@ function Activity() {
     const circuitPoints = (points ?? [])
       .filter((p) => p.circuit_id === selectedCircuitId)
       .sort((a, b) => a.order_index - b.order_index);
-    return { id: info[0], title: info[1].title, color: info[1].color, points: circuitPoints };
+    return { id: info[0], slug: info[1].slug, title: info[1].title, color: info[1].color, points: circuitPoints };
   }, [selectedCircuitId, circuits, points]);
 
   const handleMarkerClick = useCallback(
@@ -287,7 +288,7 @@ function Activity() {
                       style={{ backgroundColor: selectedCircuit.color }}
                     />
                     <Link
-                      href={`/circuits/${selectedCircuit.id}`}
+                      href={`/circuits/${selectedCircuit.slug ?? selectedCircuit.id}`}
                       className="text-base font-bold text-[#0f1d32] active:opacity-70"
                     >
                       {selectedCircuit.title}
@@ -306,7 +307,7 @@ function Activity() {
                     return (
                       <Link
                         key={p.id}
-                        href={`/circuits/${p.circuit_id}/points/${p.id}`}
+                        href={`/circuits/${p.circuit_slug ?? p.circuit_id}/points/${p.id}`}
                         className="flex min-w-[140px] shrink-0 gap-2.5 rounded-xl bg-white p-3 active:bg-gray-50"
                       >
                         <div
@@ -439,7 +440,7 @@ function Activity() {
                   <div key={point.id} className="flex w-full flex-col items-center">
                     <div className="h-3 w-0.5 bg-gray-200" />
                     <Link
-                      href={`/circuits/${point.circuit_id}/points/${point.id}`}
+                      href={`/circuits/${point.circuit_slug ?? point.circuit_id}/points/${point.id}`}
                       className="w-full rounded-2xl bg-[#f5f6f8] p-3.5 active:bg-gray-100"
                     >
                       <div className="flex gap-3">

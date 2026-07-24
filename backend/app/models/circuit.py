@@ -4,7 +4,7 @@ import uuid
 from datetime import date, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Date, DateTime, Enum, ForeignKey, Integer, Text, func
+from sqlalchemy import Date, DateTime, Enum, ForeignKey, Integer, Text, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -19,6 +19,9 @@ VisibilityEnum = Enum("private", "shared", "public", name="visibility", create_t
 
 class Circuit(Base):
     __tablename__ = "circuits"
+    __table_args__ = (
+        UniqueConstraint("owner_id", "slug", name="uq_circuits_owner_slug"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
@@ -27,6 +30,7 @@ class Circuit(Base):
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
     title: Mapped[str] = mapped_column(Text, nullable=False)
+    slug: Mapped[str | None] = mapped_column(Text)
     description: Mapped[str | None] = mapped_column(Text)
     cover_media_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     visibility: Mapped[str] = mapped_column(

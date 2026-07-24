@@ -1,4 +1,3 @@
-import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
@@ -11,6 +10,7 @@ from app.schemas.circuit import CircuitCreate, CircuitResponse, CircuitUpdate, S
 from app.services import circuits as circuits_service
 from app.services import notifications as notif_service
 from app.services import stars as stars_service
+
 
 router = APIRouter(prefix="/circuits", tags=["circuits"])
 
@@ -35,76 +35,77 @@ async def create_circuit(
 
 @router.get("/{circuit_id}", response_model=CircuitResponse)
 async def get_circuit(
-    circuit_id: uuid.UUID,
+    circuit_id: str,
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    circuit = await circuits_service.get_circuit(db, circuit_id)
+    circuit = await circuits_service.resolve_circuit(db, circuit_id)
     circuits_service.assert_owner(circuit, user.id)
-    return await circuits_service.get_circuit_with_count(db, circuit_id, user.id)
+    return await circuits_service.get_circuit_with_count(db, circuit.id, user.id)
 
 
 @router.patch("/{circuit_id}", response_model=CircuitResponse)
 async def update_circuit(
-    circuit_id: uuid.UUID,
+    circuit_id: str,
     data: CircuitUpdate,
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    circuit = await circuits_service.get_circuit(db, circuit_id)
+    circuit = await circuits_service.resolve_circuit(db, circuit_id)
     circuits_service.assert_owner(circuit, user.id)
     await circuits_service.update_circuit(db, circuit, data)
-    return await circuits_service.get_circuit_with_count(db, circuit_id, user.id)
+    return await circuits_service.get_circuit_with_count(db, circuit.id, user.id)
 
 
 @router.delete("/{circuit_id}", status_code=204)
 async def delete_circuit(
-    circuit_id: uuid.UUID,
+    circuit_id: str,
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    circuit = await circuits_service.get_circuit(db, circuit_id)
+    circuit = await circuits_service.resolve_circuit(db, circuit_id)
     circuits_service.assert_owner(circuit, user.id)
     await circuits_service.delete_circuit(db, circuit)
 
 
 @router.post("/{circuit_id}/star", status_code=201)
 async def star_circuit(
-    circuit_id: uuid.UUID,
+    circuit_id: str,
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    circuit = await circuits_service.get_circuit(db, circuit_id)
-    await stars_service.star(db, user.id, circuit_id)
+    circuit = await circuits_service.resolve_circuit(db, circuit_id)
+    await stars_service.star(db, user.id, circuit.id)
     if circuit.owner_id != user.id:
         actor_name = user.display_name or user.email
         await notif_service.create(
             db, circuit.owner_id, "star",
             f"{actor_name} starred your circuit \"{circuit.title}\"",
-            circuit_id=circuit_id, actor_id=user.id,
+            circuit_id=circuit.id, actor_id=user.id,
         )
-    count = await stars_service.star_count(db, circuit_id)
+    count = await stars_service.star_count(db, circuit.id)
     return {"star_count": count, "is_starred": True}
 
 
 @router.delete("/{circuit_id}/star")
 async def unstar_circuit(
-    circuit_id: uuid.UUID,
+    circuit_id: str,
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    await stars_service.unstar(db, user.id, circuit_id)
-    count = await stars_service.star_count(db, circuit_id)
+    circuit = await circuits_service.resolve_circuit(db, circuit_id)
+    await stars_service.unstar(db, user.id, circuit.id)
+    count = await stars_service.star_count(db, circuit.id)
     return {"star_count": count, "is_starred": False}
 
 
 @router.post("/{circuit_id}/share")
 async def share_circuit(
-    circuit_id: uuid.UUID,
+    circuit_id: str,
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    circuit = await circuits_service.get_circuit(db, circuit_id)
+    circuit = await circuits_service.resolve_circuit(db, circuit_id)
     circuits_service.assert_owner(circuit, user.id)
     token = await circuits_service.generate_share_token(db, circuit)
     return {"share_token": token}

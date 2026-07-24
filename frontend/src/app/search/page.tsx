@@ -168,7 +168,7 @@ function SearchPage() {
                     {circuits.map((c) => (
                       <Link
                         key={c.id}
-                        href={`/circuits/${c.id}`}
+                        href={`/circuits/${c.slug ?? c.id}`}
                         className="flex items-center gap-3 rounded-2xl bg-[#f5f6f8] px-4 py-3.5 active:bg-gray-200"
                       >
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#0f1d32]/10">

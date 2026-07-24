@@ -24,25 +24,25 @@ async def list_all_points(
 
 @router.get("/circuits/{circuit_id}/points", response_model=list[PointResponse])
 async def list_points(
-    circuit_id: uuid.UUID,
+    circuit_id: str,
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    circuit = await circuits_service.get_circuit(db, circuit_id)
+    circuit = await circuits_service.resolve_circuit(db, circuit_id)
     circuits_service.assert_owner(circuit, user.id)
-    return await points_service.list_points(db, circuit_id)
+    return await points_service.list_points(db, circuit.id)
 
 
 @router.post("/circuits/{circuit_id}/points", response_model=PointResponse, status_code=201)
 async def create_point(
-    circuit_id: uuid.UUID,
+    circuit_id: str,
     data: PointCreate,
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    circuit = await circuits_service.get_circuit(db, circuit_id)
+    circuit = await circuits_service.resolve_circuit(db, circuit_id)
     circuits_service.assert_owner(circuit, user.id)
-    return await points_service.create_point(db, circuit_id, data)
+    return await points_service.create_point(db, circuit.id, data)
 
 
 @router.get("/points/{point_id}", response_model=PointResponse)
@@ -84,11 +84,11 @@ async def delete_point(
 
 @router.patch("/circuits/{circuit_id}/points/reorder", response_model=list[PointResponse])
 async def reorder_points(
-    circuit_id: uuid.UUID,
+    circuit_id: str,
     data: ReorderRequest,
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    circuit = await circuits_service.get_circuit(db, circuit_id)
+    circuit = await circuits_service.resolve_circuit(db, circuit_id)
     circuits_service.assert_owner(circuit, user.id)
-    return await points_service.reorder_points(db, circuit_id, data)
+    return await points_service.reorder_points(db, circuit.id, data)

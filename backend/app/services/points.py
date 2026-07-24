@@ -84,16 +84,17 @@ async def delete_point(db: AsyncSession, point: Point) -> None:
 
 async def list_all_points(db: AsyncSession, owner_id: uuid.UUID) -> list[dict]:
     stmt = (
-        select(Point, Circuit.title.label("circuit_title"))
+        select(Point, Circuit.title.label("circuit_title"), Circuit.slug.label("circuit_slug"))
         .join(Circuit, Circuit.id == Point.circuit_id)
         .where(Circuit.owner_id == owner_id)
         .order_by(Circuit.updated_at.desc(), Point.order_index)
     )
     rows = (await db.execute(stmt)).all()
     results = []
-    for point, circuit_title in rows:
+    for point, circuit_title, circuit_slug in rows:
         d = _point_to_dict(point)
         d["circuit_title"] = circuit_title
+        d["circuit_slug"] = circuit_slug
         results.append(d)
     return results
 

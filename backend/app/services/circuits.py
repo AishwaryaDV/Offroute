@@ -1,3 +1,4 @@
+import re
 import secrets
 import uuid
 
@@ -12,6 +13,38 @@ from app.models.point import Point
 from app.models.star import Star
 from app.models.user import User
 from app.schemas.circuit import CircuitCreate, CircuitUpdate
+
+
+def _slugify(text: str) -> str:
+    s = text.lower().strip()
+    s = re.sub(r"[^\w\s-]", "", s)
+    s = re.sub(r"[\s_]+", "-", s)
+    s = re.sub(r"-+", "-", s)
+    return s.strip("-")[:80] or "circuit"
+
+
+async def _unique_slug(db: AsyncSession, owner_id: uuid.UUID, base: str) -> str:
+    slug = base
+    suffix = 0
+    while True:
+        exists = await db.scalar(
+            select(Circuit.id).where(Circuit.owner_id == owner_id, Circuit.slug == slug)
+        )
+        if not exists:
+            return slug
+        suffix += 1
+        slug = f"{base}-{suffix}"
+
+
+async def resolve_circuit(db: AsyncSession, identifier: str) -> Circuit:
+    try:
+        cid = uuid.UUID(identifier)
+        circuit = await db.get(Circuit, cid)
+    except ValueError:
+        circuit = await db.scalar(select(Circuit).where(Circuit.slug == identifier))
+    if circuit is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Circuit not found")
+    return circuit
 
 
 async def list_circuits(db: AsyncSession, owner_id: uuid.UUID) -> list[dict]:
@@ -93,7 +126,8 @@ def assert_owner(circuit: Circuit, user_id: uuid.UUID) -> None:
 async def create_circuit(
     db: AsyncSession, owner_id: uuid.UUID, data: CircuitCreate
 ) -> Circuit:
-    circuit = Circuit(owner_id=owner_id, **data.model_dump())
+    slug = await _unique_slug(db, owner_id, _slugify(data.title))
+    circuit = Circuit(owner_id=owner_id, slug=slug, **data.model_dump())
     db.add(circuit)
     await db.commit()
     await db.refresh(circuit)
@@ -103,7 +137,10 @@ async def create_circuit(
 async def update_circuit(
     db: AsyncSession, circuit: Circuit, data: CircuitUpdate
 ) -> Circuit:
-    for field, value in data.model_dump(exclude_unset=True).items():
+    updates = data.model_dump(exclude_unset=True)
+    if "title" in updates and updates["title"]:
+        updates["slug"] = await _unique_slug(db, circuit.owner_id, _slugify(updates["title"]))
+    for field, value in updates.items():
         setattr(circuit, field, value)
     await db.commit()
     await db.refresh(circuit)
@@ -142,9 +179,11 @@ async def clone_circuit(db: AsyncSession, token: str, user_id: uuid.UUID) -> Cir
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot clone your own circuit")
 
     source.clone_count = (source.clone_count or 0) + 1
+    slug = await _unique_slug(db, user_id, _slugify(source.title))
     clone = Circuit(
         owner_id=user_id,
         title=source.title,
+        slug=slug,
         description=source.description,
         tags=source.tags,
         cloned_from_token=token,

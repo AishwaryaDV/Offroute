@@ -56,11 +56,12 @@ function WorldMap() {
   );
 
   const circuits = useMemo(() => {
-    const map = new globalThis.Map<string, { title: string; color: string; count: number }>();
+    const map = new globalThis.Map<string, { title: string; slug: string | null; color: string; count: number }>();
     (points ?? []).forEach((p) => {
       if (!map.has(p.circuit_id)) {
         map.set(p.circuit_id, {
           title: p.circuit_title,
+          slug: p.circuit_slug,
           color: circuitColorMap.get(p.circuit_id) ?? "#3b82f6",
           count: 0,
         });
@@ -167,10 +168,10 @@ function WorldMap() {
             Circuits
           </p>
           <div className="flex flex-col gap-1">
-            {circuits.map(([circuitId, { title, color, count }]) => (
+            {circuits.map(([circuitId, { title, slug, color, count }]) => (
               <Link
                 key={circuitId}
-                href={`/circuits/${circuitId}`}
+                href={`/circuits/${slug ?? circuitId}`}
                 className="flex items-center gap-2 rounded-lg px-1 py-0.5 active:bg-white/10"
               >
                 <div

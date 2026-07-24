@@ -172,7 +172,7 @@ function Dashboard() {
       toast.success("Circuit created");
       setShowNewCircuit(false);
       reset();
-      router.push(`/circuits/${circuit.id}`);
+      router.push(`/circuits/${circuit.slug ?? circuit.id}`);
     },
     onError: () => toast.error("Could not create circuit — try again"),
   });
@@ -330,7 +330,7 @@ function Dashboard() {
                 return (
                   <Link
                     key={circuit.id}
-                    href={`/circuits/${circuit.id}`}
+                    href={`/circuits/${circuit.slug ?? circuit.id}`}
                     className="relative aspect-[4/3] overflow-hidden rounded-2xl active:opacity-90"
                   >
                     <img
