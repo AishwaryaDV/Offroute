@@ -87,11 +87,11 @@ Before building any page, drop the relevant reference screenshot(s) into a `/des
 - ~~AI: auto-caption, OCR, route reorder~~ — **parked**: user unsure if needed, revisit later
 - ~~Offline logging~~ — **parked**: revisit post-launch
 
-### Phase 5 — Activity timeline
+### Phase 5 — Activity timeline (complete)
 - Activity page with all points laid out chronologically across all circuits
 - Wired to the existing "Activity" tab in the bottom nav
 
-### Phase 6 — Profile, stats & trips
+### Phase 6 — Profile, stats & trips (complete)
 - Travel Profile: opt-in curated public page (`/u/[username]` — bio, cover photo, featured public circuits)
 - Stats dashboard: countries visited, points logged, distance traveled
 - Trip grouping: bundle several circuits from one longer journey under an optional parent Trip
