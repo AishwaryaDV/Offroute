@@ -74,8 +74,8 @@ function NewCircuit() {
               autoComplete="off"
               {...register("title", {
                 required: "Give your circuit a name",
-                minLength: { value: 1, message: "Name is required" },
                 maxLength: { value: 200, message: "200 characters max" },
+                validate: (v) => v.trim().length > 0 || "Name cannot be only spaces",
               })}
               className={`w-full rounded-xl bg-white px-4 py-3.5 text-base text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ${
                 errors.title
