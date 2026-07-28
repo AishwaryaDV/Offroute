@@ -141,6 +141,7 @@ function PointDetail() {
   } = useForm<EditValues>();
 
   const watchedRating = watch("rating");
+  const watchedCategory = watch("category");
 
   const editMutation = useMutation({
     mutationFn: (data: EditValues) =>
@@ -339,17 +340,26 @@ function PointDetail() {
                 className="w-full resize-none rounded-xl bg-[#f5f6f8] px-4 py-3.5 text-base text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ring-gray-200 focus:ring-blue-500"
               />
 
-              <select
-                {...register("category")}
-                className="w-full appearance-none rounded-xl bg-[#f5f6f8] px-4 py-3.5 text-base text-[#0f1d32] outline-none ring-1 ring-gray-200 focus:ring-blue-500"
-              >
-                <option value="">Category (optional)</option>
-                {CATEGORIES.map((c) => (
-                  <option key={c.value} value={c.value}>
-                    {c.label}
-                  </option>
-                ))}
-              </select>
+              <div>
+                <p className="mb-2 text-sm font-medium text-gray-500">Category</p>
+                <input type="hidden" {...register("category")} />
+                <div className="flex flex-wrap gap-2">
+                  {CATEGORIES.map((c) => (
+                    <button
+                      key={c.value}
+                      type="button"
+                      onClick={() => setValue("category", watchedCategory === c.value ? "" : c.value)}
+                      className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
+                        watchedCategory === c.value
+                          ? "bg-[#0f1d32] text-white"
+                          : "bg-[#f5f6f8] text-[#0f1d32] ring-1 ring-gray-200"
+                      }`}
+                    >
+                      {c.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
               <div>
                 <p className="mb-2 text-sm font-medium text-gray-500">Rating</p>

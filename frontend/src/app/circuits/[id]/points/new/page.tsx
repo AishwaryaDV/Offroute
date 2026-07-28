@@ -84,8 +84,13 @@ function AddPoint() {
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<FormValues>({ mode: "onBlur" });
+
+  const watchedCategory = watch("category");
+  const watchedRating = watch("rating");
 
   const mutation = useMutation({
     mutationFn: (data: FormValues) => {
@@ -317,59 +322,69 @@ function AddPoint() {
                 <Tag size={14} />
                 <span>Category</span>
               </div>
-              <select
-                {...register("category")}
-                className="w-full appearance-none rounded-xl bg-[#f5f6f8] px-4 py-3 text-sm text-[#0f1d32] outline-none ring-1 ring-gray-200 focus:ring-[#0f1d32]"
-              >
-                <option value="">Select a category</option>
+              <input type="hidden" {...register("category")} />
+              <div className="flex flex-wrap gap-2">
                 {CATEGORIES.map((c) => (
-                  <option key={c.value} value={c.value}>
+                  <button
+                    key={c.value}
+                    type="button"
+                    onClick={() => setValue("category", watchedCategory === c.value ? "" : c.value)}
+                    className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
+                      watchedCategory === c.value
+                        ? "bg-[#0f1d32] text-white"
+                        : "bg-[#f5f6f8] text-[#0f1d32] ring-1 ring-gray-200"
+                    }`}
+                  >
                     {c.label}
-                  </option>
+                  </button>
                 ))}
-              </select>
+              </div>
             </div>
 
-            <div className="flex gap-3">
-              <div className="flex-1">
-                <div className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-500">
-                  <Star size={14} />
-                  <span>Rating</span>
-                </div>
-                <select
-                  {...register("rating")}
-                  className="w-full appearance-none rounded-xl bg-[#f5f6f8] px-4 py-3 text-sm text-[#0f1d32] outline-none ring-1 ring-gray-200 focus:ring-[#0f1d32]"
-                >
-                  <option value="">-</option>
-                  {[1, 2, 3, 4, 5].map((n) => (
-                    <option key={n} value={n}>
-                      {"★".repeat(n)}
-                    </option>
-                  ))}
-                </select>
+            <div>
+              <div className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-500">
+                <Star size={14} />
+                <span>Rating</span>
               </div>
+              <input type="hidden" {...register("rating")} />
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setValue("rating", watchedRating === String(n) ? "" : String(n))}
+                    className="p-1"
+                  >
+                    <Star
+                      size={28}
+                      className={Number(watchedRating) >= n ? "text-amber-400" : "text-gray-300"}
+                      fill={Number(watchedRating) >= n ? "currentColor" : "none"}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
 
-              <div className="flex-1">
-                <div className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-500">
-                  <Calendar size={14} />
-                  <span>Date visited</span>
-                </div>
-                <input
-                  type="date"
-                  {...register("visited_at", {
-                    validate: (v) => {
-                      if (!v) return true;
-                      return new Date(v) <= new Date() || "Date cannot be in the future";
-                    },
-                  })}
-                  max={new Date().toISOString().split("T")[0]}
-                  className={`w-full rounded-xl bg-[#f5f6f8] px-4 py-3 text-sm text-[#0f1d32] outline-none ring-1 ${
-                    errors.visited_at
-                      ? "ring-red-400 focus:ring-red-500"
-                      : "ring-gray-200 focus:ring-[#0f1d32]"
-                  }`}
-                />
+            <div>
+              <div className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-500">
+                <Calendar size={14} />
+                <span>Date visited</span>
               </div>
+              <input
+                type="date"
+                {...register("visited_at", {
+                  validate: (v) => {
+                    if (!v) return true;
+                    return new Date(v) <= new Date() || "Date cannot be in the future";
+                  },
+                })}
+                max={new Date().toISOString().split("T")[0]}
+                className={`w-full rounded-xl bg-[#f5f6f8] px-4 py-3 text-sm text-[#0f1d32] outline-none ring-1 ${
+                  errors.visited_at
+                    ? "ring-red-400 focus:ring-red-500"
+                    : "ring-gray-200 focus:ring-[#0f1d32]"
+                }`}
+              />
             </div>
 
             <button
