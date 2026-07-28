@@ -548,14 +548,14 @@ function PointDetail() {
                         type="button"
                         disabled={uploading}
                         onClick={() => fileInputRef.current?.click()}
-                        className="flex aspect-square items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-[#f5f6f8] text-gray-400 transition-colors active:border-blue-400 active:bg-blue-50 active:text-blue-500 disabled:opacity-50"
+                        className="flex aspect-square items-center justify-center rounded-xl border-2 border-dashed border-[#0f1d32]/20 bg-[#f5f6f8] transition-colors active:border-blue-400 active:bg-blue-50 disabled:opacity-50"
                       >
                         {uploading ? (
                           <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-blue-500" />
                         ) : (
                           <div className="flex flex-col items-center gap-1">
-                            <Camera size={22} />
-                            <span className="text-xs font-medium">+</span>
+                            <Camera size={24} className="text-[#0f1d32]/60" />
+                            <span className="text-xs font-semibold text-[#0f1d32]/60">Add</span>
                           </div>
                         )}
                       </button>
@@ -566,7 +566,7 @@ function PointDetail() {
                       key={`empty-${i}`}
                       className="flex aspect-square items-center justify-center rounded-xl bg-[#f5f6f8]"
                     >
-                      <span className="text-xl font-light text-gray-300">+</span>
+                      <span className="text-2xl font-medium text-[#0f1d32]/25">+</span>
                     </div>
                   );
                 })}
