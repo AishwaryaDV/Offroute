@@ -75,6 +75,18 @@ const CATEGORY_LABELS: Record<string, string> = {
   other: "Other",
 };
 
+const CATEGORY_EMOJIS: Record<string, string> = {
+  food: "🍽️",
+  drink: "🍷",
+  stay: "🏠",
+  viewpoint: "⛰️",
+  activity: "⚡",
+  nature: "🌿",
+  culture: "🏛️",
+  hidden_gem: "💎",
+  other: "📍",
+};
+
 const CATEGORIES: { value: PointCategory; label: string }[] = [
   { value: "food", label: "Food" },
   { value: "drink", label: "Drink" },
@@ -404,14 +416,14 @@ function PointDetail() {
                     className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f6f8] active:bg-gray-200"
                     aria-label="Edit point"
                   >
-                    <Pencil size={15} className="text-gray-500" />
+                    <Pencil size={15} className="text-[#0f1d32]" />
                   </button>
                   <button
                     onClick={() => setShowDeleteConfirm(true)}
                     className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f6f8] active:bg-red-50"
                     aria-label="Delete point"
                   >
-                    <Trash2 size={15} className="text-red-400" />
+                    <Trash2 size={15} className="text-[#0f1d32]" />
                   </button>
                 </div>
               </div>
@@ -445,8 +457,14 @@ function PointDetail() {
 
               {/* Notes */}
               {point.notes && (
-                <div className="mt-4 rounded-xl bg-[#f5f6f8] p-4">
-                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">
+                <div className="mt-4 rounded-2xl bg-[#f5f6f8] p-4">
+                  <div className="mb-2 flex items-center gap-1.5">
+                    <span className="text-base">{CATEGORY_EMOJIS[cat] ?? "📍"}</span>
+                    <span className="text-xs font-semibold uppercase tracking-wide text-[#0f1d32]/50">
+                      {label}
+                    </span>
+                  </div>
+                  <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-[#0f1d32]">
                     {point.notes}
                   </p>
                 </div>
