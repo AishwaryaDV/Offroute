@@ -519,7 +519,10 @@ function PointDetail() {
                         {uploading ? (
                           <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-blue-500" />
                         ) : (
-                          <Camera size={24} />
+                          <div className="flex flex-col items-center gap-1">
+                            <Camera size={22} />
+                            <span className="text-xs font-medium">+</span>
+                          </div>
                         )}
                       </button>
                     );
@@ -529,7 +532,7 @@ function PointDetail() {
                       key={`empty-${i}`}
                       className="flex aspect-square items-center justify-center rounded-xl bg-[#f5f6f8]"
                     >
-                      <div className="h-5 w-5 rounded border-2 border-dashed border-gray-200" />
+                      <span className="text-xl font-light text-gray-300">+</span>
                     </div>
                   );
                 })}
