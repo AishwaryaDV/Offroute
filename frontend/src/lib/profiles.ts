@@ -1,6 +1,5 @@
 import type { PublicProfile, PublicCircuit } from "@/types/api";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+import { API_URL } from "./api";
 
 export async function getPublicProfile(username: string): Promise<PublicProfile> {
   const res = await fetch(`${API_URL}/u/${username}`);

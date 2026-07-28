@@ -1,7 +1,5 @@
-import { apiFetch } from "./api";
+import { API_URL, apiFetch } from "./api";
 import type { Circuit, CircuitCreate, CircuitUpdate, SharedCircuit } from "@/types/api";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 export function getCircuits(): Promise<Circuit[]> {
   return apiFetch<Circuit[]>("/circuits");
