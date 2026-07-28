@@ -21,3 +21,4 @@ class MediaResponse(BaseModel):
     caption: str | None
     created_at: datetime
     upload_url: str | None = None
+    public_url: str | None = None

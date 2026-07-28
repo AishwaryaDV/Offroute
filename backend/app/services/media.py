@@ -1,12 +1,34 @@
+import logging
 import uuid
+from functools import lru_cache
 
+import boto3
+from botocore.config import Config as BotoConfig
+from botocore.exceptions import ClientError
 from fastapi import HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import get_settings
 from app.models.media import Media
 
-MAX_PHOTOS_PER_POINT = 20
+logger = logging.getLogger(__name__)
+
+MAX_PHOTOS_PER_POINT = 9
+UPLOAD_URL_EXPIRY = 600  # 10 minutes
+
+
+@lru_cache
+def _get_s3_client():
+    settings = get_settings()
+    return boto3.client(
+        "s3",
+        endpoint_url=settings.s3_endpoint_url or None,
+        aws_access_key_id=settings.s3_access_key_id,
+        aws_secret_access_key=settings.s3_secret_access_key,
+        region_name=settings.s3_region,
+        config=BotoConfig(signature_version="s3v4"),
+    )
 
 
 async def list_media(db: AsyncSession, point_id: uuid.UUID) -> list[Media]:
@@ -34,7 +56,6 @@ async def create_media(
             detail=f"Maximum {MAX_PHOTOS_PER_POINT} photos per point",
         )
 
-    # storage_path is a placeholder until Supabase Storage is wired up
     storage_path = f"circuits/{circuit_id}/points/{point_id}/{uuid.uuid4()}.jpg"
 
     media = Media(
@@ -60,12 +81,37 @@ async def get_media(db: AsyncSession, media_id: uuid.UUID) -> Media:
 
 
 async def delete_media(db: AsyncSession, media: Media) -> None:
-    # TODO: delete from Supabase Storage when wired up
+    settings = get_settings()
+    try:
+        _get_s3_client().delete_object(
+            Bucket=settings.s3_bucket,
+            Key=media.storage_path,
+        )
+    except ClientError:
+        logger.warning("Storage delete failed for %s", media.storage_path, exc_info=True)
     await db.delete(media)
     await db.commit()
 
 
 def generate_upload_url(storage_path: str) -> str | None:
-    # TODO: generate pre-signed S3 upload URL via boto3
-    # Returns None until Supabase Storage credentials are configured
-    return None
+    settings = get_settings()
+    if not settings.s3_access_key_id:
+        return None
+    try:
+        return _get_s3_client().generate_presigned_url(
+            "put_object",
+            Params={
+                "Bucket": settings.s3_bucket,
+                "Key": storage_path,
+                "ContentType": "image/jpeg",
+            },
+            ExpiresIn=UPLOAD_URL_EXPIRY,
+        )
+    except ClientError:
+        logger.error("Failed to generate upload URL for %s", storage_path, exc_info=True)
+        return None
+
+
+def get_public_url(storage_path: str) -> str:
+    settings = get_settings()
+    return f"{settings.storage_public_url}/{storage_path}"

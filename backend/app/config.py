@@ -15,6 +15,12 @@ class Settings(BaseSettings):
     vapid_private_key: str = ""
     vapid_public_key: str = ""
     vapid_contact_email: str = ""
+    s3_endpoint_url: str = ""
+    s3_access_key_id: str = ""
+    s3_secret_access_key: str = ""
+    s3_bucket: str = "media"
+    s3_region: str = "auto"
+    storage_public_url: str = ""
 
     @property
     def cors_origins_list(self) -> list[str]:

@@ -24,7 +24,14 @@ async def list_media(
     point = await points_service.get_point(db, point_id)
     circuit = await circuits_service.get_circuit(db, point.circuit_id)
     circuits_service.assert_owner(circuit, user.id)
-    return await media_service.list_media(db, point_id)
+    items = await media_service.list_media(db, point_id)
+    return [
+        {
+            **{c.key: getattr(m, c.key) for c in m.__table__.columns},
+            "public_url": media_service.get_public_url(m.storage_path),
+        }
+        for m in items
+    ]
 
 
 @router.post("/points/{point_id}/media", response_model=MediaResponse, status_code=201)
@@ -44,12 +51,11 @@ async def create_media(
         media_type=data.type,
         caption=data.caption,
     )
-    upload_url = media_service.generate_upload_url(media.storage_path)
-    result = {
+    return {
         **{c.key: getattr(media, c.key) for c in media.__table__.columns},
-        "upload_url": upload_url,
+        "upload_url": media_service.generate_upload_url(media.storage_path),
+        "public_url": media_service.get_public_url(media.storage_path),
     }
-    return result
 
 
 @router.delete("/media/{media_id}", status_code=204)
