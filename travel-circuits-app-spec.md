@@ -51,14 +51,14 @@ Before building any page, drop the relevant reference screenshot(s) into a `/des
 
 ## 4. User roles & accounts
 
-- Individual accounts via **Supabase Auth** (email/password + Google/Apple OAuth). FastAPI verifies the JWTs and auto-provisions a row in the app's own `users` table on first authentication; all application data lives in the app's own Postgres.
+- Individual accounts via **Supabase Auth** (email/password + Google OAuth). FastAPI verifies the JWTs and auto-provisions a row in the app's own `users` table on first authentication; all application data lives in the app's own Postgres. Google OAuth is configured via a Google Cloud Console project with Supabase as the redirect target; Supabase auto-links identities when the same email signs in with both methods.
 - No forced "household" or pairing model — partners are just two independent users who can collaborate on specific circuits or share/clone each other's.
 - A circuit has one owner and zero or more collaborators (edit access) and zero or more viewers (read access, via share link or explicit invite).
 
 ## 5. Feature scope
 
 ### Phase 1 — Auth & identity (complete)
-- Auth: sign up / log in / log out (Supabase Auth)
+- Auth: sign up / log in / log out (Supabase Auth) + Google OAuth (Google Cloud Console → Supabase provider, identity auto-linking)
 - JWT verification, auto-provisioned `users` table, protected routes
 - Settings: display name, nationality, change password, delete account
 
@@ -66,7 +66,7 @@ Before building any page, drop the relevant reference screenshot(s) into a `/des
 - Create, edit, delete a circuit (name, description, cover image, visibility, trip dates)
 - Add, edit, delete, reorder points within a circuit (title, lat/lng via map pin drop or GPS, notes, category, rating)
 - Map view: category-icon pin markers with order badges, smooth bezier route lines, horizontal points carousel with map fly-to
-- Upload photos to a point (pre-signed S3 uploads via Supabase Storage, point photo carousel, pin thumbnails)
+- Upload photos to a point (pre-signed S3 uploads via boto3/S3 protocol against Supabase Storage, client-side compression via browser-image-compression, 3×3 photo grid with tappable full-screen viewer, long-press delete mode with red border/translucent overlay, max 9 photos per point)
 - Share a circuit via link (`/s/[token]` read-only public view with OG tags for WhatsApp/iMessage previews)
 - Aggregate world map (`/world`): every point from all circuits on one map, colored by circuit
 - PWA shell: manifest + service worker, installable on iOS and Android
@@ -87,6 +87,15 @@ Before building any page, drop the relevant reference screenshot(s) into a `/des
 - ~~AI: auto-caption, OCR, route reorder~~ — **dropped for v1**: user will develop a dedicated AI PRD once the product is live
 - ~~Offline logging~~ — **parked**: revisit post-launch
 
+### UI polish (complete)
+- Custom form controls replacing native browser elements across new-point and edit-point forms:
+  - **Category**: custom themed dropdown (deep blue selected state, chevron indicator, overlay list) — replaces native `<select>` that overflowed bottom sheets
+  - **Rating**: 5 tappable Star icons with amber fill (tap to set, tap same to clear) — replaces native `<select>` dropdown
+  - **Date visited**: custom modal date picker (bottom-sheet calendar with month navigation, today/clear buttons, deep blue selected day) — replaces native `<input type="date">` that overflowed
+- Photo grid: "Add" button with Camera icon and visible label, empty cells with subtle blue-tinted "+" placeholders
+- Point detail: notes section with lucide category icons in deep blue, edit/delete action icons in app color
+- All form inputs use consistent `bg-[#f5f6f8]` background with `ring-1 ring-gray-200` borders across screens
+
 ### Phase 5 — Activity timeline (complete)
 - Activity page with all points laid out chronologically across all circuits
 - Wired to the existing "Activity" tab in the bottom nav
@@ -106,9 +115,9 @@ Before building any page, drop the relevant reference screenshot(s) into a `/des
 - Settings → Notifications page: toggle push on/off, browser-blocked state handling
 - `/push/vapid-key` public endpoint, `/push/subscribe` + `/push/unsubscribe` authenticated endpoints
 
-### Phase 8 — Testing & deployment
-- UI fixes document from user
-- QA testing of all features across phases
+### Phase 8 — Testing & deployment (in progress)
+- QA testing of all features across phases — bugs documented in a single issues doc before fixing
+- UI fixes document from user (pending)
 - Production deployment
 
 ### Explicitly out of scope for now
@@ -266,9 +275,9 @@ Points:
 - `POST /points/{id}/progress` — mark visited on a cloned circuit (phase 2)
 
 Media:
-- `POST /media/presign` — returns a pre-signed upload URL for direct browser → object storage upload
-- `POST /media` — register uploaded file (path, type, point/circuit link) after upload completes
-- `DELETE /media/{id}`
+- `POST /points/{id}/media` — creates a media record and returns a pre-signed S3 upload URL (via boto3 `generate_presigned_url`) for direct browser → storage upload; also returns the public URL
+- `GET /points/{id}/media` — list media for a point (includes public URLs)
+- `DELETE /media/{id}` — deletes the media record and the S3 object
 
 Aggregate & profile:
 - `GET /me/aggregate` — all points across all owned circuits (map mode POC; timeline params phase 2)
