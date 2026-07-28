@@ -454,7 +454,7 @@ function PointDetail() {
               {/* Divider */}
               <div className="my-5 h-px bg-gray-200" />
 
-              {/* Photo section */}
+              {/* Photo grid — 3×3 with "+" placeholders */}
               <input
                 ref={fileInputRef}
                 type="file"
@@ -463,69 +463,68 @@ function PointDetail() {
                 className="hidden"
                 onChange={handleFileSelect}
               />
-              <div>
-                {photoCount > 0 ? (
-                  <>
-                    <div className="grid grid-cols-3 gap-2">
-                      {media!.map((m) => (
-                        <div
-                          key={m.id}
-                          className="group relative aspect-square overflow-hidden rounded-xl bg-[#f5f6f8]"
+              <div className="grid grid-cols-3 gap-2">
+                {Array.from({ length: 9 }).map((_, i) => {
+                  const m = media?.[i];
+                  if (m) {
+                    return (
+                      <div
+                        key={m.id}
+                        className="group relative aspect-square overflow-hidden rounded-xl bg-[#f5f6f8]"
+                      >
+                        {m.public_url ? (
+                          <img
+                            src={m.public_url}
+                            alt=""
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center">
+                            <Camera size={20} className="text-gray-400" />
+                          </div>
+                        )}
+                        <button
+                          onClick={() => deleteMediaMutation.mutate(m.id)}
+                          className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100 active:opacity-100"
+                          aria-label="Remove photo"
                         >
-                          {m.public_url ? (
-                            <img
-                              src={m.public_url}
-                              alt=""
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-full items-center justify-center">
-                              <Camera size={20} className="text-gray-400" />
-                            </div>
-                          )}
-                          <button
-                            onClick={() => deleteMediaMutation.mutate(m.id)}
-                            className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100 active:opacity-100"
-                            aria-label="Remove photo"
-                          >
-                            <X size={14} className="text-white" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                    {photoCount < 20 && (
+                          <X size={14} className="text-white" />
+                        </button>
+                      </div>
+                    );
+                  }
+                  if (i === photoCount) {
+                    return (
                       <button
+                        key={`add-${i}`}
                         type="button"
                         disabled={uploading}
                         onClick={() => fileInputRef.current?.click()}
-                        className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-[#f5f6f8] py-3 text-sm font-medium text-gray-500 active:bg-gray-200 disabled:opacity-50"
+                        className="flex aspect-square items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-[#f5f6f8] text-gray-400 transition-colors active:border-blue-400 active:bg-blue-50 active:text-blue-500 disabled:opacity-50"
                       >
-                        <Camera size={16} />
-                        {uploading ? "Uploading…" : "Add more photos"}
+                        {uploading ? (
+                          <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-blue-500" />
+                        ) : (
+                          <Camera size={24} />
+                        )}
                       </button>
-                    )}
-                  </>
-                ) : (
-                  <button
-                    type="button"
-                    disabled={uploading}
-                    onClick={() => fileInputRef.current?.click()}
-                    className="flex w-full items-center gap-4 rounded-xl border-2 border-dashed border-gray-200 p-4 text-left transition-colors active:border-blue-400 active:bg-blue-50 disabled:opacity-50"
-                  >
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-blue-50">
-                      <Camera size={22} className="text-blue-500" />
+                    );
+                  }
+                  return (
+                    <div
+                      key={`empty-${i}`}
+                      className="flex aspect-square items-center justify-center rounded-xl bg-[#f5f6f8]"
+                    >
+                      <div className="h-5 w-5 rounded border-2 border-dashed border-gray-200" />
                     </div>
-                    <div>
-                      <p className="text-sm font-semibold text-blue-500">
-                        {uploading ? "Uploading…" : "Add photos"}
-                      </p>
-                      <p className="mt-0.5 text-xs text-gray-400">
-                        Up to 20 per point
-                      </p>
-                    </div>
-                  </button>
-                )}
+                  );
+                })}
               </div>
+              {uploading && (
+                <p className="mt-2 text-center text-xs text-gray-400">
+                  Compressing & uploading…
+                </p>
+              )}
             </>
           )}
         </div>
