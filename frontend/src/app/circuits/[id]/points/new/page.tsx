@@ -8,6 +8,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AuthGuard } from "@/components/AuthGuard";
+import { DatePicker } from "@/components/DatePicker";
 import MapDynamic from "@/components/MapDynamic";
 import { createPoint } from "@/lib/points";
 import type { PointCategory } from "@/types/api";
@@ -370,20 +371,11 @@ function AddPoint() {
                 <Calendar size={14} />
                 <span>Date visited</span>
               </div>
-              <input
-                type="date"
-                {...register("visited_at", {
-                  validate: (v) => {
-                    if (!v) return true;
-                    return new Date(v) <= new Date() || "Date cannot be in the future";
-                  },
-                })}
+              <input type="hidden" {...register("visited_at")} />
+              <DatePicker
+                value={watch("visited_at") || ""}
+                onChange={(v) => setValue("visited_at", v)}
                 max={new Date().toISOString().split("T")[0]}
-                className={`w-full rounded-xl bg-[#f5f6f8] px-4 py-3 text-sm text-[#0f1d32] outline-none ring-1 ${
-                  errors.visited_at
-                    ? "ring-red-400 focus:ring-red-500"
-                    : "ring-gray-200 focus:ring-[#0f1d32]"
-                }`}
               />
             </div>
 

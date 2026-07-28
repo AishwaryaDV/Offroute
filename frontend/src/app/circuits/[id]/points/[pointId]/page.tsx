@@ -26,6 +26,7 @@ import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AuthGuard } from "@/components/AuthGuard";
+import { DatePicker } from "@/components/DatePicker";
 import MapDynamic from "@/components/MapDynamic";
 import { StepLoader } from "@/components/StepLoader";
 import { getPoint, getPoints, deletePoint, updatePoint } from "@/lib/points";
@@ -382,11 +383,15 @@ function PointDetail() {
                 </div>
               </div>
 
-              <input
-                type="date"
-                {...register("visited_at")}
-                className="w-full rounded-xl bg-[#f5f6f8] px-4 py-3.5 text-base text-[#0f1d32] outline-none ring-1 ring-gray-200 focus:ring-blue-500"
-              />
+              <div>
+                <p className="mb-2 text-sm font-medium text-gray-500">Date visited</p>
+                <input type="hidden" {...register("visited_at")} />
+                <DatePicker
+                  value={watch("visited_at") || ""}
+                  onChange={(v) => setValue("visited_at", v)}
+                  max={new Date().toISOString().split("T")[0]}
+                />
+              </div>
 
               <button
                 type="submit"
