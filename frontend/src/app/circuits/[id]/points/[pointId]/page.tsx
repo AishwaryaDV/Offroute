@@ -22,7 +22,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AuthGuard } from "@/components/AuthGuard";
@@ -30,7 +30,7 @@ import MapDynamic from "@/components/MapDynamic";
 import { StepLoader } from "@/components/StepLoader";
 import { getPoint, getPoints, deletePoint, updatePoint } from "@/lib/points";
 import { getCircuit } from "@/lib/circuits";
-import { getMedia } from "@/lib/media";
+import { getMedia, uploadPhoto, deleteMedia } from "@/lib/media";
 import type { PointCategory } from "@/types/api";
 
 type IconComponent = React.ComponentType<{
@@ -104,6 +104,8 @@ function PointDetail() {
   const queryClient = useQueryClient();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: point, isLoading } = useQuery({
     queryKey: ["point", pointId],
@@ -160,6 +162,33 @@ function PointDetail() {
     },
     onError: () => toast.error("Could not delete point"),
   });
+
+  const deleteMediaMutation = useMutation({
+    mutationFn: (mediaId: string) => deleteMedia(mediaId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["media", pointId] });
+      toast.success("Photo removed");
+    },
+    onError: () => toast.error("Could not remove photo"),
+  });
+
+  async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files;
+    if (!files?.length) return;
+    setUploading(true);
+    try {
+      for (const file of Array.from(files)) {
+        await uploadPhoto(pointId, file);
+      }
+      queryClient.invalidateQueries({ queryKey: ["media", pointId] });
+      toast.success(files.length === 1 ? "Photo uploaded" : `${files.length} photos uploaded`);
+    } catch {
+      toast.error("Upload failed — try again");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
 
   function startEditing() {
     if (!point) return;
@@ -426,34 +455,69 @@ function PointDetail() {
               <div className="my-5 h-px bg-gray-200" />
 
               {/* Photo section */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={handleFileSelect}
+              />
               <div>
                 {photoCount > 0 ? (
-                  <div className="grid grid-cols-3 gap-2">
-                    {media!.map((m) => (
-                      <div
-                        key={m.id}
-                        className="relative aspect-square overflow-hidden rounded-xl bg-[#f5f6f8]"
-                      >
-                        <div className="flex h-full items-center justify-center">
-                          <Camera size={20} className="text-gray-400" />
+                  <>
+                    <div className="grid grid-cols-3 gap-2">
+                      {media!.map((m) => (
+                        <div
+                          key={m.id}
+                          className="group relative aspect-square overflow-hidden rounded-xl bg-[#f5f6f8]"
+                        >
+                          {m.public_url ? (
+                            <img
+                              src={m.public_url}
+                              alt=""
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full items-center justify-center">
+                              <Camera size={20} className="text-gray-400" />
+                            </div>
+                          )}
+                          <button
+                            onClick={() => deleteMediaMutation.mutate(m.id)}
+                            className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100 active:opacity-100"
+                            aria-label="Remove photo"
+                          >
+                            <X size={14} className="text-white" />
+                          </button>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                    {photoCount < 20 && (
+                      <button
+                        type="button"
+                        disabled={uploading}
+                        onClick={() => fileInputRef.current?.click()}
+                        className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-[#f5f6f8] py-3 text-sm font-medium text-gray-500 active:bg-gray-200 disabled:opacity-50"
+                      >
+                        <Camera size={16} />
+                        {uploading ? "Uploading…" : "Add more photos"}
+                      </button>
+                    )}
+                  </>
                 ) : (
                   <button
                     type="button"
-                    onClick={() =>
-                      toast("Photos will be available once storage is configured")
-                    }
-                    className="flex w-full items-center gap-4 rounded-xl border-2 border-dashed border-gray-200 p-4 text-left transition-colors active:border-blue-400 active:bg-blue-50"
+                    disabled={uploading}
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex w-full items-center gap-4 rounded-xl border-2 border-dashed border-gray-200 p-4 text-left transition-colors active:border-blue-400 active:bg-blue-50 disabled:opacity-50"
                   >
                     <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-blue-50">
                       <Camera size={22} className="text-blue-500" />
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-blue-500">
-                        Add photos and videos
+                        {uploading ? "Uploading…" : "Add photos"}
                       </p>
                       <p className="mt-0.5 text-xs text-gray-400">
                         Up to 20 per point
