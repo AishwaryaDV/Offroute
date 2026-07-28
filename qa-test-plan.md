@@ -35,23 +35,16 @@ Tested 2026-07-29 against local dev (backend :8000, frontend :3000).
 
 ## Bugs Found
 
-### BUG-1: Backend accepts whitespace-only circuit titles
-- **Severity**: Low (frontend validates, but API is unprotected)
-- **File**: `backend/app/schemas/circuit.py` — `CircuitCreate.title` has `min_length=1` but no strip validation
-- **Repro**: `POST /circuits {"title": "   "}` returns 201 with title `"   "`
-- **Fix**: Add Pydantic `field_validator` to strip and reject empty-after-strip
+### BUG-1: Backend accepts whitespace-only circuit titles — FIXED
+- **Fix**: Added `field_validator` to `CircuitCreate` and `CircuitUpdate` that strips and rejects blank
+- **Verified**: `POST /circuits {"title": "   "}` now returns 422
 
-### BUG-2: Backend accepts whitespace-only point titles
-- **Severity**: Low (frontend validates, but API is unprotected)
-- **File**: `backend/app/schemas/point.py` — `PointCreate.title` same issue
-- **Repro**: `POST /circuits/{id}/points {"title": "   ", ...}` returns 201
-- **Fix**: Same strip validator
+### BUG-2: Backend accepts whitespace-only point titles — FIXED
+- **Fix**: Same validator on `PointCreate` and `PointUpdate`
+- **Verified**: `POST /circuits/{id}/points {"title": "   ", ...}` now returns 422
 
-### BUG-3: API_URL constant duplicated across 4 frontend files
-- **Severity**: Low (not a bug, maintenance smell)
-- **Files**: `frontend/src/lib/api.ts`, `push.ts`, `profiles.ts`, `circuits.ts`
-- **Each has**: `const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"`
-- **Fix**: Export once from `api.ts`, import in others
+### BUG-3: API_URL constant duplicated across 4 frontend files — FIXED
+- **Fix**: Exported from `api.ts`, removed duplicates from `push.ts`, `profiles.ts`, `circuits.ts`
 
 ---
 
