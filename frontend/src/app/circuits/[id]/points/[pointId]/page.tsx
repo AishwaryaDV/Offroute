@@ -105,6 +105,7 @@ function PointDetail() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editing, setEditing] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [viewingPhoto, setViewingPhoto] = useState<{ url: string; id: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: point, isLoading } = useQuery({
@@ -468,9 +469,11 @@ function PointDetail() {
                   const m = media?.[i];
                   if (m) {
                     return (
-                      <div
+                      <button
                         key={m.id}
-                        className="group relative aspect-square overflow-hidden rounded-xl bg-[#f5f6f8]"
+                        type="button"
+                        onClick={() => m.public_url && setViewingPhoto({ url: m.public_url, id: m.id })}
+                        className="relative aspect-square overflow-hidden rounded-xl bg-[#f5f6f8]"
                       >
                         {m.public_url ? (
                           <img
@@ -483,14 +486,7 @@ function PointDetail() {
                             <Camera size={20} className="text-gray-400" />
                           </div>
                         )}
-                        <button
-                          onClick={() => deleteMediaMutation.mutate(m.id)}
-                          className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100 active:opacity-100"
-                          aria-label="Remove photo"
-                        >
-                          <X size={14} className="text-white" />
-                        </button>
-                      </div>
+                      </button>
                     );
                   }
                   if (i === photoCount) {
@@ -529,6 +525,44 @@ function PointDetail() {
           )}
         </div>
       </div>
+
+      {/* Full-screen photo viewer */}
+      {viewingPhoto && (
+        <div
+          className="fixed inset-0 z-50 flex flex-col bg-black"
+          onClick={() => setViewingPhoto(null)}
+        >
+          <div className="flex items-center justify-between px-4 pt-[max(env(safe-area-inset-top),0.75rem)] pb-3">
+            <button
+              onClick={() => setViewingPhoto(null)}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 backdrop-blur-md"
+              aria-label="Close"
+            >
+              <X size={20} className="text-white" />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                deleteMediaMutation.mutate(viewingPhoto.id, {
+                  onSuccess: () => setViewingPhoto(null),
+                });
+              }}
+              disabled={deleteMediaMutation.isPending}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 backdrop-blur-md disabled:opacity-50"
+              aria-label="Delete photo"
+            >
+              <Trash2 size={18} className="text-red-400" />
+            </button>
+          </div>
+          <div className="flex flex-1 items-center justify-center px-4" onClick={(e) => e.stopPropagation()}>
+            <img
+              src={viewingPhoto.url}
+              alt=""
+              className="max-h-full max-w-full rounded-lg object-contain"
+            />
+          </div>
+        </div>
+      )}
 
       {/* Delete confirmation */}
       {showDeleteConfirm && (
