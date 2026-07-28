@@ -1,7 +1,7 @@
 import uuid
 from datetime import date, datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class PointCreate(BaseModel):
@@ -13,9 +13,27 @@ class PointCreate(BaseModel):
     category: str | None = None
     rating: int | None = Field(default=None, ge=1, le=5)
 
+    @field_validator("title")
+    @classmethod
+    def title_not_blank(cls, v: str) -> str:
+        stripped = v.strip()
+        if not stripped:
+            raise ValueError("Title cannot be blank")
+        return stripped
+
 
 class PointUpdate(BaseModel):
     title: str | None = Field(default=None, min_length=1, max_length=200)
+
+    @field_validator("title")
+    @classmethod
+    def title_not_blank(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        stripped = v.strip()
+        if not stripped:
+            raise ValueError("Title cannot be blank")
+        return stripped
     notes: str | None = None
     latitude: float | None = Field(default=None, ge=-90, le=90)
     longitude: float | None = Field(default=None, ge=-180, le=180)

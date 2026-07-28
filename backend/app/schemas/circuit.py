@@ -1,7 +1,7 @@
 import uuid
 from datetime import date, datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class CircuitCreate(BaseModel):
@@ -12,9 +12,27 @@ class CircuitCreate(BaseModel):
     start_date: date | None = None
     end_date: date | None = None
 
+    @field_validator("title")
+    @classmethod
+    def title_not_blank(cls, v: str) -> str:
+        stripped = v.strip()
+        if not stripped:
+            raise ValueError("Title cannot be blank")
+        return stripped
+
 
 class CircuitUpdate(BaseModel):
     title: str | None = Field(default=None, min_length=1, max_length=200)
+
+    @field_validator("title")
+    @classmethod
+    def title_not_blank(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        stripped = v.strip()
+        if not stripped:
+            raise ValueError("Title cannot be blank")
+        return stripped
     description: str | None = None
     visibility: str | None = None
     tags: list[str] | None = None
