@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Calendar, Crosshair, FileText, MapPin, Navigation, Search, Settings, Star, Tag, Type, X } from "lucide-react";
+import { ArrowLeft, Calendar, ChevronDown, Crosshair, FileText, MapPin, Navigation, Search, Settings, Star, Tag, Type, X } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -52,6 +52,7 @@ function AddPoint() {
   const [showGuidance, setShowGuidance] = useState(false);
   const [showDenied, setShowDenied] = useState(false);
 
+  const [categoryOpen, setCategoryOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<NominatimResult[]>([]);
   const [searching, setSearching] = useState(false);
@@ -318,28 +319,41 @@ function AddPoint() {
               )}
             </div>
 
-            <div>
+            <div className="relative">
               <div className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-500">
                 <Tag size={14} />
                 <span>Category</span>
               </div>
               <input type="hidden" {...register("category")} />
-              <div className="flex flex-wrap gap-2">
-                {CATEGORIES.map((c) => (
-                  <button
-                    key={c.value}
-                    type="button"
-                    onClick={() => setValue("category", watchedCategory === c.value ? "" : c.value)}
-                    className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
-                      watchedCategory === c.value
-                        ? "bg-[#0f1d32] text-white"
-                        : "bg-[#f5f6f8] text-[#0f1d32] ring-1 ring-gray-200"
-                    }`}
-                  >
-                    {c.label}
-                  </button>
-                ))}
-              </div>
+              <button
+                type="button"
+                onClick={() => setCategoryOpen(!categoryOpen)}
+                className="flex w-full items-center justify-between rounded-xl bg-[#f5f6f8] px-4 py-3 text-sm outline-none ring-1 ring-gray-200 focus:ring-[#0f1d32]"
+              >
+                <span className={watchedCategory ? "text-[#0f1d32]" : "text-gray-400"}>
+                  {CATEGORIES.find((c) => c.value === watchedCategory)?.label || "Select a category"}
+                </span>
+                <ChevronDown size={16} className={`text-gray-400 transition-transform ${categoryOpen ? "rotate-180" : ""}`} />
+              </button>
+              {categoryOpen && (
+                <div className="absolute inset-x-0 top-full z-20 mt-1 max-h-52 overflow-y-auto rounded-xl bg-white py-1 shadow-xl ring-1 ring-black/5">
+                  {CATEGORIES.map((c) => (
+                    <button
+                      key={c.value}
+                      type="button"
+                      onClick={() => {
+                        setValue("category", watchedCategory === c.value ? "" : c.value);
+                        setCategoryOpen(false);
+                      }}
+                      className={`flex w-full items-center px-4 py-2.5 text-left text-sm active:bg-[#f5f6f8] ${
+                        watchedCategory === c.value ? "font-semibold text-[#0f1d32]" : "text-gray-700"
+                      }`}
+                    >
+                      {c.label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div>
