@@ -553,26 +553,13 @@ function PointDetail() {
           className="fixed inset-0 z-50 flex flex-col bg-black"
           onClick={() => setViewingPhoto(null)}
         >
-          <div className="flex items-center justify-between px-4 pt-[max(env(safe-area-inset-top),0.75rem)] pb-3">
+          <div className="flex items-center px-4 pt-[max(env(safe-area-inset-top),0.75rem)] pb-3">
             <button
               onClick={() => setViewingPhoto(null)}
               className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 backdrop-blur-md"
               aria-label="Close"
             >
               <X size={20} className="text-white" />
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                deleteMediaMutation.mutate(viewingPhoto.id, {
-                  onSuccess: () => setViewingPhoto(null),
-                });
-              }}
-              disabled={deleteMediaMutation.isPending}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 backdrop-blur-md disabled:opacity-50"
-              aria-label="Delete photo"
-            >
-              <Trash2 size={18} className="text-red-400" />
             </button>
           </div>
           <div className="flex flex-1 items-center justify-center px-4" onClick={(e) => e.stopPropagation()}>
@@ -581,6 +568,21 @@ function PointDetail() {
               alt=""
               className="max-h-full max-w-full rounded-lg object-contain"
             />
+          </div>
+          <div className="flex justify-center px-4 pb-[max(env(safe-area-inset-bottom),1.5rem)] pt-4">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                deleteMediaMutation.mutate(viewingPhoto.id, {
+                  onSuccess: () => setViewingPhoto(null),
+                });
+              }}
+              disabled={deleteMediaMutation.isPending}
+              className="flex items-center gap-2 rounded-full bg-red-500/90 px-6 py-3 text-sm font-medium text-white backdrop-blur-md active:bg-red-600 disabled:opacity-50"
+            >
+              <Trash2 size={16} />
+              {deleteMediaMutation.isPending ? "Deleting…" : "Delete photo"}
+            </button>
           </div>
         </div>
       )}
