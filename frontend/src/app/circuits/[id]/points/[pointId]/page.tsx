@@ -118,6 +118,8 @@ function PointDetail() {
   const [editing, setEditing] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [viewingPhoto, setViewingPhoto] = useState<{ url: string; id: string } | null>(null);
+  const [longPressId, setLongPressId] = useState<string | null>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: point, isLoading } = useQuery({
@@ -482,26 +484,58 @@ function PointDetail() {
                 className="hidden"
                 onChange={handleFileSelect}
               />
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-2" onPointerDown={() => { if (longPressId) setLongPressId(null); }}>
                 {Array.from({ length: 9 }).map((_, i) => {
                   const m = media?.[i];
                   if (m) {
+                    const isLongPressed = longPressId === m.id;
                     return (
                       <button
                         key={m.id}
                         type="button"
-                        onClick={() => m.public_url && setViewingPhoto({ url: m.public_url, id: m.id })}
-                        className="relative aspect-square overflow-hidden rounded-xl bg-[#f5f6f8]"
+                        onClick={() => {
+                          if (isLongPressed) {
+                            deleteMediaMutation.mutate(m.id, {
+                              onSuccess: () => setLongPressId(null),
+                            });
+                          } else if (m.public_url) {
+                            setViewingPhoto({ url: m.public_url, id: m.id });
+                          }
+                        }}
+                        onPointerDown={() => {
+                          longPressTimer.current = setTimeout(() => {
+                            setLongPressId(m.id);
+                          }, 500);
+                        }}
+                        onPointerUp={() => {
+                          if (longPressTimer.current) clearTimeout(longPressTimer.current);
+                          longPressTimer.current = null;
+                        }}
+                        onPointerLeave={() => {
+                          if (longPressTimer.current) clearTimeout(longPressTimer.current);
+                          longPressTimer.current = null;
+                        }}
+                        onContextMenu={(e) => e.preventDefault()}
+                        className={`relative aspect-square overflow-hidden rounded-xl transition-all ${
+                          isLongPressed
+                            ? "ring-2 ring-red-500"
+                            : "bg-[#f5f6f8]"
+                        }`}
                       >
                         {m.public_url ? (
                           <img
                             src={m.public_url}
                             alt=""
-                            className="h-full w-full object-cover"
+                            className={`h-full w-full object-cover transition-opacity ${isLongPressed ? "opacity-30" : ""}`}
                           />
                         ) : (
                           <div className="flex h-full items-center justify-center">
                             <Camera size={20} className="text-gray-400" />
+                          </div>
+                        )}
+                        {isLongPressed && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-red-500/20">
+                            <Trash2 size={28} className="text-red-500" />
                           </div>
                         )}
                       </button>
