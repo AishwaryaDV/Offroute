@@ -84,7 +84,7 @@ Before building any page, drop the relevant reference screenshot(s) into a `/des
 ### Phase 4 — Export (complete)
 - Export a circuit as a PDF — client-side jsPDF generation with title, description, tags, dates, stats, and all points with details
 - ~~Video and file attachments~~ — **dropped**: user decided not to add media attachments
-- ~~AI: auto-caption, OCR, route reorder~~ — **parked**: user unsure if needed, revisit later
+- ~~AI: auto-caption, OCR, route reorder~~ — **dropped for v1**: user will develop a dedicated AI PRD once the product is live
 - ~~Offline logging~~ — **parked**: revisit post-launch
 
 ### Phase 5 — Activity timeline (complete)
