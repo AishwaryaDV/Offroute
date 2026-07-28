@@ -75,17 +75,6 @@ const CATEGORY_LABELS: Record<string, string> = {
   other: "Other",
 };
 
-const CATEGORY_EMOJIS: Record<string, string> = {
-  food: "🍽️",
-  drink: "🍷",
-  stay: "🏠",
-  viewpoint: "⛰️",
-  activity: "⚡",
-  nature: "🌿",
-  culture: "🏛️",
-  hidden_gem: "💎",
-  other: "📍",
-};
 
 const CATEGORIES: { value: PointCategory; label: string }[] = [
   { value: "food", label: "Food" },
@@ -461,7 +450,7 @@ function PointDetail() {
               {point.notes && (
                 <div className="mt-4 rounded-2xl bg-[#f5f6f8] p-4">
                   <div className="mb-2 flex items-center gap-1.5">
-                    <span className="text-base">{CATEGORY_EMOJIS[cat] ?? "📍"}</span>
+                    <Icon size={14} style={{ color }} />
                     <span className="text-xs font-semibold uppercase tracking-wide text-[#0f1d32]/50">
                       {label}
                     </span>
