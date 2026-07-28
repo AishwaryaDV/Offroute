@@ -256,4 +256,5 @@ export interface Media {
   caption: string | null;
   created_at: string;
   upload_url: string | null;
+  public_url: string | null;
 }
