@@ -135,8 +135,12 @@ function PointDetail() {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<EditValues>();
+
+  const watchedRating = watch("rating");
 
   const editMutation = useMutation({
     mutationFn: (data: EditValues) =>
@@ -347,25 +351,32 @@ function PointDetail() {
                 ))}
               </select>
 
-              <div className="flex gap-3">
-                <select
-                  {...register("rating")}
-                  className="flex-1 appearance-none rounded-xl bg-[#f5f6f8] px-4 py-3.5 text-base text-[#0f1d32] outline-none ring-1 ring-gray-200 focus:ring-blue-500"
-                >
-                  <option value="">Rating</option>
+              <div>
+                <p className="mb-2 text-sm font-medium text-gray-500">Rating</p>
+                <div className="flex gap-1">
+                  <input type="hidden" {...register("rating")} />
                   {[1, 2, 3, 4, 5].map((n) => (
-                    <option key={n} value={n}>
-                      {"★".repeat(n)}
-                    </option>
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setValue("rating", watchedRating === String(n) ? "" : String(n))}
+                      className="p-1"
+                    >
+                      <Star
+                        size={28}
+                        className={Number(watchedRating) >= n ? "text-amber-400" : "text-gray-300"}
+                        fill={Number(watchedRating) >= n ? "currentColor" : "none"}
+                      />
+                    </button>
                   ))}
-                </select>
-
-                <input
-                  type="date"
-                  {...register("visited_at")}
-                  className="flex-1 rounded-xl bg-[#f5f6f8] px-4 py-3.5 text-base text-[#0f1d32] outline-none ring-1 ring-gray-200 focus:ring-blue-500"
-                />
+                </div>
               </div>
+
+              <input
+                type="date"
+                {...register("visited_at")}
+                className="w-full rounded-xl bg-[#f5f6f8] px-4 py-3.5 text-base text-[#0f1d32] outline-none ring-1 ring-gray-200 focus:ring-blue-500"
+              />
 
               <button
                 type="submit"
