@@ -155,7 +155,7 @@ export default function LandingPage() {
         >
           Get started
         </Link>
-        <p className="mt-3 text-center text-xs text-white/25">
+        <p className="mt-3 text-center text-xs text-white/50">
           Free forever. No ads.
         </p>
       </div>
