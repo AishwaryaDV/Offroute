@@ -42,18 +42,25 @@ export function Globe() {
 
     map.on("load", () => {
       map.setProjection({ type: "globe" });
-      let animFrame: number;
-      const speed = 0.04;
+
+      let stopped = false;
 
       function rotate() {
+        if (stopped) return;
         const center = map.getCenter();
-        center.lng += speed;
-        map.setCenter(center);
-        animFrame = requestAnimationFrame(rotate);
+        map.easeTo({
+          center: [center.lng + 6, center.lat],
+          duration: 2500,
+          easing: (t) => t,
+        });
       }
 
-      animFrame = requestAnimationFrame(rotate);
-      map.once("remove", () => cancelAnimationFrame(animFrame));
+      map.on("moveend", rotate);
+      rotate();
+      map.once("remove", () => {
+        stopped = true;
+        map.off("moveend", rotate);
+      });
     });
 
     mapRef.current = map;
