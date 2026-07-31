@@ -98,6 +98,9 @@ export default function LandingPage() {
       <div className="twinkle-3" />
       <div className="comet comet-1" />
       <div className="comet comet-2" />
+      <div className="comet comet-3" />
+      <div className="comet comet-4" />
+      <div className="comet comet-5" />
 
       {/* Branding — top */}
       <div className="relative z-10 flex items-center gap-2.5 px-6 pt-[max(env(safe-area-inset-top),2rem)]">
@@ -270,6 +273,18 @@ export default function LandingPage() {
         .comet-2 {
           top: 28%; left: -10%;
           animation: comet-streak 8s linear 5s infinite;
+        }
+        .comet-3 {
+          top: 55%; left: -10%;
+          animation: comet-streak 7s linear 1s infinite;
+        }
+        .comet-4 {
+          top: 72%; left: -10%;
+          animation: comet-streak 5.5s linear 4s infinite;
+        }
+        .comet-5 {
+          top: 42%; left: -10%;
+          animation: comet-streak 9s linear 7s infinite;
         }
         @keyframes comet-streak {
           0% { transform: translate(-10%, 0); opacity: 0; }
