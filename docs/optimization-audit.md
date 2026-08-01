@@ -4,6 +4,20 @@ Comprehensive audit of working features that could be optimized for performance,
 
 ---
 
+## SOLVED
+
+### S1. Auth token caching with proactive refresh
+**Files:** `frontend/src/lib/supabase.ts`, `frontend/src/lib/api.ts`
+**Problem:** Every `apiFetch` call invoked `supabase.auth.getSession()` — a network round-trip to Supabase's auth servers. A dashboard load with 4 parallel API calls meant 4 redundant auth lookups, causing noticeable delay and making it look like the backend was down.
+**Solution:** Module-level cached access token with proactive refresh. On app init:
+- `supabase.auth.onAuthStateChange` listener stores `access_token` and `expires_at` in module variables
+- `supabase.auth.getSession()` called once at import to seed the cache
+- New `getAccessToken()` function returns the cached token instantly. If the token is within 60 seconds of expiry, it proactively calls `supabase.auth.refreshSession()` before returning — so the user never hits an expired token.
+- `apiFetch` now calls `await getAccessToken()` instead of `await supabase.auth.getSession()`, eliminating per-request Supabase network calls.
+**Impact:** Dashboard load went from sluggish (multiple Supabase round-trips) to near-instant auth header injection.
+
+---
+
 ## HIGH PRIORITY
 
 ### H1. Remove unused `three.js` dependencies from bundle
