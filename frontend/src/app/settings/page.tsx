@@ -83,10 +83,10 @@ const COUNTRIES = [
 
 const MAP_STYLE_KEY = "offroute-map-style";
 const MAP_STYLES = [
-  { id: "satellite", url: "/map-style-satellite.json", label: "Satellite", color: "#2d5a27" },
-  { id: "streets", url: "/map-style-streets.json", label: "Streets", color: "#e2d8c3" },
-  { id: "dark", url: "/map-style-dark.json", label: "Dark", color: "#1a1a2e" },
-  { id: "terrain", url: "/map-style-terrain.json", label: "Terrain", color: "#7a9e6b" },
+  { id: "satellite", url: "/map-style-satellite.json", label: "Satellite", preview: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/3/3/4" },
+  { id: "streets", url: "/map-style-streets.json", label: "Streets", preview: "https://tile.openstreetmap.org/3/4/3.png" },
+  { id: "dark", url: "/map-style-dark.json", label: "Dark", preview: "https://basemaps.cartocdn.com/dark_all/3/4/3@2x.png" },
+  { id: "terrain", url: "/map-style-terrain.json", label: "Terrain", preview: "https://tile.opentopomap.org/3/4/3.png" },
 ];
 
 type View = "menu" | "profile" | "account" | "mapstyle" | "notifications";
@@ -567,7 +567,7 @@ function Settings() {
                           : "bg-[#f5f6f8] ring-1 ring-gray-200 active:bg-gray-100"
                       }`}
                     >
-                      <div className="h-16 w-full rounded-xl" style={{ backgroundColor: s.color }} />
+                      <img src={s.preview} alt={s.label} className="h-16 w-full rounded-xl object-cover" />
                       <span className={`text-sm font-semibold ${isActive ? "text-blue-600" : "text-[#0f1d32]"}`}>
                         {s.label}
                       </span>
