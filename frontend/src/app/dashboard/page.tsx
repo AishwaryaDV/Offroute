@@ -19,7 +19,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AuthGuard } from "@/components/AuthGuard";
@@ -30,6 +30,8 @@ import { getMe } from "@/lib/me";
 import { getCircuits, createCircuit } from "@/lib/circuits";
 import { getMyStats } from "@/lib/stats";
 import { getMyInvites, acceptInvite, declineInvite } from "@/lib/collaborators";
+import { getAllPoints } from "@/lib/points";
+import { countUniqueCountries } from "@/lib/countries";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import type { Invite } from "@/types/api";
 
@@ -60,6 +62,14 @@ function Dashboard() {
     queryKey: ["invites"],
     queryFn: getMyInvites,
   });
+  const { data: allPoints } = useQuery({
+    queryKey: ["allPoints"],
+    queryFn: getAllPoints,
+  });
+  const countryCount = useMemo(
+    () => (allPoints ? countUniqueCountries(allPoints) : 0),
+    [allPoints],
+  );
 
   const acceptMutation = useMutation({
     mutationFn: acceptInvite,
@@ -291,7 +301,7 @@ function Dashboard() {
           {[
             { icon: <Compass size={14} />, value: stats?.circuits ?? circuits?.length ?? 0, label: "Circuits" },
             { icon: <MapPin size={14} />, value: stats?.points ?? 0, label: "Points" },
-            { icon: <Globe2 size={14} />, value: "—", label: "Countries" },
+            { icon: <Globe2 size={14} />, value: countryCount, label: "Countries" },
             { icon: <Copy size={14} />, value: stats?.total_clones ?? 0, label: "Clones" },
           ].map((s) => (
             <div key={s.label} className="rounded-xl bg-[#f5f6f8] px-2 py-3">
@@ -347,11 +357,20 @@ function Dashboard() {
                       className="absolute inset-0 h-full w-full object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
-                    {active && (
-                      <span className="absolute right-2.5 top-2.5 rounded-full bg-emerald-500 px-2 py-0.5 text-[9px] font-bold uppercase text-white shadow-sm">
-                        Active
-                      </span>
-                    )}
+                    <div className="absolute right-2.5 top-2.5 flex flex-col items-end gap-1">
+                      {active && (
+                        <span className="flex items-center gap-1 rounded-full bg-emerald-500 px-2 py-0.5 text-[9px] font-bold uppercase text-white shadow-sm">
+                          <span className="h-1.5 w-1.5 rounded-full bg-white" style={{ animation: "pulse-dot 1.5s ease-in-out infinite" }} />
+                          Active
+                        </span>
+                      )}
+                      {circuit.cloned_from_token && (
+                        <span className="flex items-center gap-1 rounded-full bg-blue-500/90 px-2 py-0.5 text-[9px] font-bold uppercase text-white shadow-sm">
+                          <Copy size={8} />
+                          Cloned
+                        </span>
+                      )}
+                    </div>
                     <div className="absolute inset-x-0 bottom-0 p-3.5">
                       <p className="truncate text-sm font-bold text-white">
                         {circuit.title}
