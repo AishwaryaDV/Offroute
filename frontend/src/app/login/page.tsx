@@ -1,6 +1,6 @@
 "use client";
 
-import { Compass, Eye, EyeOff } from "lucide-react";
+import { Compass, Eye, EyeOff, LogIn, UserPlus } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -168,8 +168,9 @@ function LoginForm({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="rounded-full bg-[#0f1d32] py-3.5 text-sm font-semibold text-white active:bg-[#162a46] disabled:opacity-50"
+          className="flex items-center justify-center gap-2 rounded-full bg-[#0f1d32] py-3.5 text-sm font-semibold text-white active:bg-[#162a46] disabled:opacity-50"
         >
+          <LogIn size={16} />
           {isSubmitting ? "Logging in…" : "Log in"}
         </button>
       </form>
@@ -302,8 +303,9 @@ function SignupForm({ onSwitch }: { onSwitch: () => void }) {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="mt-1 rounded-full bg-[#0f1d32] py-3.5 text-sm font-semibold text-white active:bg-[#162a46] disabled:opacity-50"
+          className="mt-1 flex items-center justify-center gap-2 rounded-full bg-[#0f1d32] py-3.5 text-sm font-semibold text-white active:bg-[#162a46] disabled:opacity-50"
         >
+          <UserPlus size={16} />
           {isSubmitting ? "Creating account…" : "Create account"}
         </button>
       </form>
