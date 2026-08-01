@@ -356,7 +356,7 @@ function Settings() {
 
         {/* Sub-view card — slides up from bottom */}
         <div
-          className={`absolute inset-x-0 bottom-0 max-h-[50dvh] overflow-y-auto rounded-t-[20px] bg-white shadow-[0_-4px_30px_rgba(0,0,0,0.12)] transition-transform duration-300 ease-out ${
+          className={`absolute inset-x-0 bottom-0 max-h-[85dvh] overflow-y-auto rounded-t-[20px] bg-white shadow-[0_-4px_30px_rgba(0,0,0,0.12)] transition-transform duration-300 ease-out ${
             cardOpen ? "translate-y-0" : "translate-y-full"
           }`}
         >
@@ -437,11 +437,12 @@ function Settings() {
                     value={natOpen ? natSearch : profileForm.watch("nationality")}
                     onChange={(e) => { setNatSearch(e.target.value); setNatOpen(true); }}
                     onFocus={() => { setNatSearch(""); setNatOpen(true); }}
+                    onBlur={() => setTimeout(() => setNatOpen(false), 150)}
                     className="flex-1 bg-transparent text-base font-medium text-[#0f1d32] placeholder-gray-300 outline-none"
                   />
-                  {natOpen && filteredCountries.length > 0 && (
-                    <div className="absolute inset-x-0 bottom-full z-20 mb-1 max-h-40 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg">
-                      {filteredCountries.slice(0, 20).map((country) => (
+                  {natOpen && natSearch.length > 0 && filteredCountries.length > 0 && (
+                    <div className="absolute inset-x-0 top-full z-20 mt-1 max-h-40 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg">
+                      {filteredCountries.slice(0, 8).map((country) => (
                         <button
                           type="button"
                           key={country}
