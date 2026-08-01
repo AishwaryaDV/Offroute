@@ -489,13 +489,7 @@ function PointDetail() {
 
               {/* Notes */}
               {point.notes && (
-                <div className="mt-4 rounded-2xl bg-[#f5f6f8] p-4">
-                  <div className="mb-2 flex items-center gap-1.5">
-                    <Icon size={14} style={{ color }} />
-                    <span className="text-xs font-semibold uppercase tracking-wide text-[#0f1d32]/50">
-                      {label}
-                    </span>
-                  </div>
+                <div className="mt-4 rounded-xl border border-gray-200 px-4 py-3.5">
                   <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-[#0f1d32]">
                     {point.notes}
                   </p>
