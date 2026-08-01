@@ -2,11 +2,12 @@
 
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export function Globe() {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -38,30 +39,10 @@ export function Globe() {
       interactive: false,
       attributionControl: false,
       fadeDuration: 0,
+      renderWorldCopies: true,
     });
 
-    map.on("load", () => {
-      map.setProjection({ type: "globe" });
-
-      let stopped = false;
-
-      function rotate() {
-        if (stopped) return;
-        const center = map.getCenter();
-        map.easeTo({
-          center: [center.lng + 6, center.lat],
-          duration: 2500,
-          easing: (t) => t,
-        });
-      }
-
-      map.on("moveend", rotate);
-      rotate();
-      map.once("remove", () => {
-        stopped = true;
-        map.off("moveend", rotate);
-      });
-    });
+    map.on("idle", () => setReady(true));
 
     mapRef.current = map;
 
@@ -72,9 +53,27 @@ export function Globe() {
   }, []);
 
   return (
-    <div
-      ref={containerRef}
-      className="globe-map-container h-full w-full overflow-hidden rounded-full"
-    />
+    <div className="h-full w-full overflow-hidden rounded-full">
+      <div
+        ref={containerRef}
+        className={`globe-scroll-strip ${ready ? "globe-scroll-animate" : ""}`}
+      />
+      <style jsx>{`
+        .globe-scroll-strip {
+          width: 300%;
+          height: 100%;
+          opacity: 0;
+          transition: opacity 0.6s ease;
+        }
+        .globe-scroll-animate {
+          opacity: 1;
+          animation: globe-scroll 20s linear infinite;
+        }
+        @keyframes globe-scroll {
+          from { transform: translateX(0); }
+          to { transform: translateX(-33.333%); }
+        }
+      `}</style>
+    </div>
   );
 }
