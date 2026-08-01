@@ -1,20 +1,45 @@
 "use client";
 
-import { Copy, FolderOpen, MapPin, Plus, Star, Trash2, X } from "lucide-react";
+import {
+  Calendar,
+  Check,
+  Compass,
+  Copy,
+  Eye,
+  FolderOpen,
+  Globe2,
+  Lock,
+  MapPin,
+  Plus,
+  Star,
+  Trash2,
+  UserPlus,
+  Users,
+  X,
+} from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AuthGuard } from "@/components/AuthGuard";
 import { BottomNav } from "@/components/BottomNav";
 import MapDynamic from "@/components/MapDynamic";
 import { StepLoader } from "@/components/StepLoader";
-import { getCircuits } from "@/lib/circuits";
+import { getCircuits, createCircuit } from "@/lib/circuits";
 import { getMe } from "@/lib/me";
 import { getTrips, createTrip, deleteTrip } from "@/lib/trips";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import type { Circuit, Trip } from "@/types/api";
+
+interface NewCircuitValues {
+  title: string;
+  description: string;
+  start_date: string;
+  end_date: string;
+  visibility: string;
+}
 
 const PLACEHOLDER_COVERS = [
   "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&h=300&fit=crop",
@@ -99,7 +124,38 @@ function CircuitsList() {
   });
 
   const [showTrips, setShowTrips] = useState(false);
+  const [showNewCircuit, setShowNewCircuit] = useState(false);
   const [newTripTitle, setNewTripTitle] = useState("");
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    formState: { errors },
+  } = useForm<NewCircuitValues>({
+    defaultValues: { visibility: "private" },
+  });
+
+  const createCircuitMutation = useMutation({
+    mutationFn: (data: NewCircuitValues) =>
+      createCircuit({
+        title: data.title,
+        description: data.description || undefined,
+        visibility:
+          (data.visibility as "private" | "shared" | "public") || undefined,
+        start_date: data.start_date || undefined,
+        end_date: data.end_date || undefined,
+      }),
+    onSuccess: (circuit) => {
+      queryClient.invalidateQueries({ queryKey: ["circuits"] });
+      toast.success("Circuit created");
+      setShowNewCircuit(false);
+      reset();
+      router.push(`/circuits/${circuit.slug ?? circuit.id}`);
+    },
+    onError: () => toast.error("Could not create circuit — try again"),
+  });
 
   const createTripMutation = useMutation({
     mutationFn: () => createTrip(newTripTitle),
@@ -146,7 +202,11 @@ function CircuitsList() {
           <div className="flex justify-center pt-3 pb-1">
             <div className="h-1 w-10 rounded-full bg-gray-300" />
           </div>
-          <div className="flex items-center justify-between px-5 pt-2 pb-1">
+
+          <div className="flex items-center justify-between px-5 pb-2 pt-2">
+            <h1 className="text-4xl font-bold tracking-tight text-[#0f1d32]">
+              Trips
+            </h1>
             <button
               onClick={() => setShowTrips(false)}
               className="flex h-11 w-11 items-center justify-center rounded-full bg-white active:bg-gray-100"
@@ -154,12 +214,7 @@ function CircuitsList() {
             >
               <X size={22} className="text-[#0f1d32]" strokeWidth={2.5} />
             </button>
-            <div className="w-11" />
           </div>
-
-          <h1 className="px-5 pb-2 pt-2 text-4xl font-bold tracking-tight text-[#0f1d32]">
-            Trips
-          </h1>
           <p className="px-5 pb-6 text-sm text-gray-400">
             Group your circuits into trips for easy organization
           </p>
@@ -244,13 +299,13 @@ function CircuitsList() {
                   Circuits
                 </h1>
                 <div className="flex gap-2">
-                  <Link
-                    href="/circuits/new"
+                  <button
+                    onClick={() => setShowNewCircuit(true)}
                     className="flex h-11 w-11 items-center justify-center rounded-full bg-[#0f1d32] active:bg-[#0f1d32]/80"
                     aria-label="New circuit"
                   >
                     <Plus size={20} className="text-white" />
-                  </Link>
+                  </button>
                   <button
                     onClick={() => setShowTrips(true)}
                     className="flex h-11 w-11 items-center justify-center rounded-full bg-white active:bg-gray-100"
@@ -318,6 +373,183 @@ function CircuitsList() {
           </div>
           <BottomNav />
         </>
+      )}
+
+      {showNewCircuit && (
+        <div
+          className="fixed inset-0 z-50 flex items-end bg-black/50 backdrop-blur-sm"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowNewCircuit(false);
+              reset();
+            }
+          }}
+        >
+          <div className="flex max-h-[94dvh] w-full flex-col rounded-t-3xl bg-white">
+            <div className="flex justify-center pb-1 pt-3">
+              <div className="h-1 w-10 rounded-full bg-gray-300" />
+            </div>
+
+            <div className="flex items-center justify-between px-5 pb-1 pt-2">
+              <button
+                onClick={() => {
+                  setShowNewCircuit(false);
+                  reset();
+                }}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f6f8] active:bg-gray-200"
+              >
+                <X size={18} className="text-gray-600" />
+              </button>
+              <h2 className="text-lg font-bold text-[#0f1d32]">New Circuit</h2>
+              <div className="w-9" />
+            </div>
+            <p className="px-5 pb-5 text-center text-xs text-gray-400">
+              Don&apos;t worry, you can change all of this later
+            </p>
+
+            <form
+              onSubmit={handleSubmit((data) => createCircuitMutation.mutate(data))}
+              className="sheet-light flex flex-1 flex-col overflow-y-auto"
+            >
+            <div className="flex flex-col gap-5 px-5">
+              <div>
+                <div className="mb-2 flex items-center gap-2 text-sm font-medium text-[#0f1d32]">
+                  <Compass size={16} className="text-gray-400" />
+                  <span>Circuit name</span>
+                </div>
+                <input
+                  type="text"
+                  placeholder="e.g. Goa weekend"
+                  autoComplete="off"
+                  autoFocus
+                  {...register("title", {
+                    required: "Give your circuit a name",
+                    maxLength: { value: 200, message: "200 characters max" },
+                  })}
+                  className={`w-full rounded-xl bg-white px-3 py-2.5 text-sm text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ${
+                    errors.title
+                      ? "ring-red-400 focus:ring-red-500"
+                      : "ring-gray-200 focus:ring-[#0f1d32]"
+                  }`}
+                />
+                {errors.title && (
+                  <p className="mt-1.5 text-sm text-red-500">
+                    {errors.title.message}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <div className="mb-2 flex items-center gap-2 text-sm font-medium text-[#0f1d32]">
+                  <MapPin size={16} className="text-gray-400" />
+                  <span>Description</span>
+                  <span className="text-xs font-normal text-gray-400">(optional)</span>
+                </div>
+                <input
+                  type="text"
+                  placeholder="A short summary of your trip"
+                  {...register("description", {
+                    maxLength: { value: 200, message: "200 characters max" },
+                  })}
+                  className="w-full rounded-xl bg-white px-3 py-2.5 text-sm text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ring-gray-200 focus:ring-[#0f1d32]"
+                />
+              </div>
+
+              <div>
+                <div className="mb-3 flex items-center gap-2 text-sm font-medium text-[#0f1d32]">
+                  <Calendar size={16} className="text-gray-400" />
+                  <span>Trip dates</span>
+                  <span className="text-xs font-normal text-gray-400">(optional)</span>
+                </div>
+                <div className="flex gap-3">
+                  <div className="flex-1">
+                    <label className="mb-1 block text-xs text-gray-400">
+                      Start date
+                    </label>
+                    <input
+                      type="date"
+                      {...register("start_date")}
+                      className="w-full rounded-xl bg-white px-3 py-2.5 text-sm text-[#0f1d32] outline-none ring-1 ring-gray-200 focus:ring-[#0f1d32]"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="mb-1 block text-xs text-gray-400">
+                      End date
+                    </label>
+                    <input
+                      type="date"
+                      {...register("end_date")}
+                      className="w-full rounded-xl bg-white px-3 py-2.5 text-sm text-[#0f1d32] outline-none ring-1 ring-gray-200 focus:ring-[#0f1d32]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div className="mb-3 flex items-center gap-2 text-sm font-medium text-[#0f1d32]">
+                  <Eye size={16} className="text-gray-400" />
+                  <span>Who can see this?</span>
+                </div>
+                <div className="flex flex-col gap-2">
+                  {(
+                    [
+                      { value: "private", label: "Only me", desc: "Only you can see this circuit", icon: <Lock size={18} /> },
+                      { value: "shared", label: "Friends", desc: "People you share with can see it", icon: <Users size={18} /> },
+                      { value: "public", label: "Everyone", desc: "Anyone can discover this circuit", icon: <Globe2 size={18} /> },
+                    ] as const
+                  ).map((opt) => {
+                    const selected = watch("visibility") === opt.value;
+                    return (
+                      <label
+                        key={opt.value}
+                        className={`flex cursor-pointer items-center gap-3 rounded-xl px-4 py-3 ring-1 transition-colors ${
+                          selected
+                            ? "bg-[#0f1d32]/5 ring-[#0f1d32]"
+                            : "bg-white ring-gray-200"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          value={opt.value}
+                          {...register("visibility")}
+                          className="sr-only"
+                        />
+                        <span className={selected ? "text-[#0f1d32]" : "text-gray-400"}>{opt.icon}</span>
+                        <div className="flex-1">
+                          <p className={`text-sm font-semibold ${selected ? "text-[#0f1d32]" : "text-gray-600"}`}>{opt.label}</p>
+                          <p className="text-xs text-gray-400">{opt.desc}</p>
+                        </div>
+                        <div className={`h-4 w-4 rounded-full ring-1 ${selected ? "bg-[#0f1d32] ring-[#0f1d32]" : "ring-gray-300"}`}>
+                          {selected && (
+                            <Check size={12} className="m-0.5 text-white" />
+                          )}
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 rounded-xl bg-[#f5f6f8] px-4 py-3">
+                <UserPlus size={18} className="shrink-0 text-gray-400" />
+                <p className="text-xs text-gray-400">
+                  You can invite collaborators after creating your circuit
+                </p>
+              </div>
+            </div>
+
+              <div className="shrink-0 px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-3">
+                <button
+                  type="submit"
+                  disabled={createCircuitMutation.isPending}
+                  className="w-full rounded-full bg-[#0f1d32] py-4 text-base font-semibold text-white active:bg-[#162a46] disabled:opacity-50"
+                >
+                  {createCircuitMutation.isPending ? "Creating…" : "Create circuit"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );
