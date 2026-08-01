@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Camera, Check, ChevronRight, LogOut, Map, Shield, User, X } from "lucide-react";
+import { Bell, Camera, Check, ChevronRight, Eye, EyeOff, KeyRound, LogOut, Map, Shield, User, X } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -102,6 +102,8 @@ function Settings() {
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [natSearch, setNatSearch] = useState("");
   const [natOpen, setNatOpen] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [mapStyle, setMapStyle] = useState(() =>
     typeof window !== "undefined"
       ? localStorage.getItem(MAP_STYLE_KEY) ?? "/map-style-satellite.json"
@@ -199,7 +201,8 @@ function Settings() {
     onSuccess: () => {
       toast.success("Password updated");
       pwForm.reset();
-      setView("menu");
+      setShowPasswordModal(false);
+      setShowPassword(false);
     },
     onError: (err: Error) =>
       toast.error(err.message || "Could not update password"),
@@ -221,12 +224,7 @@ function Settings() {
     router.replace("/");
   }
 
-  function saveAccount() {
-    const password = pwForm.getValues("password");
-    if (!password) {
-      setView("menu");
-      return;
-    }
+  function submitPassword() {
     pwForm.handleSubmit((data) => pwMutation.mutate(data))();
   }
 
@@ -477,16 +475,8 @@ function Settings() {
           {/* Account */}
           {view === "account" && (
             <div className="px-5 pb-6">
-              <div className="flex items-center justify-between pt-2 pb-4">
+              <div className="pt-2 pb-4">
                 <h2 className="text-2xl font-bold text-[#0f1d32]">Account</h2>
-                <button
-                  onClick={saveAccount}
-                  disabled={pwMutation.isPending}
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0f1d32] active:bg-[#162a46] disabled:opacity-50"
-                  aria-label="Save"
-                >
-                  <Check size={20} className="text-white" strokeWidth={2.5} />
-                </button>
               </div>
 
               <div className="flex items-center gap-4 py-3">
@@ -497,41 +487,18 @@ function Settings() {
               </div>
               <div className="h-px bg-gray-100" />
 
-              <p className="pb-1 pt-5 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                Change password
-              </p>
-              <div className="py-3">
-                <input
-                  type="password"
-                  placeholder="New password"
-                  {...pwForm.register("password", {
-                    minLength: { value: 6, message: "At least 6 characters" },
-                  })}
-                  className="w-full bg-transparent text-base font-medium text-[#0f1d32] placeholder-gray-300 outline-none"
-                />
-                {pwForm.formState.errors.password && (
-                  <p className="mt-1 text-xs text-red-500">
-                    {pwForm.formState.errors.password.message}
-                  </p>
-                )}
-              </div>
-              <div className="h-px bg-gray-100" />
-              <div className="py-3">
-                <input
-                  type="password"
-                  placeholder="Confirm new password"
-                  {...pwForm.register("confirm", {
-                    validate: (val) =>
-                      val === pwForm.watch("password") || "Passwords don't match",
-                  })}
-                  className="w-full bg-transparent text-base font-medium text-[#0f1d32] placeholder-gray-300 outline-none"
-                />
-                {pwForm.formState.errors.confirm && (
-                  <p className="mt-1 text-xs text-red-500">
-                    {pwForm.formState.errors.confirm.message}
-                  </p>
-                )}
-              </div>
+              <button
+                onClick={() => {
+                  pwForm.reset();
+                  setShowPassword(false);
+                  setShowPasswordModal(true);
+                }}
+                className="flex w-full items-center gap-3 py-4 active:opacity-70"
+              >
+                <KeyRound size={18} className="text-gray-400" />
+                <span className="flex-1 text-left text-base font-medium text-[#0f1d32]">Change password</span>
+                <ChevronRight size={18} className="text-gray-300" />
+              </button>
               <div className="h-px bg-gray-100" />
 
               <button
@@ -628,6 +595,100 @@ function Settings() {
           )}
         </div>
       </div>
+
+      {/* Change password modal */}
+      {showPasswordModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowPasswordModal(false);
+              setShowPassword(false);
+              pwForm.reset();
+            }
+          }}
+        >
+          <div className="sheet-light mx-5 w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+            <h3 className="text-xl font-bold text-[#0f1d32]">Change password</h3>
+            <p className="mt-1 text-sm text-gray-400">
+              Enter a new password for your account
+            </p>
+
+            <div className="mt-5">
+              <label className="mb-1 block text-xs text-gray-400">New password</label>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="At least 6 characters"
+                  {...pwForm.register("password", {
+                    minLength: { value: 6, message: "At least 6 characters" },
+                    required: "Password is required",
+                  })}
+                  className="w-full rounded-xl border border-gray-200 bg-[#f5f6f8] px-4 py-3 pr-11 text-base text-[#0f1d32] placeholder-gray-300 outline-none focus:border-[#0f1d32]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 active:text-gray-600"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              {pwForm.formState.errors.password && (
+                <p className="mt-1 text-xs text-red-500">
+                  {pwForm.formState.errors.password.message}
+                </p>
+              )}
+            </div>
+
+            <div className="mt-3">
+              <label className="mb-1 block text-xs text-gray-400">Confirm password</label>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Re-enter your password"
+                  {...pwForm.register("confirm", {
+                    required: "Please confirm your password",
+                    validate: (val) =>
+                      val === pwForm.watch("password") || "Passwords don't match",
+                  })}
+                  className="w-full rounded-xl border border-gray-200 bg-[#f5f6f8] px-4 py-3 pr-11 text-base text-[#0f1d32] placeholder-gray-300 outline-none focus:border-[#0f1d32]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 active:text-gray-600"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              {pwForm.formState.errors.confirm && (
+                <p className="mt-1 text-xs text-red-500">
+                  {pwForm.formState.errors.confirm.message}
+                </p>
+              )}
+            </div>
+
+            <button
+              onClick={submitPassword}
+              disabled={pwMutation.isPending}
+              className="mt-5 w-full rounded-full bg-[#0f1d32] py-3.5 text-base font-semibold text-white active:bg-[#162a46] disabled:opacity-50"
+            >
+              {pwMutation.isPending ? "Updating…" : "Update password"}
+            </button>
+            <button
+              onClick={() => {
+                setShowPasswordModal(false);
+                setShowPassword(false);
+                pwForm.reset();
+              }}
+              className="mt-2 w-full rounded-full py-3 text-base font-semibold text-gray-500 active:bg-gray-50"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Delete confirmation modal */}
       {showDeleteModal && (
