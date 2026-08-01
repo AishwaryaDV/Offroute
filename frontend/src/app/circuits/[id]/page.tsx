@@ -4,15 +4,20 @@ import { Fragment } from "react";
 import {
   ArrowLeft,
   ArrowDownUp,
+  Calendar,
   Check,
+  Compass,
   Copy,
   Download,
+  Eye,
   FolderOpen,
   Gem,
+  Globe2,
   GripVertical,
   Home,
   Landmark,
   Leaf,
+  Lock,
   MapPin,
   MoreVertical,
   Mountain,
@@ -409,30 +414,29 @@ function CircuitDetail() {
   return (
     <div className="relative h-[100dvh] overflow-hidden bg-[#0b1120]">
       {/* Full-screen map */}
-      {mapMarkers.length > 0 ? (
-        <MapDynamic
-          className="absolute inset-0 h-full w-full"
-          markers={mapMarkers}
-          activeMarkerId={activePointId ?? undefined}
-          drawRoute
-          interactive
-          onMarkerClick={(markerId) => {
-            const pt = points?.find((p) => p.id === markerId);
-            if (pt) handleSelectPoint(pt);
-          }}
-          onMapInit={(handle) => {
-            mapHandleRef.current = handle;
-          }}
-          key={mapMarkers.length}
-        />
-      ) : (
-        <MapDynamic
-          className="absolute inset-0 h-full w-full"
-          center={userGeo.center}
-          zoom={4}
-          interactive
-        />
-      )}
+      <MapDynamic
+        className="absolute inset-0 h-full w-full"
+        center={
+          mapMarkers.length > 0
+            ? [
+                mapMarkers.reduce((s, m) => s + m.lng, 0) / mapMarkers.length,
+                mapMarkers.reduce((s, m) => s + m.lat, 0) / mapMarkers.length,
+              ]
+            : userGeo.center
+        }
+        zoom={mapMarkers.length > 0 ? 12 : 4}
+        markers={mapMarkers}
+        activeMarkerId={activePointId ?? undefined}
+        drawRoute={mapMarkers.length > 1}
+        interactive
+        onMarkerClick={(markerId) => {
+          const pt = points?.find((p) => p.id === markerId);
+          if (pt) handleSelectPoint(pt);
+        }}
+        onMapInit={(handle) => {
+          mapHandleRef.current = handle;
+        }}
+      />
 
       {/* Top bar */}
       <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-4 pt-[max(env(safe-area-inset-top),0.75rem)]">
@@ -734,84 +738,140 @@ function CircuitDetail() {
       {/* Edit circuit sheet */}
       {showEditCircuit && (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-end bg-black/50 backdrop-blur-sm"
           onClick={(e) => {
             if (e.target === e.currentTarget) setShowEditCircuit(false);
           }}
         >
-          <div className="max-h-[85dvh] w-full max-w-sm overflow-y-auto rounded-t-3xl bg-white p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-gray-300" />
-            <div className="flex items-center justify-between pb-4">
-              <h2 className="text-2xl font-bold text-[#0f1d32]">Edit circuit</h2>
-              <button
-                onClick={() => editCircuitMutation.mutate()}
-                disabled={!editTitle.trim() || editCircuitMutation.isPending}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0f1d32] active:bg-[#162a46] disabled:opacity-50"
-                aria-label="Save"
-              >
-                <Check size={20} className="text-white" strokeWidth={2.5} />
-              </button>
+          <div className="sheet-light flex max-h-[94dvh] w-full flex-col rounded-t-3xl bg-white">
+            <div className="flex justify-center pb-1 pt-3">
+              <div className="h-1 w-10 rounded-full bg-gray-300" />
             </div>
 
-            <div className="flex flex-col gap-4">
-              <div>
-                <label className="mb-1 block text-xs font-medium text-gray-400">Title</label>
-                <input
-                  type="text"
-                  value={editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
-                  className="w-full rounded-xl bg-[#f5f6f8] px-4 py-3 text-base text-[#0f1d32] outline-none ring-1 ring-gray-200 focus:ring-blue-500"
-                  placeholder="Circuit title"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-gray-400">Description</label>
-                <textarea
-                  value={editDesc}
-                  onChange={(e) => setEditDesc(e.target.value)}
-                  rows={3}
-                  maxLength={500}
-                  className="w-full resize-none rounded-xl bg-[#f5f6f8] px-4 py-3 text-base text-[#0f1d32] outline-none ring-1 ring-gray-200 focus:ring-blue-500"
-                  placeholder="What's this circuit about?"
-                />
-              </div>
-              <div className="flex gap-3">
-                <div className="flex-1">
-                  <label className="mb-1 block text-xs font-medium text-gray-400">Start date</label>
+            <div className="flex items-center justify-between px-5 pb-1 pt-2">
+              <button
+                onClick={() => setShowEditCircuit(false)}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f6f8] active:bg-gray-200"
+              >
+                <X size={18} className="text-gray-600" />
+              </button>
+              <h2 className="text-lg font-bold text-[#0f1d32]">Edit Circuit</h2>
+              <div className="w-9" />
+            </div>
+            <p className="px-5 pb-5 text-center text-xs text-gray-400">
+              Changes are saved instantly
+            </p>
+
+            <div className="flex flex-1 flex-col overflow-y-auto">
+              <div className="flex flex-col gap-5 px-5">
+                <div>
+                  <div className="mb-2 flex items-center gap-2 text-sm font-medium text-[#0f1d32]">
+                    <Compass size={16} className="text-gray-400" />
+                    <span>Circuit name</span>
+                  </div>
                   <input
-                    type="date"
-                    value={editStartDate}
-                    onChange={(e) => setEditStartDate(e.target.value)}
-                    className="w-full rounded-xl bg-[#f5f6f8] px-4 py-3 text-sm text-[#0f1d32] outline-none ring-1 ring-gray-200 focus:ring-blue-500"
+                    type="text"
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    className="w-full rounded-xl bg-white px-3 py-2.5 text-sm text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ring-gray-200 focus:ring-[#0f1d32]"
+                    placeholder="Circuit title"
                   />
                 </div>
-                <div className="flex-1">
-                  <label className="mb-1 block text-xs font-medium text-gray-400">End date</label>
+
+                <div>
+                  <div className="mb-2 flex items-center gap-2 text-sm font-medium text-[#0f1d32]">
+                    <MapPin size={16} className="text-gray-400" />
+                    <span>Description</span>
+                    <span className="text-xs font-normal text-gray-400">(optional)</span>
+                  </div>
                   <input
-                    type="date"
-                    value={editEndDate}
-                    onChange={(e) => setEditEndDate(e.target.value)}
-                    className="w-full rounded-xl bg-[#f5f6f8] px-4 py-3 text-sm text-[#0f1d32] outline-none ring-1 ring-gray-200 focus:ring-blue-500"
+                    type="text"
+                    value={editDesc}
+                    onChange={(e) => setEditDesc(e.target.value)}
+                    className="w-full rounded-xl bg-white px-3 py-2.5 text-sm text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ring-gray-200 focus:ring-[#0f1d32]"
+                    placeholder="A short summary of your trip"
                   />
                 </div>
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-gray-400">Visibility</label>
-                <div className="flex gap-2">
-                  {(["private", "shared", "public"] as const).map((v) => (
-                    <button
-                      key={v}
-                      onClick={() => setEditVisibility(v)}
-                      className={`flex-1 rounded-xl py-2.5 text-sm font-medium capitalize ring-1 transition-colors ${
-                        editVisibility === v
-                          ? "bg-[#0f1d32] text-white ring-[#0f1d32]"
-                          : "bg-white text-gray-600 ring-gray-200 active:bg-gray-50"
-                      }`}
-                    >
-                      {v}
-                    </button>
-                  ))}
+
+                <div>
+                  <div className="mb-3 flex items-center gap-2 text-sm font-medium text-[#0f1d32]">
+                    <Calendar size={16} className="text-gray-400" />
+                    <span>Trip dates</span>
+                    <span className="text-xs font-normal text-gray-400">(optional)</span>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="flex-1">
+                      <label className="mb-1 block text-xs text-gray-400">Start date</label>
+                      <input
+                        type="date"
+                        value={editStartDate}
+                        onChange={(e) => setEditStartDate(e.target.value)}
+                        className="w-full rounded-xl bg-white px-3 py-2.5 text-sm text-[#0f1d32] outline-none ring-1 ring-gray-200 focus:ring-[#0f1d32]"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="mb-1 block text-xs text-gray-400">End date</label>
+                      <input
+                        type="date"
+                        value={editEndDate}
+                        onChange={(e) => setEditEndDate(e.target.value)}
+                        className="w-full rounded-xl bg-white px-3 py-2.5 text-sm text-[#0f1d32] outline-none ring-1 ring-gray-200 focus:ring-[#0f1d32]"
+                      />
+                    </div>
+                  </div>
                 </div>
+
+                <div>
+                  <div className="mb-3 flex items-center gap-2 text-sm font-medium text-[#0f1d32]">
+                    <Eye size={16} className="text-gray-400" />
+                    <span>Who can see this?</span>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {(
+                      [
+                        { value: "private", label: "Only me", desc: "Only you can see this circuit", icon: <Lock size={18} /> },
+                        { value: "shared", label: "Friends", desc: "People you share with can see it", icon: <Users size={18} /> },
+                        { value: "public", label: "Everyone", desc: "Anyone can discover this circuit", icon: <Globe2 size={18} /> },
+                      ] as const
+                    ).map((opt) => {
+                      const selected = editVisibility === opt.value;
+                      return (
+                        <button
+                          type="button"
+                          key={opt.value}
+                          onClick={() => setEditVisibility(opt.value)}
+                          className={`flex items-center gap-3 rounded-xl px-4 py-3 text-left ring-1 transition-colors ${
+                            selected
+                              ? "bg-[#0f1d32]/5 ring-[#0f1d32]"
+                              : "bg-white ring-gray-200"
+                          }`}
+                        >
+                          <span className={selected ? "text-[#0f1d32]" : "text-gray-400"}>{opt.icon}</span>
+                          <div className="flex-1">
+                            <p className={`text-sm font-semibold ${selected ? "text-[#0f1d32]" : "text-gray-600"}`}>{opt.label}</p>
+                            <p className="text-xs text-gray-400">{opt.desc}</p>
+                          </div>
+                          <div className={`h-4 w-4 rounded-full ring-1 ${selected ? "bg-[#0f1d32] ring-[#0f1d32]" : "ring-gray-300"}`}>
+                            {selected && (
+                              <Check size={12} className="m-0.5 text-white" />
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              <div className="shrink-0 px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-5">
+                <button
+                  type="button"
+                  onClick={() => editCircuitMutation.mutate()}
+                  disabled={!editTitle.trim() || editCircuitMutation.isPending}
+                  className="w-full rounded-full bg-[#0f1d32] py-4 text-base font-semibold text-white active:bg-[#162a46] disabled:opacity-50"
+                >
+                  {editCircuitMutation.isPending ? "Saving…" : "Save changes"}
+                </button>
               </div>
             </div>
           </div>
