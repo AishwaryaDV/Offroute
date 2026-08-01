@@ -129,33 +129,37 @@ function SortablePointCard({
       style={{
         transform: CSS.Transform.toString(transform),
         transition,
-        opacity: isDragging ? 0.5 : 1,
         zIndex: isDragging ? 50 : 0,
       }}
-      className="flex shrink-0 flex-col items-center gap-1"
+      className="flex flex-col items-center gap-1"
     >
       <div
-        {...attributes}
-        {...listeners}
-        className="relative h-[72px] w-[72px] overflow-hidden rounded-xl ring-1 ring-white/20"
+        style={{ animationDelay: `${index * 0.05}s` }}
+        className={isDragging ? "opacity-50" : "animate-wiggle"}
       >
-        <img
-          src={POINT_PLACEHOLDER_IMAGES[index % POINT_PLACEHOLDER_IMAGES.length]}
-          alt=""
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-        <div className="absolute inset-0 bg-black/40" />
-        <div className="relative z-10 flex h-full flex-col items-center justify-center">
-          <Icon size={16} className="text-white/80" />
-          <span className="mt-0.5 text-[10px] font-bold text-white/60">{index + 1}</span>
+        <div
+          {...attributes}
+          {...listeners}
+          className="relative h-[72px] w-[72px] overflow-hidden rounded-xl ring-1 ring-white/20 touch-none"
+        >
+          <img
+            src={POINT_PLACEHOLDER_IMAGES[index % POINT_PLACEHOLDER_IMAGES.length]}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-black/40" />
+          <div className="relative z-10 flex h-full flex-col items-center justify-center">
+            <Icon size={16} className="text-white/80" />
+            <span className="mt-0.5 text-[10px] font-bold text-white/60">{index + 1}</span>
+          </div>
+          <div className="absolute right-0.5 top-0.5">
+            <GripVertical size={12} className="text-white/40" />
+          </div>
         </div>
-        <div className="absolute right-0.5 top-0.5">
-          <GripVertical size={12} className="text-white/40" />
-        </div>
+        <p className="max-w-[72px] truncate text-center text-[10px] font-medium text-white/70">
+          {point.title}
+        </p>
       </div>
-      <p className="max-w-[72px] truncate text-center text-[10px] font-medium text-white/70">
-        {point.title}
-      </p>
     </div>
   );
 }
@@ -187,10 +191,10 @@ function CircuitDetail() {
   const [editEndDate, setEditEndDate] = useState("");
 
   const touchSensor = useSensor(TouchSensor, {
-    activationConstraint: { delay: 200, tolerance: 5 },
+    activationConstraint: { delay: 100, tolerance: 8 },
   });
   const pointerSensor = useSensor(PointerSensor, {
-    activationConstraint: { delay: 200, tolerance: 5 },
+    activationConstraint: { distance: 5 },
   });
   const sensors = useSensors(touchSensor, pointerSensor);
 
@@ -645,7 +649,7 @@ function CircuitDetail() {
                   items={reorderList.map((p) => p.id)}
                   strategy={horizontalListSortingStrategy}
                 >
-                  <div className="flex items-start gap-2.5 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  <div className="flex items-start justify-evenly">
                     {reorderList.map((point, i) => (
                       <SortablePointCard key={point.id} point={point} index={i} />
                     ))}

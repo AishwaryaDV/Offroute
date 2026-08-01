@@ -96,6 +96,15 @@ select {
   background: transparent !important;
 }
 
+@keyframes wiggle {
+  0%, 100% { transform: rotate(-1.5deg); }
+  50% { transform: rotate(1.5deg); }
+}
+
+.animate-wiggle {
+  animation: wiggle 0.3s ease-in-out infinite;
+}
+
 /* Light-themed pages/sheets: native controls should render light */
 .sheet-light input,
 .sheet-light textarea,
