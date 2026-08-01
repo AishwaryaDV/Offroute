@@ -169,7 +169,7 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
       const my = (pts[0].y + pts[1].y) / 2 + ny * off;
       return `M${pts[0].x},${pts[0].y} Q${mx},${my} ${pts[1].x},${pts[1].y}`;
     }
-    const t = 0.4;
+    const t = 0.5;
     let d = `M${pts[0].x},${pts[0].y}`;
     for (let i = 0; i < pts.length - 1; i++) {
       const p0 = pts[Math.max(0, i - 1)];
@@ -233,10 +233,8 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
         const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         dot.setAttribute("cx", String(pt.x));
         dot.setAttribute("cy", String(pt.y));
-        dot.setAttribute("r", "4");
-        dot.setAttribute("fill", route.color);
-        dot.setAttribute("stroke", "#ffffff");
-        dot.setAttribute("stroke-width", "1.5");
+        dot.setAttribute("r", "3");
+        dot.setAttribute("fill", "#ffffff");
         dot.setAttribute("opacity", String(route.opacity));
         svg.appendChild(dot);
       }
