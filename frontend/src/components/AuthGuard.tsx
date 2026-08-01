@@ -7,11 +7,13 @@ import { supabase } from "@/lib/supabase";
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [ready, setReady] = useState(false);
+  const [show, setShow] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setReady(true);
+        requestAnimationFrame(() => setShow(true));
       } else {
         router.replace("/login");
       }
@@ -34,5 +36,11 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  return <div className="page-transition">{children}</div>;
+  return (
+    <div
+      className={`transition-opacity duration-300 ease-out ${show ? "opacity-100" : "opacity-0"}`}
+    >
+      {children}
+    </div>
+  );
 }
