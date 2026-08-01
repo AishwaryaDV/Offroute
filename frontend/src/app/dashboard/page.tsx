@@ -260,7 +260,7 @@ function Dashboard() {
             <div className="h-1 w-10 rounded-full bg-gray-300" />
           </div>
 
-        {me && (
+        {me ? (
           <div className="flex items-center gap-4 px-6 pt-2 pb-2">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#0f1d32]/10 text-xl font-bold text-[#0f1d32]">
               {(me.display_name?.[0] ?? me.email[0]).toUpperCase()}
@@ -272,6 +272,14 @@ function Dashboard() {
               <p className="truncate text-sm text-gray-500">
                 {me.nationality ?? me.email}
               </p>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-4 px-6 pt-2 pb-2 animate-pulse">
+            <div className="h-14 w-14 shrink-0 rounded-full bg-gray-200" />
+            <div className="min-w-0 flex-1 space-y-2">
+              <div className="h-5 w-32 rounded-md bg-gray-200" />
+              <div className="h-3.5 w-48 rounded-md bg-gray-100" />
             </div>
           </div>
         )}
