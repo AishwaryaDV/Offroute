@@ -615,7 +615,10 @@ function Settings() {
             </p>
 
             <div className="mt-5">
-              <label className="mb-1 block text-xs text-gray-400">New password</label>
+              <div className="mb-1 flex items-center gap-1.5 text-xs text-gray-400">
+                <KeyRound size={12} />
+                <span>New password</span>
+              </div>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
@@ -642,7 +645,10 @@ function Settings() {
             </div>
 
             <div className="mt-3">
-              <label className="mb-1 block text-xs text-gray-400">Confirm password</label>
+              <div className="mb-1 flex items-center gap-1.5 text-xs text-gray-400">
+                <KeyRound size={12} />
+                <span>Confirm password</span>
+              </div>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
