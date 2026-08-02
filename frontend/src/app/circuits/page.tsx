@@ -83,7 +83,7 @@ function CircuitCard({ circuit, index, tripName }: { circuit: Circuit; index: nu
           </span>
         )}
         {circuit.cloned_from_token && (
-          <span className="flex items-center gap-1 rounded-full bg-blue-500/90 px-2 py-0.5 text-[9px] font-bold uppercase text-white shadow-sm">
+          <span className="flex items-center gap-1 rounded-full bg-black/80 px-2 py-0.5 text-[9px] font-bold uppercase text-white backdrop-blur-sm shadow-sm">
             <Copy size={8} />
             Cloned
           </span>
@@ -132,6 +132,7 @@ function CircuitsList() {
   const [showTrips, setShowTrips] = useState(false);
   const [showNewCircuit, setShowNewCircuit] = useState(false);
   const [newTripTitle, setNewTripTitle] = useState("");
+  const [filterCloned, setFilterCloned] = useState(false);
 
   const {
     register,
@@ -193,7 +194,9 @@ function CircuitsList() {
     return map;
   }, [trips]);
 
-  const allCircuits = circuits ?? [];
+  const allCircuits = filterCloned
+    ? (circuits ?? []).filter((c) => c.cloned_from_token)
+    : (circuits ?? []);
 
   return (
     <div className="relative h-[100dvh]">
@@ -342,6 +345,22 @@ function CircuitsList() {
                 </div>
               )}
             </header>
+
+            {circuits && circuits.some((c) => c.cloned_from_token) && (
+              <div className="flex gap-2 px-5 pb-3">
+                <button
+                  onClick={() => setFilterCloned(!filterCloned)}
+                  className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    filterCloned
+                      ? "bg-[#0f1d32] text-white"
+                      : "bg-[#f5f6f8] text-[#0f1d32] ring-1 ring-gray-200"
+                  }`}
+                >
+                  <Copy size={10} />
+                  Cloned
+                </button>
+              </div>
+            )}
 
             <main className="px-5 pb-6">
               {isLoading ? (

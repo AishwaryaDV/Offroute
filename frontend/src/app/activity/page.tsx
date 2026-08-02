@@ -441,7 +441,7 @@ function Activity() {
                     <div className="h-3 w-0.5 bg-gray-200" />
                     <Link
                       href={`/circuits/${point.circuit_slug ?? point.circuit_id}/points/${point.id}`}
-                      className="w-full rounded-2xl bg-[#f5f6f8] p-3.5 active:bg-gray-100"
+                      className="w-full rounded-2xl border border-gray-200 bg-white p-3.5 active:bg-gray-50"
                     >
                       <div className="flex gap-3">
                         <div

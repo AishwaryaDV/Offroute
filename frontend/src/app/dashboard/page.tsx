@@ -365,7 +365,7 @@ function Dashboard() {
                         </span>
                       )}
                       {circuit.cloned_from_token && (
-                        <span className="flex items-center gap-1 rounded-full bg-blue-500/90 px-2 py-0.5 text-[9px] font-bold uppercase text-white shadow-sm">
+                        <span className="flex items-center gap-1 rounded-full bg-black/80 px-2 py-0.5 text-[9px] font-bold uppercase text-white backdrop-blur-sm shadow-sm">
                           <Copy size={8} />
                           Cloned
                         </span>
