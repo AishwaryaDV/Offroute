@@ -17,7 +17,7 @@ import {
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import MapDynamic from "@/components/MapDynamic";
 import { StepLoader } from "@/components/StepLoader";
@@ -59,11 +59,12 @@ export default function SharedCircuitPage() {
   const { token } = useParams<{ token: string }>();
   const router = useRouter();
 
+  const [clonedSlug, setClonedSlug] = useState<string | null>(null);
+
   const cloneMutation = useMutation({
     mutationFn: () => cloneCircuit(token),
     onSuccess: (cloned) => {
-      toast.success("Circuit cloned to your account");
-      router.push(`/circuits/${cloned.slug ?? cloned.id}`);
+      setClonedSlug(cloned.slug ?? cloned.id);
     },
     onError: (err: Error) =>
       toast.error(
@@ -185,14 +186,24 @@ export default function SharedCircuitPage() {
             )}
           </div>
           <div className="mt-4 flex gap-2">
-            <button
-              onClick={() => cloneMutation.mutate()}
-              disabled={cloneMutation.isPending}
-              className="flex items-center gap-2 rounded-full bg-[#0f1d32] px-4 py-2 text-sm font-medium text-white active:bg-[#162a46] disabled:opacity-50"
-            >
-              <Copy size={14} />
-              {cloneMutation.isPending ? "Cloning…" : "Clone to my circuits"}
-            </button>
+            {clonedSlug ? (
+              <Link
+                href={`/circuits/${clonedSlug}`}
+                className="flex items-center gap-2 rounded-full bg-emerald-500 px-4 py-2 text-sm font-medium text-white active:bg-emerald-600"
+              >
+                <Copy size={14} />
+                Cloned! View in my circuits →
+              </Link>
+            ) : (
+              <button
+                onClick={() => cloneMutation.mutate()}
+                disabled={cloneMutation.isPending}
+                className="flex items-center gap-2 rounded-full bg-[#0f1d32] px-4 py-2 text-sm font-medium text-white active:bg-[#162a46] disabled:opacity-50"
+              >
+                <Copy size={14} />
+                {cloneMutation.isPending ? "Cloning…" : "Clone to my circuits"}
+              </button>
+            )}
             <button
               onClick={handleShare}
               className="flex items-center gap-2 rounded-full bg-[#f5f6f8] px-4 py-2 text-sm font-medium text-[#0f1d32] ring-1 ring-gray-200 active:bg-gray-100"
