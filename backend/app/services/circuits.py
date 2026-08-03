@@ -115,6 +115,12 @@ async def get_circuit_with_count(
             select(Star.id).where(Star.user_id == user_id, Star.circuit_id == circuit_id)
         )
         obj["is_starred"] = starred is not None
+    obj["cloned_from_owner"] = None
+    if circuit.cloned_from_token:
+        source = await get_circuit_by_share_token(db, circuit.cloned_from_token)
+        if source:
+            owner = await db.get(User, source.owner_id)
+            obj["cloned_from_owner"] = (owner.display_name or owner.email) if owner else None
     return obj
 
 

@@ -88,5 +88,6 @@ class CircuitResponse(BaseModel):
     trip_id: uuid.UUID | None = None
     clone_count: int = 0
     cloned_from_token: str | None = None
+    cloned_from_owner: str | None = None
     star_count: int = 0
     is_starred: bool = False

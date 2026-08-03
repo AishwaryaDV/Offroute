@@ -55,6 +55,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { AuthGuard } from "@/components/AuthGuard";
+import { StepLoader } from "@/components/StepLoader";
 import MapDynamic from "@/components/MapDynamic";
 import type { MapMarker, MapHandle } from "@/components/MapDynamic";
 import { getCircuit, deleteCircuit, shareCircuit, updateCircuit, starCircuit, unstarCircuit } from "@/lib/circuits";
@@ -404,6 +405,11 @@ function CircuitDetail() {
   return (
     <div className="relative h-[100dvh] overflow-hidden bg-[#0b1120]">
       {/* Full-screen map — wait for points so we don't flash the user's location */}
+      {pointsLoading && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <StepLoader variant="dark" />
+        </div>
+      )}
       {!pointsLoading && (
         <MapDynamic
           className="absolute inset-0 h-full w-full"
