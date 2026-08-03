@@ -273,24 +273,25 @@ function Dashboard() {
 
         {me ? (
           <div className="flex items-center gap-4 px-6 pt-2 pb-2">
-            {me.nationality && COUNTRY_CODES[me.nationality] ? (
-              <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full ring-2 ring-[#0f1d32]/10">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={`/flags/${COUNTRY_CODES[me.nationality]}.svg`}
-                  alt={me.nationality}
-                  className="h-full w-full object-cover"
-                />
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#0f1d32]/10 text-xl font-bold text-[#0f1d32]">
+              {(me.display_name?.[0] ?? me.email[0]).toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <p className="truncate text-xl font-bold text-[#0f1d32]">
+                  {me.display_name ?? "Traveler"}
+                </p>
+                {me.nationality && COUNTRY_CODES[me.nationality] && (
+                  <div className="h-5 w-5 shrink-0 overflow-hidden rounded-full ring-1 ring-gray-200">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={`/flags/${COUNTRY_CODES[me.nationality]}.svg`}
+                      alt={me.nationality}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#0f1d32]/10 text-xl font-bold text-[#0f1d32]">
-                {(me.display_name?.[0] ?? me.email[0]).toUpperCase()}
-              </div>
-            )}
-            <div className="min-w-0">
-              <p className="truncate text-xl font-bold text-[#0f1d32]">
-                {me.display_name ?? "Traveler"}
-              </p>
               <p className="truncate text-sm text-gray-500">
                 {me.email}
               </p>
