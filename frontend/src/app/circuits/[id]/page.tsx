@@ -403,30 +403,32 @@ function CircuitDetail() {
 
   return (
     <div className="relative h-[100dvh] overflow-hidden bg-[#0b1120]">
-      {/* Full-screen map */}
-      <MapDynamic
-        className="absolute inset-0 h-full w-full"
-        center={
-          mapMarkers.length > 0
-            ? [
-                mapMarkers.reduce((s, m) => s + m.lng, 0) / mapMarkers.length,
-                mapMarkers.reduce((s, m) => s + m.lat, 0) / mapMarkers.length,
-              ]
-            : userGeo.center
-        }
-        zoom={mapMarkers.length > 0 ? 12 : 4}
-        markers={mapMarkers}
-        activeMarkerId={activePointId ?? undefined}
-        drawRoute={mapMarkers.length > 1}
-        interactive
-        onMarkerClick={(markerId) => {
-          const pt = points?.find((p) => p.id === markerId);
-          if (pt) handleSelectPoint(pt);
-        }}
-        onMapInit={(handle) => {
-          mapHandleRef.current = handle;
-        }}
-      />
+      {/* Full-screen map — wait for points so we don't flash the user's location */}
+      {!pointsLoading && (
+        <MapDynamic
+          className="absolute inset-0 h-full w-full"
+          center={
+            mapMarkers.length > 0
+              ? [
+                  mapMarkers.reduce((s, m) => s + m.lng, 0) / mapMarkers.length,
+                  mapMarkers.reduce((s, m) => s + m.lat, 0) / mapMarkers.length,
+                ]
+              : userGeo.center
+          }
+          zoom={mapMarkers.length > 0 ? 12 : 4}
+          markers={mapMarkers}
+          activeMarkerId={activePointId ?? undefined}
+          drawRoute={mapMarkers.length > 1}
+          interactive
+          onMarkerClick={(markerId) => {
+            const pt = points?.find((p) => p.id === markerId);
+            if (pt) handleSelectPoint(pt);
+          }}
+          onMapInit={(handle) => {
+            mapHandleRef.current = handle;
+          }}
+        />
+      )}
 
       {/* Top bar */}
       <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-4 pt-[max(env(safe-area-inset-top),0.75rem)]">
