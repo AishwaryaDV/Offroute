@@ -3,6 +3,7 @@
 import {
   BarChart3,
   Calendar,
+  Camera,
   Check,
   Compass,
   Copy,
@@ -26,7 +27,7 @@ import { AuthGuard } from "@/components/AuthGuard";
 import { BottomNav } from "@/components/BottomNav";
 import MapDynamic from "@/components/MapDynamic";
 import { StepLoader } from "@/components/StepLoader";
-import { getMe } from "@/lib/me";
+import { getMe, updateMe } from "@/lib/me";
 import { getCircuits, createCircuit } from "@/lib/circuits";
 import { getMyStats } from "@/lib/stats";
 import { getMyInvites, acceptInvite, declineInvite } from "@/lib/collaborators";
@@ -71,6 +72,36 @@ function Dashboard() {
     () => (allPoints ? countUniqueCountries(allPoints) : 0),
     [allPoints],
   );
+
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const handleAvatarPick = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { toast.error("Please select an image"); return; }
+    if (file.size > 2 * 1024 * 1024) { toast.error("Image must be under 2 MB"); return; }
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+          const scale = Math.min(512 / img.width, 512 / img.height, 1);
+          const w = Math.round(img.width * scale);
+          const h = Math.round(img.height * scale);
+          const canvas = document.createElement("canvas");
+          canvas.width = w;
+          canvas.height = h;
+          canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL("image/jpeg", 0.85));
+        };
+        img.onerror = () => reject(new Error("Could not read image"));
+        img.src = URL.createObjectURL(file);
+      });
+      const updated = await updateMe({ avatar_url: dataUrl });
+      queryClient.setQueryData(["me"], updated);
+      toast.success("Profile photo updated");
+    } catch {
+      toast.error("Could not update photo");
+    }
+  }, [queryClient]);
 
   const acceptMutation = useMutation({
     mutationFn: acceptInvite,
@@ -271,11 +302,37 @@ function Dashboard() {
             <div className="h-1 w-10 rounded-full bg-gray-300" />
           </div>
 
+        <input
+          ref={avatarInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleAvatarPick}
+        />
         {me ? (
           <div className="flex items-center gap-4 px-6 pt-2 pb-2">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#0f1d32]/10 text-xl font-bold text-[#0f1d32]">
-              {(me.display_name?.[0] ?? me.email[0]).toUpperCase()}
-            </div>
+            <button
+              onClick={() => avatarInputRef.current?.click()}
+              className="relative h-14 w-14 shrink-0 rounded-full"
+            >
+              {me.avatar_url ? (
+                <div className="h-14 w-14 overflow-hidden rounded-full ring-2 ring-[#0f1d32]/10">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={me.avatar_url}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#0f1d32]/10 text-xl font-bold text-[#0f1d32]">
+                  {(me.display_name?.[0] ?? me.email[0]).toUpperCase()}
+                </div>
+              )}
+              <div className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#0f1d32] ring-2 ring-white">
+                <Camera size={10} className="text-white" />
+              </div>
+            </button>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <p className="truncate text-xl font-bold text-[#0f1d32]">
