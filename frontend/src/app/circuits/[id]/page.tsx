@@ -509,23 +509,18 @@ function CircuitDetail() {
         </div>
       </div>
 
-      {/* Cloned-from banner */}
+      {/* Cloned-from pill */}
       {circuit?.cloned_from_token && (
         <Link
           href={`/s/${circuit.cloned_from_token}`}
-          className="absolute left-4 right-4 top-[calc(max(env(safe-area-inset-top),0.75rem)+3.5rem)] z-10 flex items-center gap-2 rounded-2xl bg-white/90 px-4 py-2.5 shadow-md backdrop-blur-md active:bg-white"
+          className="absolute left-4 top-[calc(max(env(safe-area-inset-top),0.75rem)+3.5rem)] z-10 flex items-center gap-1.5 rounded-full bg-black/50 px-3 py-1.5 backdrop-blur-md active:bg-black/70"
         >
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0f1d32]/10">
-            <Copy size={14} className="text-[#0f1d32]" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold text-[#0f1d32]">
-              {circuit.cloned_from_owner
-                ? `Cloned from ${circuit.cloned_from_owner}`
-                : "Cloned circuit"}
-            </p>
-            <p className="text-[10px] text-gray-500">Tap to view original</p>
-          </div>
+          <Copy size={11} className="text-white/70" />
+          <span className="text-[11px] font-medium text-white">
+            {circuit.cloned_from_owner
+              ? `Cloned from ${circuit.cloned_from_owner}`
+              : "Cloned"}
+          </span>
         </Link>
       )}
 
@@ -536,73 +531,73 @@ function CircuitDetail() {
             className="fixed inset-0 z-20"
             onClick={() => setShowMenu(false)}
           />
-          <div className="absolute right-4 top-[calc(max(env(safe-area-inset-top),0.75rem)+3rem)] z-30 w-48 overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-black/5">
+          <div className="absolute right-4 top-[calc(max(env(safe-area-inset-top),0.75rem)+3rem)] z-30 w-48 overflow-hidden rounded-2xl bg-[#111a2e]/90 shadow-2xl ring-1 ring-white/10 backdrop-blur-xl">
             <button
               onClick={openEditCircuit}
-              className="flex w-full items-center gap-3 px-4 py-3.5 text-sm font-medium text-[#0f1d32] active:bg-gray-50"
+              className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-white active:bg-white/10"
             >
-              <Pencil size={16} className="text-gray-400" />
+              <Pencil size={15} className="text-white/50" />
               Edit circuit
             </button>
-            <div className="mx-4 h-px bg-gray-100" />
+            <div className="mx-4 h-px bg-white/10" />
             <button
               onClick={handleShare}
-              className="flex w-full items-center gap-3 px-4 py-3.5 text-sm font-medium text-[#0f1d32] active:bg-gray-50"
+              className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-white active:bg-white/10"
             >
-              <Share2 size={16} className="text-gray-400" />
+              <Share2 size={15} className="text-white/50" />
               Share circuit
             </button>
-            <div className="mx-4 h-px bg-gray-100" />
+            <div className="mx-4 h-px bg-white/10" />
             <button
               onClick={() => {
                 setShowMenu(false);
                 if (circuit && points) exportCircuitPdf(circuit, points);
               }}
-              className="flex w-full items-center gap-3 px-4 py-3.5 text-sm font-medium text-[#0f1d32] active:bg-gray-50"
+              className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-white active:bg-white/10"
             >
-              <Download size={16} className="text-gray-400" />
+              <Download size={15} className="text-white/50" />
               Export PDF
             </button>
-            <div className="mx-4 h-px bg-gray-100" />
+            <div className="mx-4 h-px bg-white/10" />
             <button
               onClick={() => {
                 setShowMenu(false);
                 setShowTripPicker(true);
               }}
-              className="flex w-full items-center gap-3 px-4 py-3.5 text-sm font-medium text-[#0f1d32] active:bg-gray-50"
+              className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-white active:bg-white/10"
             >
-              <FolderOpen size={16} className="text-gray-400" />
+              <FolderOpen size={15} className="text-white/50" />
               {circuit?.trip_id ? "Change trip" : "Move to trip"}
             </button>
-            <div className="mx-4 h-px bg-gray-100" />
+            <div className="mx-4 h-px bg-white/10" />
             <button
               onClick={startReorder}
               disabled={!points || points.length < 2}
-              className="flex w-full items-center gap-3 px-4 py-3.5 text-sm font-medium text-[#0f1d32] active:bg-gray-50 disabled:opacity-30"
+              className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-white active:bg-white/10 disabled:opacity-30"
             >
-              <ArrowDownUp size={16} className="text-gray-400" />
+              <ArrowDownUp size={15} className="text-white/50" />
               Reorder points
             </button>
-            <div className="mx-4 h-px bg-gray-100" />
+            <div className="mx-4 h-px bg-white/10" />
             <button
               onClick={() => {
                 setShowMenu(false);
                 setShowCollaborators(true);
               }}
-              className="flex w-full items-center gap-3 px-4 py-3.5 text-sm font-medium text-[#0f1d32] active:bg-gray-50"
+              className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-white active:bg-white/10"
             >
-              <Users size={16} className="text-gray-400" />
+              <Users size={15} className="text-white/50" />
               Collaborators
             </button>
-            <div className="mx-4 h-px bg-gray-100" />
+            <div className="mx-4 h-px bg-white/10" />
             <button
               onClick={() => {
                 setShowMenu(false);
                 setShowDeleteConfirm("circuit");
               }}
-              className="flex w-full items-center gap-3 px-4 py-3.5 text-sm font-medium text-red-500 active:bg-gray-50"
+              className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-red-400 active:bg-white/10"
             >
-              <Trash2 size={16} />
+              <Trash2 size={15} />
               Delete circuit
             </button>
           </div>
