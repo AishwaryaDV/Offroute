@@ -2,6 +2,7 @@
 
 import {
   ArrowLeft,
+  Compass,
   Copy,
   Gem,
   Home,
@@ -120,7 +121,9 @@ export default function SharedCircuitPage() {
   if (error || !circuit) {
     return (
       <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-4 bg-[#f5f6f8] px-6 text-center">
-        <span className="text-5xl">🗺️</span>
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#0f1d32]/10">
+          <Compass size={28} className="text-[#0f1d32]/40" />
+        </div>
         <p className="text-lg font-bold text-[#0f1d32]">
           Looks like this trail went cold
         </p>

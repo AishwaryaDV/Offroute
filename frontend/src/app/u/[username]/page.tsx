@@ -33,7 +33,9 @@ function PublicProfile() {
   if (isError || !profile) {
     return (
       <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-white px-6 text-center">
-        <span className="text-5xl">🧳</span>
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#0f1d32]/10">
+          <Compass size={28} className="text-[#0f1d32]/40" />
+        </div>
         <h1 className="mt-3 text-lg font-bold text-[#0f1d32]">This traveler is off the grid</h1>
         <p className="mt-1 max-w-[260px] text-sm leading-relaxed text-gray-500">
           This profile doesn&apos;t exist or is set to private. Maybe they&apos;re still exploring!

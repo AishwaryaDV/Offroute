@@ -230,7 +230,9 @@ function PointDetail() {
       <div className="flex h-[100dvh] flex-col bg-[#0b1120]">
         <div className="h-72 bg-[#111a2e]" />
         <div className="flex flex-1 flex-col items-center justify-center rounded-t-[28px] bg-white -mt-4 px-6 text-center">
-          <span className="text-5xl">📍</span>
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#0f1d32]/10">
+            <MapPin size={28} className="text-[#0f1d32]/40" />
+          </div>
           <p className="mt-3 text-lg font-bold text-[#0f1d32]">
             This pin dropped off the map
           </p>
