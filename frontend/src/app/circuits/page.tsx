@@ -58,7 +58,7 @@ function formatMonthYear(d: string) {
 }
 
 function CircuitCard({ circuit, index, tripName }: { circuit: Circuit; index: number; tripName?: string }) {
-  const coverUrl = PLACEHOLDER_COVERS[index % PLACEHOLDER_COVERS.length];
+  const coverUrl = circuit.cover_url ?? PLACEHOLDER_COVERS[index % PLACEHOLDER_COVERS.length];
   const isActive = (() => {
     if (!circuit.start_date) return false;
     const now = new Date();

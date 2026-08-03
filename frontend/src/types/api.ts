@@ -67,6 +67,7 @@ export interface Circuit {
   cloned_from_owner: string | null;
   star_count: number;
   is_starred: boolean;
+  cover_url: string | null;
 }
 
 export interface SharedPoint {

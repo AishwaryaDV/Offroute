@@ -414,7 +414,7 @@ function Dashboard() {
             <div className="grid grid-cols-2 gap-3">
               {visibleCircuits?.map((circuit, i) => {
                 const active = isActiveTrip(circuit);
-                const coverUrl = PLACEHOLDER_COVERS[i % PLACEHOLDER_COVERS.length];
+                const coverUrl = circuit.cover_url ?? PLACEHOLDER_COVERS[i % PLACEHOLDER_COVERS.length];
                 return (
                   <Link
                     key={circuit.id}
