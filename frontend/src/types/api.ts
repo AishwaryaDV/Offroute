@@ -64,6 +64,7 @@ export interface Circuit {
   trip_id: string | null;
   clone_count: number;
   cloned_from_token: string | null;
+  cloned_from_owner: string | null;
   star_count: number;
   is_starred: boolean;
 }

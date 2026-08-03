@@ -513,10 +513,19 @@ function CircuitDetail() {
       {circuit?.cloned_from_token && (
         <Link
           href={`/s/${circuit.cloned_from_token}`}
-          className="absolute left-4 top-[calc(max(env(safe-area-inset-top),0.75rem)+3.5rem)] z-10 flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-xs font-medium text-[#0f1d32] shadow-md backdrop-blur-md active:bg-white"
+          className="absolute left-4 right-4 top-[calc(max(env(safe-area-inset-top),0.75rem)+3.5rem)] z-10 flex items-center gap-2 rounded-2xl bg-white/90 px-4 py-2.5 shadow-md backdrop-blur-md active:bg-white"
         >
-          <Copy size={12} className="text-gray-500" />
-          View original circuit
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0f1d32]/10">
+            <Copy size={14} className="text-[#0f1d32]" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-semibold text-[#0f1d32]">
+              {circuit.cloned_from_owner
+                ? `Cloned from ${circuit.cloned_from_owner}`
+                : "Cloned circuit"}
+            </p>
+            <p className="text-[10px] text-gray-500">Tap to view original</p>
+          </div>
         </Link>
       )}
 
