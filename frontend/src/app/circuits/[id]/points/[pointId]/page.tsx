@@ -229,11 +229,17 @@ function PointDetail() {
     return (
       <div className="flex h-[100dvh] flex-col bg-[#0b1120]">
         <div className="h-72 bg-[#111a2e]" />
-        <div className="flex flex-1 flex-col items-center justify-center rounded-t-[28px] bg-white -mt-4 px-6">
-          <p className="text-lg font-semibold text-[#0f1d32]">Point not found</p>
+        <div className="flex flex-1 flex-col items-center justify-center rounded-t-[28px] bg-white -mt-4 px-6 text-center">
+          <span className="text-5xl">📍</span>
+          <p className="mt-3 text-lg font-bold text-[#0f1d32]">
+            This pin dropped off the map
+          </p>
+          <p className="mt-1 max-w-[240px] text-sm text-gray-500">
+            We couldn&apos;t find this point. It may have been removed.
+          </p>
           <Link
             href={`/circuits/${circuitId}`}
-            className="mt-4 text-sm font-medium text-blue-500"
+            className="mt-4 rounded-full bg-[#0f1d32] px-6 py-2.5 text-sm font-semibold text-white active:bg-[#162a46]"
           >
             Back to circuit
           </Link>

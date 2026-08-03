@@ -119,16 +119,19 @@ export default function SharedCircuitPage() {
 
   if (error || !circuit) {
     return (
-      <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-4 bg-[#f5f6f8] px-6">
-        <p className="text-lg font-semibold text-[#0f1d32]">Circuit not found</p>
-        <p className="text-sm text-gray-500">
-          This link may have expired or been removed.
+      <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-4 bg-[#f5f6f8] px-6 text-center">
+        <span className="text-5xl">🗺️</span>
+        <p className="text-lg font-bold text-[#0f1d32]">
+          Looks like this trail went cold
+        </p>
+        <p className="max-w-[260px] text-sm leading-relaxed text-gray-500">
+          This circuit may have been removed or the link has expired. Time to chart a new course!
         </p>
         <Link
-          href="/"
-          className="mt-2 rounded-full bg-blue-500 px-6 py-2.5 text-sm font-semibold text-white"
+          href="/dashboard"
+          className="mt-2 rounded-full bg-[#0f1d32] px-6 py-2.5 text-sm font-semibold text-white active:bg-[#162a46]"
         >
-          Go to Offroute
+          Back to Offroute
         </Link>
       </div>
     );
@@ -273,7 +276,7 @@ export default function SharedCircuitPage() {
         <div className="border-t border-gray-100 px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-4">
           <Link
             href="/login"
-            className="block rounded-xl bg-blue-500 py-3.5 text-center text-sm font-semibold text-white active:bg-blue-600"
+            className="block rounded-xl bg-[#0f1d32] py-3.5 text-center text-sm font-semibold text-white active:bg-[#162a46]"
           >
             Create your own circuits on Offroute
           </Link>

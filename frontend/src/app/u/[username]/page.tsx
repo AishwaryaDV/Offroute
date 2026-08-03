@@ -1,6 +1,6 @@
 "use client";
 
-import { Compass, Globe, MapPin, Tag } from "lucide-react";
+import { Compass, MapPin } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -33,16 +33,16 @@ function PublicProfile() {
   if (isError || !profile) {
     return (
       <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-white px-6 text-center">
-        <Globe size={48} className="mb-4 text-gray-300" />
-        <h1 className="text-2xl font-bold text-[#0f1d32]">Profile not found</h1>
-        <p className="mt-2 text-gray-500">
-          This user doesn&apos;t exist or hasn&apos;t enabled their public profile.
+        <span className="text-5xl">🧳</span>
+        <h1 className="mt-3 text-lg font-bold text-[#0f1d32]">This traveler is off the grid</h1>
+        <p className="mt-1 max-w-[260px] text-sm leading-relaxed text-gray-500">
+          This profile doesn&apos;t exist or is set to private. Maybe they&apos;re still exploring!
         </p>
         <Link
-          href="/"
-          className="mt-6 rounded-full bg-[#0f1d32] px-6 py-3 text-sm font-semibold text-white"
+          href="/dashboard"
+          className="mt-5 rounded-full bg-[#0f1d32] px-6 py-2.5 text-sm font-semibold text-white active:bg-[#162a46]"
         >
-          Go home
+          Back to Offroute
         </Link>
       </div>
     );
