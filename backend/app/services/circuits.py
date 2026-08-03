@@ -8,11 +8,19 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.config import get_settings
 from app.models.circuit import Circuit
+from app.models.media import Media
 from app.models.point import Point
 from app.models.star import Star
 from app.models.user import User
 from app.schemas.circuit import CircuitCreate, CircuitUpdate
+
+
+def _cover_url(storage_path: str | None) -> str | None:
+    if not storage_path:
+        return None
+    return f"{get_settings().storage_public_url}/{storage_path}"
 
 
 def _slugify(text: str) -> str:
@@ -58,27 +66,39 @@ async def list_circuits(db: AsyncSession, owner_id: uuid.UUID) -> list[dict]:
         .where(Star.user_id == owner_id)
         .subquery()
     )
+    cover_sub = (
+        select(
+            Media.circuit_id,
+            func.min(Media.storage_path).label("cover_path"),
+        )
+        .where(Media.type == "photo")
+        .group_by(Media.circuit_id)
+        .subquery()
+    )
     stmt = (
         select(
             Circuit,
             func.count(Point.id).label("point_count"),
             func.coalesce(star_sub.c.star_count, 0).label("star_count"),
             my_star.c.circuit_id.label("is_starred"),
+            cover_sub.c.cover_path,
         )
         .outerjoin(Point, Point.circuit_id == Circuit.id)
         .outerjoin(star_sub, star_sub.c.circuit_id == Circuit.id)
         .outerjoin(my_star, my_star.c.circuit_id == Circuit.id)
+        .outerjoin(cover_sub, cover_sub.c.circuit_id == Circuit.id)
         .where(Circuit.owner_id == owner_id)
-        .group_by(Circuit.id, star_sub.c.star_count, my_star.c.circuit_id)
+        .group_by(Circuit.id, star_sub.c.star_count, my_star.c.circuit_id, cover_sub.c.cover_path)
         .order_by(Circuit.updated_at.desc())
     )
     rows = (await db.execute(stmt)).all()
     results = []
-    for circuit, point_count, star_count, is_starred in rows:
+    for circuit, point_count, star_count, is_starred, cover_path in rows:
         obj = circuit.__dict__.copy()
         obj["point_count"] = point_count
         obj["star_count"] = star_count
         obj["is_starred"] = is_starred is not None
+        obj["cover_url"] = _cover_url(cover_path)
         results.append(obj)
     return results
 
@@ -121,6 +141,13 @@ async def get_circuit_with_count(
         if source:
             owner = await db.get(User, source.owner_id)
             obj["cloned_from_owner"] = (owner.display_name or owner.email) if owner else None
+    cover_path = await db.scalar(
+        select(Media.storage_path)
+        .where(Media.circuit_id == circuit_id, Media.type == "photo")
+        .order_by(Media.created_at)
+        .limit(1)
+    )
+    obj["cover_url"] = _cover_url(cover_path)
     return obj
 
 

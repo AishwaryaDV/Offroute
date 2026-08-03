@@ -91,3 +91,4 @@ class CircuitResponse(BaseModel):
     cloned_from_owner: str | None = None
     star_count: int = 0
     is_starred: bool = False
+    cover_url: str | None = None
