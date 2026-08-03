@@ -169,17 +169,30 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
       const my = (pts[0].y + pts[1].y) / 2 + ny * off;
       return `M${pts[0].x},${pts[0].y} Q${mx},${my} ${pts[1].x},${pts[1].y}`;
     }
-    const t = 0.5;
+    const t = 0.35;
     let d = `M${pts[0].x},${pts[0].y}`;
     for (let i = 0; i < pts.length - 1; i++) {
       const p0 = pts[Math.max(0, i - 1)];
       const p1 = pts[i];
       const p2 = pts[i + 1];
       const p3 = pts[Math.min(pts.length - 1, i + 2)];
-      const cp1x = p1.x + (p2.x - p0.x) * t;
-      const cp1y = p1.y + (p2.y - p0.y) * t;
-      const cp2x = p2.x - (p3.x - p1.x) * t;
-      const cp2y = p2.y - (p3.y - p1.y) * t;
+      let cp1x = p1.x + (p2.x - p0.x) * t;
+      let cp1y = p1.y + (p2.y - p0.y) * t;
+      let cp2x = p2.x - (p3.x - p1.x) * t;
+      let cp2y = p2.y - (p3.y - p1.y) * t;
+      const segDx = p2.x - p1.x;
+      const segDy = p2.y - p1.y;
+      const segLen = Math.sqrt(segDx * segDx + segDy * segDy);
+      if (segLen > 0) {
+        const nx = -segDy / segLen;
+        const ny = segDx / segLen;
+        const minBow = Math.max(segLen * 0.08, 6);
+        const alt = i % 2 === 0 ? 1 : -1;
+        cp1x += nx * minBow * alt;
+        cp1y += ny * minBow * alt;
+        cp2x += nx * minBow * alt;
+        cp2y += ny * minBow * alt;
+      }
       d += ` C${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2.y}`;
     }
     return d;
