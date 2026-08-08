@@ -30,6 +30,7 @@ import { StepLoader } from "@/components/StepLoader";
 import { getCircuits, createCircuit } from "@/lib/circuits";
 import { getMe } from "@/lib/me";
 import { getTrips, createTrip, deleteTrip } from "@/lib/trips";
+import { useUnsplashCover } from "@/hooks/useUnsplashCover";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import type { Circuit, Trip } from "@/types/api";
 
@@ -41,14 +42,7 @@ interface NewCircuitValues {
   visibility: string;
 }
 
-const PLACEHOLDER_COVERS = [
-  "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&h=300&fit=crop",
-  "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=400&h=300&fit=crop",
-  "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=400&h=300&fit=crop",
-  "https://images.unsplash.com/photo-1530789253388-582c481c54b0?w=400&h=300&fit=crop",
-  "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=300&fit=crop",
-  "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=400&h=300&fit=crop",
-];
+const FALLBACK_GRADIENT = "linear-gradient(135deg, #0f1d32 0%, #1a3a5c 100%)";
 
 function formatMonthYear(d: string) {
   return new Date(d).toLocaleDateString(undefined, {
@@ -57,8 +51,9 @@ function formatMonthYear(d: string) {
   });
 }
 
-function CircuitCard({ circuit, index, tripName }: { circuit: Circuit; index: number; tripName?: string }) {
-  const coverUrl = circuit.cover_url ?? PLACEHOLDER_COVERS[index % PLACEHOLDER_COVERS.length];
+function CircuitCard({ circuit, tripName }: { circuit: Circuit; tripName?: string }) {
+  const unsplashCover = useUnsplashCover(circuit.title, !!circuit.cover_url);
+  const coverUrl = circuit.cover_url ?? unsplashCover;
   const isActive = (() => {
     if (!circuit.start_date) return false;
     const now = new Date();
@@ -73,7 +68,11 @@ function CircuitCard({ circuit, index, tripName }: { circuit: Circuit; index: nu
       href={`/circuits/${circuit.slug ?? circuit.id}`}
       className="relative aspect-[4/3] overflow-hidden rounded-2xl active:opacity-90"
     >
-      <img src={coverUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
+      {coverUrl ? (
+        <img src={coverUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
+      ) : (
+        <div className="absolute inset-0" style={{ background: FALLBACK_GRADIENT }} />
+      )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
       <div className="absolute right-2.5 top-2.5 flex flex-col items-end gap-1">
         {isActive && (
@@ -369,11 +368,10 @@ function CircuitsList() {
                 </div>
               ) : allCircuits.length > 0 ? (
                 <div className="grid grid-cols-2 gap-3">
-                  {allCircuits.map((circuit, i) => (
+                  {allCircuits.map((circuit) => (
                     <CircuitCard
                       key={circuit.id}
                       circuit={circuit}
-                      index={i}
                       tripName={circuit.trip_id ? tripMap.get(circuit.trip_id) : undefined}
                     />
                   ))}

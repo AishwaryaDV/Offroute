@@ -28,6 +28,7 @@ import { BottomNav } from "@/components/BottomNav";
 import MapDynamic from "@/components/MapDynamic";
 import { StepLoader } from "@/components/StepLoader";
 import { getMe, updateMe } from "@/lib/me";
+import { useUnsplashCover } from "@/hooks/useUnsplashCover";
 import { getCircuits, createCircuit } from "@/lib/circuits";
 import { getMyStats } from "@/lib/stats";
 import { getMyInvites, acceptInvite, declineInvite } from "@/lib/collaborators";
@@ -46,6 +47,65 @@ interface NewCircuitValues {
 }
 
 type SheetSnap = "collapsed" | "half" | "full";
+
+const FALLBACK_GRADIENT = "linear-gradient(135deg, #0f1d32 0%, #1a3a5c 100%)";
+
+function formatMonthYear(d: string) {
+  return new Date(d).toLocaleDateString(undefined, {
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function DashboardCircuitCard({ circuit, isActive }: { circuit: import("@/types/api").Circuit; isActive: boolean }) {
+  const unsplashCover = useUnsplashCover(circuit.title, !!circuit.cover_url);
+  const coverUrl = circuit.cover_url ?? unsplashCover;
+
+  return (
+    <Link
+      href={`/circuits/${circuit.slug ?? circuit.id}`}
+      className="relative aspect-[4/3] overflow-hidden rounded-2xl active:opacity-90"
+    >
+      {coverUrl ? (
+        <img src={coverUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
+      ) : (
+        <div className="absolute inset-0" style={{ background: FALLBACK_GRADIENT }} />
+      )}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
+      <div className="absolute right-2.5 top-2.5 flex flex-col items-end gap-1">
+        {isActive && (
+          <span className="flex items-center gap-1 rounded-full bg-emerald-500 px-2 py-0.5 text-[9px] font-bold uppercase text-white shadow-sm">
+            <span className="h-1.5 w-1.5 rounded-full bg-white" style={{ animation: "pulse-dot 1.5s ease-in-out infinite" }} />
+            Active
+          </span>
+        )}
+        {circuit.cloned_from_token && (
+          <span className="flex items-center gap-1 rounded-full bg-black/80 px-2 py-0.5 text-[9px] font-bold uppercase text-white backdrop-blur-sm shadow-sm">
+            <Copy size={8} />
+            Cloned
+          </span>
+        )}
+      </div>
+      <div className="absolute inset-x-0 bottom-0 p-3.5">
+        <p className="truncate text-sm font-bold text-white">{circuit.title}</p>
+        <div className="mt-1.5 flex items-center gap-2 text-[10px] text-white/70">
+          <span className="flex items-center gap-0.5">
+            <MapPin size={10} /> {circuit.point_count}
+          </span>
+          <span className="flex items-center gap-0.5">
+            <Star size={10} /> {circuit.star_count}
+          </span>
+          <span className="flex items-center gap-0.5">
+            <Copy size={10} /> {circuit.clone_count}
+          </span>
+        </div>
+        <p className="mt-1 text-[10px] text-white/50">
+          {formatMonthYear(circuit.start_date ?? circuit.created_at)}
+        </p>
+      </div>
+    </Link>
+  );
+}
 
 function Dashboard() {
   const router = useRouter();
@@ -222,22 +282,6 @@ function Dashboard() {
   const visibleCircuits =
     snap === "full" ? circuits : circuits?.slice(0, 3);
 
-  const PLACEHOLDER_COVERS = [
-    "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&h=300&fit=crop",
-    "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=400&h=300&fit=crop",
-    "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=400&h=300&fit=crop",
-    "https://images.unsplash.com/photo-1530789253388-582c481c54b0?w=400&h=300&fit=crop",
-    "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=300&fit=crop",
-    "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=400&h=300&fit=crop",
-  ];
-
-  function formatMonthYear(d: string) {
-    return new Date(d).toLocaleDateString(undefined, {
-      month: "short",
-      year: "numeric",
-    });
-  }
-
   function isActiveTrip(circuit: { start_date: string | null; end_date: string | null }) {
     if (!circuit.start_date) return false;
     const now = new Date();
@@ -412,57 +456,13 @@ function Dashboard() {
         {circuits && circuits.length > 0 && (
           <div className="px-6 pt-5">
             <div className="grid grid-cols-2 gap-3">
-              {visibleCircuits?.map((circuit, i) => {
-                const active = isActiveTrip(circuit);
-                const coverUrl = circuit.cover_url ?? PLACEHOLDER_COVERS[i % PLACEHOLDER_COVERS.length];
-                return (
-                  <Link
-                    key={circuit.id}
-                    href={`/circuits/${circuit.slug ?? circuit.id}`}
-                    className="relative aspect-[4/3] overflow-hidden rounded-2xl active:opacity-90"
-                  >
-                    <img
-                      src={coverUrl}
-                      alt=""
-                      className="absolute inset-0 h-full w-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
-                    <div className="absolute right-2.5 top-2.5 flex flex-col items-end gap-1">
-                      {active && (
-                        <span className="flex items-center gap-1 rounded-full bg-emerald-500 px-2 py-0.5 text-[9px] font-bold uppercase text-white shadow-sm">
-                          <span className="h-1.5 w-1.5 rounded-full bg-white" style={{ animation: "pulse-dot 1.5s ease-in-out infinite" }} />
-                          Active
-                        </span>
-                      )}
-                      {circuit.cloned_from_token && (
-                        <span className="flex items-center gap-1 rounded-full bg-black/80 px-2 py-0.5 text-[9px] font-bold uppercase text-white backdrop-blur-sm shadow-sm">
-                          <Copy size={8} />
-                          Cloned
-                        </span>
-                      )}
-                    </div>
-                    <div className="absolute inset-x-0 bottom-0 p-3.5">
-                      <p className="truncate text-sm font-bold text-white">
-                        {circuit.title}
-                      </p>
-                      <div className="mt-1.5 flex items-center gap-2 text-[10px] text-white/70">
-                        <span className="flex items-center gap-0.5">
-                          <MapPin size={10} /> {circuit.point_count}
-                        </span>
-                        <span className="flex items-center gap-0.5">
-                          <Star size={10} /> {circuit.star_count}
-                        </span>
-                        <span className="flex items-center gap-0.5">
-                          <Copy size={10} /> {circuit.clone_count}
-                        </span>
-                      </div>
-                      <p className="mt-1 text-[10px] text-white/50">
-                        {formatMonthYear(circuit.start_date ?? circuit.created_at)}
-                      </p>
-                    </div>
-                  </Link>
-                );
-              })}
+              {visibleCircuits?.map((circuit) => (
+                <DashboardCircuitCard
+                  key={circuit.id}
+                  circuit={circuit}
+                  isActive={isActiveTrip(circuit)}
+                />
+              ))}
             </div>
 
             {/* Show more / Show less */}

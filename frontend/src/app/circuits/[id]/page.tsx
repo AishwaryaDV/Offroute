@@ -63,6 +63,7 @@ import { getCollaborators, inviteCollaborator, removeCollaborator } from "@/lib/
 import { getPoints, deletePoint, reorderPoints } from "@/lib/points";
 import { exportCircuitPdf } from "@/lib/exportPdf";
 import { getTrips, addCircuitToTrip, removeCircuitFromTrip } from "@/lib/trips";
+import { useUnsplashCover } from "@/hooks/useUnsplashCover";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import type { Collaborator, Point, Trip } from "@/types/api";
 
@@ -96,18 +97,14 @@ const CATEGORY_COLORS: Record<string, string> = {
   other: "#3b82f6",
 };
 
-const POINT_PLACEHOLDER_IMAGES = [
-  "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=320&h=200&fit=crop",
-  "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=320&h=200&fit=crop",
-  "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=320&h=200&fit=crop",
-  "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=320&h=200&fit=crop",
-  "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=320&h=200&fit=crop",
-  "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=320&h=200&fit=crop",
-  "https://images.unsplash.com/photo-1528164344705-47542687000d?w=320&h=200&fit=crop",
-  "https://images.unsplash.com/photo-1551632811-561732d1e306?w=320&h=200&fit=crop",
-  "https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=320&h=200&fit=crop",
-  "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=320&h=200&fit=crop",
-];
+function PointThumb({ title, className, style }: { title: string; className?: string; style?: React.CSSProperties }) {
+  const url = useUnsplashCover(title, false);
+  return url ? (
+    <img src={url} alt="" className={className} style={style} />
+  ) : (
+    <div className={className} style={{ ...style, background: "linear-gradient(135deg, #1a3a5c 0%, #0f1d32 100%)" }} />
+  );
+}
 
 function SortablePointCard({
   point,
@@ -141,11 +138,7 @@ function SortablePointCard({
           {...listeners}
           className="relative h-[72px] w-[72px] overflow-hidden rounded-xl ring-1 ring-white/20 touch-none"
         >
-          <img
-            src={POINT_PLACEHOLDER_IMAGES[index % POINT_PLACEHOLDER_IMAGES.length]}
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover"
-          />
+          <PointThumb title={point.title} className="absolute inset-0 h-full w-full object-cover" />
           <div className="absolute inset-0 bg-black/40" />
           <div className="relative z-10 flex h-full flex-col items-center justify-center">
             <Icon size={16} className="text-white/80" />
@@ -665,9 +658,8 @@ function CircuitDetail() {
                           : "border-white/20"
                       }`}
                     >
-                      <img
-                        src={POINT_PLACEHOLDER_IMAGES[i % POINT_PLACEHOLDER_IMAGES.length]}
-                        alt=""
+                      <PointThumb
+                        title={point.title}
                         className="h-14 w-14 shrink-0 rounded-xl object-cover"
                       />
                       <div className="min-w-0 flex-1 py-0.5">
