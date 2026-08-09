@@ -395,7 +395,6 @@ function CircuitDetail() {
         try {
           await navigator.share({
             title: circuit?.title ?? "Circuit",
-            text: circuit?.description ?? "Check out this circuit on Offroute",
             url,
           });
         } catch {

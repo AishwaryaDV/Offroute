@@ -2,7 +2,7 @@
 
 import { Compass, Eye, EyeOff, LogIn, UserPlus } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -91,9 +91,11 @@ function PasswordInput({
 function LoginForm({
   onSwitch,
   onForgot,
+  redirectTo,
 }: {
   onSwitch: () => void;
   onForgot: () => void;
+  redirectTo: string;
 }) {
   const router = useRouter();
   const {
@@ -109,13 +111,13 @@ function LoginForm({
       return;
     }
     toast.success("Welcome back!");
-    router.push("/dashboard");
+    router.push(redirectTo);
   }
 
   async function signInWithGoogle() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/dashboard` },
+      options: { redirectTo: `${window.location.origin}${redirectTo}` },
     });
     if (error) toast.error(error.message);
   }
@@ -203,7 +205,7 @@ function LoginForm({
   );
 }
 
-function SignupForm({ onSwitch }: { onSwitch: () => void }) {
+function SignupForm({ onSwitch, redirectTo }: { onSwitch: () => void; redirectTo: string }) {
   const router = useRouter();
   const {
     register,
@@ -214,7 +216,7 @@ function SignupForm({ onSwitch }: { onSwitch: () => void }) {
   async function signUpWithGoogle() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/dashboard` },
+      options: { redirectTo: `${window.location.origin}${redirectTo}` },
     });
     if (error) toast.error(error.message);
   }
@@ -230,7 +232,7 @@ function SignupForm({ onSwitch }: { onSwitch: () => void }) {
     }
     if (data.session) {
       toast.success("Account created — welcome to Offroute!");
-      router.push("/dashboard");
+      router.push(redirectTo);
     } else {
       toast.success("Check your email to confirm your account, then log in.");
       onSwitch();
@@ -388,13 +390,15 @@ function ForgotPasswordForm({ onBack }: { onBack: () => void }) {
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect") || "/dashboard";
   const [view, setView] = useState<"login" | "signup" | "forgot">("login");
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) router.replace("/dashboard");
+      if (session) router.replace(redirectTo);
     });
-  }, [router]);
+  }, [router, redirectTo]);
 
   return (
     <div className="relative flex h-[100dvh] flex-col overflow-hidden bg-[#060d1b] text-white">
@@ -424,9 +428,10 @@ export default function LoginPage() {
           <LoginForm
             onSwitch={() => setView("signup")}
             onForgot={() => setView("forgot")}
+            redirectTo={redirectTo}
           />
         )}
-        {view === "signup" && <SignupForm onSwitch={() => setView("login")} />}
+        {view === "signup" && <SignupForm onSwitch={() => setView("login")} redirectTo={redirectTo} />}
         {view === "forgot" && <ForgotPasswordForm onBack={() => setView("login")} />}
       </div>
 

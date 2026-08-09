@@ -17,13 +17,14 @@ import {
 } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import MapDynamic from "@/components/MapDynamic";
 import { StepLoader } from "@/components/StepLoader";
 import type { MapMarker } from "@/components/MapDynamic";
 import { getSharedCircuit, cloneCircuit } from "@/lib/circuits";
+import { supabase } from "@/lib/supabase";
 import type { SharedPoint } from "@/types/api";
 
 type IconComponent = React.ComponentType<{
@@ -60,20 +61,44 @@ export default function SharedCircuitPage() {
   const { token } = useParams<{ token: string }>();
   const router = useRouter();
 
+  const searchParams = useSearchParams();
   const [clonedSlug, setClonedSlug] = useState<string | null>(null);
+  const autoCloned = useRef(false);
+
+  async function handleClone() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      router.push(`/login?redirect=${encodeURIComponent(`/s/${token}?clone=1`)}`);
+      return;
+    }
+    cloneMutation.mutate();
+  }
 
   const cloneMutation = useMutation({
     mutationFn: () => cloneCircuit(token),
     onSuccess: (cloned) => {
-      setClonedSlug(cloned.slug ?? cloned.id);
+      const slug = cloned.slug ?? cloned.id;
+      setClonedSlug(slug);
+      if (searchParams.get("clone") === "1") {
+        toast.success("Circuit cloned!");
+        router.replace(`/circuits/${slug}`);
+      }
     },
     onError: (err: Error) =>
       toast.error(
         err.message?.includes("400")
           ? "You can't clone your own circuit"
-          : "Could not clone — are you logged in?"
+          : "Could not clone"
       ),
   });
+
+  useEffect(() => {
+    if (searchParams.get("clone") === "1" && !autoCloned.current) {
+      autoCloned.current = true;
+      cloneMutation.mutate();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const { data: circuit, isLoading, error } = useQuery({
     queryKey: ["shared", token],
@@ -98,7 +123,6 @@ export default function SharedCircuitPage() {
       try {
         await navigator.share({
           title: circuit?.title ?? "Circuit",
-          text: circuit?.description ?? "Check out this circuit on Offroute",
           url,
         });
       } catch {
@@ -202,7 +226,7 @@ export default function SharedCircuitPage() {
               </Link>
             ) : (
               <button
-                onClick={() => cloneMutation.mutate()}
+                onClick={handleClone}
                 disabled={cloneMutation.isPending}
                 className="flex items-center gap-2 rounded-full bg-[#0f1d32] px-4 py-2 text-sm font-medium text-white active:bg-[#162a46] disabled:opacity-50"
               >
