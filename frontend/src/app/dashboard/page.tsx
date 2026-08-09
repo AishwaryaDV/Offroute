@@ -420,10 +420,10 @@ function Dashboard() {
           ].map((s) => (
             <div key={s.label} className="rounded-xl bg-[#f5f6f8] px-2 py-3">
               <div className="flex items-center justify-center gap-1.5">
-                <span className="text-[#0f1d32]/40">{s.icon}</span>
+                <span className="text-[#0f1d32]/60">{s.icon}</span>
                 <p className="text-lg font-bold text-[#0f1d32]">{s.value}</p>
               </div>
-              <p className="mt-0.5 text-center text-[10px] text-gray-400">{s.label}</p>
+              <p className="mt-0.5 text-center text-[11px] text-gray-400">{s.label}</p>
             </div>
           ))}
         </div>
@@ -438,8 +438,8 @@ function Dashboard() {
             New circuit
           </button>
           <button
-            disabled
-            className="flex flex-1 items-center justify-center gap-2 rounded-full border border-gray-200 bg-white py-3.5 text-sm font-semibold text-gray-300"
+            onClick={() => toast("Coming soon", { description: "Travel stats are on the way" })}
+            className="flex flex-1 items-center justify-center gap-2 rounded-full border border-gray-200 bg-white py-3.5 text-sm font-semibold text-gray-300 active:bg-gray-50"
           >
             <BarChart3 size={18} />
             Travel stats

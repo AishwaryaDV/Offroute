@@ -134,7 +134,7 @@ export function BottomNav() {
                   </span>
                 )}
               </span>
-              <span className="text-[9px] font-semibold">{item.label}</span>
+              <span className="text-[10px] font-semibold">{item.label}</span>
             </Link>
           );
         })}
