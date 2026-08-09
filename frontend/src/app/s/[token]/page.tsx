@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  ArrowLeft,
   Check,
   Compass,
   Copy,
@@ -177,12 +176,9 @@ export default function SharedCircuitPage() {
           interactive
         />
         <div className="absolute left-4 top-[max(env(safe-area-inset-top),0.75rem)]">
-          <Link
-            href="/"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-black/50 backdrop-blur-md active:bg-black/70"
-            aria-label="Home"
-          >
-            <ArrowLeft size={20} className="text-white" />
+          <Link href="/" className="flex items-center gap-2">
+            <Compass size={22} className="text-white/80" />
+            <span className="text-xl font-bold tracking-tight text-white/90">Offroute</span>
           </Link>
         </div>
       </div>
@@ -197,9 +193,14 @@ export default function SharedCircuitPage() {
         <div className="px-5 pb-4 pt-4">
           <h1 className="text-2xl font-bold text-[#0f1d32]">{circuit.title}</h1>
           {circuit.owner_name && (
-            <p className="mt-1 text-sm text-gray-500">
-              by {circuit.owner_name}
-            </p>
+            <div className="mt-2 flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#0f1d32]/10">
+                <Compass size={14} className="text-[#0f1d32]/50" />
+              </div>
+              <span className="text-sm font-semibold text-[#0f1d32]/70">
+                {circuit.owner_name}
+              </span>
+            </div>
           )}
           {circuit.description && (
             <p className="mt-2 text-sm leading-relaxed text-gray-500">
