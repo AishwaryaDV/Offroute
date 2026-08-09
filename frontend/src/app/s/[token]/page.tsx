@@ -258,7 +258,7 @@ export default function SharedCircuitPage() {
               return (
                 <div
                   key={point.id}
-                  className="flex items-start gap-3 rounded-2xl bg-[#f5f6f8] p-4"
+                  className="flex items-start gap-3 rounded-2xl border border-gray-200 bg-white p-4"
                 >
                   <div
                     className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
