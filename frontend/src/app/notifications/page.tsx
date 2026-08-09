@@ -14,13 +14,14 @@ import {
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AuthGuard } from "@/components/AuthGuard";
 import { BottomNav } from "@/components/BottomNav";
 import MapDynamic from "@/components/MapDynamic";
 import { StepLoader } from "@/components/StepLoader";
 import {
   getNotifications,
+  markAllRead,
   deleteNotification,
   clearAllNotifications,
 } from "@/lib/notifications";
@@ -159,6 +160,13 @@ function NotificationsPage() {
     queryKey: ["invites"],
     queryFn: getMyInvites,
   });
+
+  useEffect(() => {
+    if (!notifications?.some((n) => !n.read)) return;
+    markAllRead().then(() => {
+      queryClient.invalidateQueries({ queryKey: ["unread-count"] });
+    });
+  }, [notifications, queryClient]);
 
   const clearAllMutation = useMutation({
     mutationFn: clearAllNotifications,

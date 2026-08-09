@@ -9,10 +9,13 @@ let cachedAuthValid = false;
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [ready, setReady] = useState(cachedAuthValid);
-  const [show, setShow] = useState(cachedAuthValid);
+  const [show, setShow] = useState(false);
 
   useEffect(() => {
-    if (cachedAuthValid) return;
+    if (cachedAuthValid) {
+      requestAnimationFrame(() => setShow(true));
+      return;
+    }
 
     supabase.auth.getUser().then(({ data: { user }, error }) => {
       if (user && !error) {
@@ -50,7 +53,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
   return (
     <div
-      className={`transition-opacity duration-300 ease-out ${show ? "opacity-100" : "opacity-0"}`}
+      className={`transition-all duration-200 ease-out ${show ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1"}`}
     >
       {children}
     </div>
