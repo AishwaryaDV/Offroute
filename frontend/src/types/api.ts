@@ -106,6 +106,7 @@ export interface CircuitCreate {
 export interface CircuitUpdate {
   title?: string;
   description?: string;
+  cover_media_id?: string | null;
   visibility?: "private" | "shared" | "public";
   tags?: string[];
   start_date?: string;

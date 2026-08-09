@@ -11,10 +11,12 @@ import {
   Download,
   Eye,
   FolderOpen,
+  ImageIcon,
   Gem,
   Globe2,
   GripVertical,
   Home,
+  History,
   Landmark,
   Leaf,
   Lock,
@@ -60,12 +62,13 @@ import MapDynamic from "@/components/MapDynamic";
 import type { MapMarker, MapHandle } from "@/components/MapDynamic";
 import { getCircuit, deleteCircuit, shareCircuit, updateCircuit, starCircuit, unstarCircuit } from "@/lib/circuits";
 import { getCollaborators, inviteCollaborator, removeCollaborator } from "@/lib/collaborators";
+import { getCircuitMedia } from "@/lib/media";
 import { getPoints, deletePoint, reorderPoints } from "@/lib/points";
 import { exportCircuitPdf } from "@/lib/exportPdf";
 import { getTrips, addCircuitToTrip, removeCircuitFromTrip } from "@/lib/trips";
 import { useUnsplashCover } from "@/hooks/useUnsplashCover";
 import { useUserLocation } from "@/hooks/useUserLocation";
-import type { Collaborator, Point, Trip } from "@/types/api";
+import type { Collaborator, Media, Point, Trip } from "@/types/api";
 
 type IconComponent = React.ComponentType<{
   size?: number;
@@ -180,6 +183,8 @@ function CircuitDetail() {
   const [editVisibility, setEditVisibility] = useState<"private" | "shared" | "public">("private");
   const [editStartDate, setEditStartDate] = useState("");
   const [editEndDate, setEditEndDate] = useState("");
+  const [editCoverId, setEditCoverId] = useState<string | null>(null);
+  const [showCoverPicker, setShowCoverPicker] = useState(false);
 
   const touchSensor = useSensor(TouchSensor, {
     activationConstraint: { delay: 100, tolerance: 8 },
@@ -203,6 +208,12 @@ function CircuitDetail() {
     queryKey: ["collaborators", id],
     queryFn: () => getCollaborators(id),
     enabled: showCollaborators,
+  });
+
+  const { data: circuitMedia } = useQuery({
+    queryKey: ["circuit-media", id],
+    queryFn: () => getCircuitMedia(id),
+    enabled: showEditCircuit,
   });
 
   const { data: trips } = useQuery({
@@ -241,6 +252,7 @@ function CircuitDetail() {
         lat: p.latitude,
         label: String(i + 1),
         category: p.category ?? undefined,
+        photoUrl: p.photo_url ?? undefined,
       })),
     [points],
   );
@@ -272,6 +284,7 @@ function CircuitDetail() {
       updateCircuit(id, {
         title: editTitle.trim() || undefined,
         description: editDesc.trim() || undefined,
+        cover_media_id: editCoverId,
         visibility: editVisibility,
         start_date: editStartDate || undefined,
         end_date: editEndDate || undefined,
@@ -289,6 +302,7 @@ function CircuitDetail() {
     setShowMenu(false);
     setEditTitle(circuit?.title ?? "");
     setEditDesc(circuit?.description ?? "");
+    setEditCoverId(circuit?.cover_media_id ?? null);
     setEditVisibility(circuit?.visibility ?? "private");
     setEditStartDate(circuit?.start_date ?? "");
     setEditEndDate(circuit?.end_date ?? "");
@@ -525,71 +539,71 @@ function CircuitDetail() {
             className="fixed inset-0 z-20"
             onClick={() => setShowMenu(false)}
           />
-          <div className="absolute right-4 top-[calc(max(env(safe-area-inset-top),0.75rem)+3rem)] z-30 w-48 overflow-hidden rounded-2xl bg-[#111a2e]/90 shadow-2xl ring-1 ring-white/10 backdrop-blur-xl">
+          <div className="absolute right-4 top-[calc(max(env(safe-area-inset-top),0.75rem)+3rem)] z-30 w-48 overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5">
             <button
               onClick={openEditCircuit}
-              className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-white active:bg-white/10"
+              className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-[#0f1d32] active:bg-gray-50"
             >
-              <Pencil size={15} className="text-white/50" />
+              <Pencil size={15} className="text-gray-400" />
               Edit circuit
             </button>
-            <div className="mx-4 h-px bg-white/10" />
+            <div className="mx-4 h-px bg-gray-100" />
             <button
               onClick={handleShare}
-              className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-white active:bg-white/10"
+              className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-[#0f1d32] active:bg-gray-50"
             >
-              <Share2 size={15} className="text-white/50" />
+              <Share2 size={15} className="text-gray-400" />
               Share circuit
             </button>
-            <div className="mx-4 h-px bg-white/10" />
+            <div className="mx-4 h-px bg-gray-100" />
             <button
               onClick={() => {
                 setShowMenu(false);
                 if (circuit && points) exportCircuitPdf(circuit, points);
               }}
-              className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-white active:bg-white/10"
+              className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-[#0f1d32] active:bg-gray-50"
             >
-              <Download size={15} className="text-white/50" />
+              <Download size={15} className="text-gray-400" />
               Export PDF
             </button>
-            <div className="mx-4 h-px bg-white/10" />
+            <div className="mx-4 h-px bg-gray-100" />
             <button
               onClick={() => {
                 setShowMenu(false);
                 setShowTripPicker(true);
               }}
-              className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-white active:bg-white/10"
+              className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-[#0f1d32] active:bg-gray-50"
             >
-              <FolderOpen size={15} className="text-white/50" />
+              <FolderOpen size={15} className="text-gray-400" />
               {circuit?.trip_id ? "Change trip" : "Move to trip"}
             </button>
-            <div className="mx-4 h-px bg-white/10" />
+            <div className="mx-4 h-px bg-gray-100" />
             <button
               onClick={startReorder}
               disabled={!points || points.length < 2}
-              className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-white active:bg-white/10 disabled:opacity-30"
+              className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-[#0f1d32] active:bg-gray-50 disabled:opacity-30"
             >
-              <ArrowDownUp size={15} className="text-white/50" />
+              <ArrowDownUp size={15} className="text-gray-400" />
               Reorder points
             </button>
-            <div className="mx-4 h-px bg-white/10" />
+            <div className="mx-4 h-px bg-gray-100" />
             <button
               onClick={() => {
                 setShowMenu(false);
                 setShowCollaborators(true);
               }}
-              className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-white active:bg-white/10"
+              className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-[#0f1d32] active:bg-gray-50"
             >
-              <Users size={15} className="text-white/50" />
+              <Users size={15} className="text-gray-400" />
               Collaborators
             </button>
-            <div className="mx-4 h-px bg-white/10" />
+            <div className="mx-4 h-px bg-gray-100" />
             <button
               onClick={() => {
                 setShowMenu(false);
                 setShowDeleteConfirm("circuit");
               }}
-              className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-red-400 active:bg-white/10"
+              className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-red-500 active:bg-gray-50"
             >
               <Trash2 size={15} />
               Delete circuit
@@ -653,7 +667,7 @@ function CircuitDetail() {
                       onKeyDown={(e) => {
                         if (e.key === "Enter") handleSelectPoint(point);
                       }}
-                      className={`flex min-w-[160px] max-w-[180px] shrink-0 gap-2.5 overflow-hidden rounded-2xl bg-black/40 p-2.5 text-left backdrop-blur-xl transition-all border ${
+                      className={`flex min-w-[160px] max-w-[180px] shrink-0 gap-2.5 overflow-hidden rounded-2xl bg-black/60 p-2.5 text-left backdrop-blur-xl transition-all border ${
                         isActive
                           ? "border-white/50 ring-2 ring-white/30 scale-[1.02]"
                           : "border-white/20"
@@ -777,6 +791,77 @@ function CircuitDetail() {
                   />
                 </div>
 
+                {circuitMedia && circuitMedia.length > 0 && (() => {
+                  const showInline = circuitMedia.length <= 4;
+                  const previewPhotos = showInline ? circuitMedia : circuitMedia.slice(0, 3);
+                  const remaining = circuitMedia.length - 3;
+
+                  return (
+                    <div>
+                      <div className="mb-2 flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-sm font-medium text-[#0f1d32]">
+                          <ImageIcon size={16} className="text-gray-400" />
+                          <span>Cover photo</span>
+                        </div>
+                        {editCoverId && (
+                          <button
+                            type="button"
+                            onClick={() => setEditCoverId(null)}
+                            className="flex items-center gap-1 text-xs font-medium text-gray-400 active:text-gray-600"
+                          >
+                            <History size={12} />
+                            Reset
+                          </button>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-4 gap-2">
+                        {previewPhotos.map((m: Media) => {
+                          const selected = editCoverId === m.id;
+                          return (
+                            <button
+                              key={m.id}
+                              type="button"
+                              onClick={() => setEditCoverId(m.id)}
+                              className={`relative aspect-square overflow-hidden rounded-xl ring-2 transition-all ${
+                                selected
+                                  ? "ring-[#0f1d32] scale-[0.95]"
+                                  : "ring-transparent"
+                              }`}
+                            >
+                              <img
+                                src={m.public_url ?? ""}
+                                alt=""
+                                className="h-full w-full object-cover"
+                              />
+                              {selected && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white">
+                                    <Check size={14} className="text-[#0f1d32]" />
+                                  </div>
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
+                        {!showInline && (
+                          <button
+                            type="button"
+                            onClick={() => setShowCoverPicker(true)}
+                            className="flex aspect-square items-center justify-center rounded-xl bg-gray-100 text-sm font-semibold text-gray-500 active:bg-gray-200"
+                          >
+                            +{remaining}
+                          </button>
+                        )}
+                      </div>
+                      {!editCoverId && (
+                        <p className="mt-1.5 text-[11px] text-gray-400">
+                          Auto-picks the first uploaded photo
+                        </p>
+                      )}
+                    </div>
+                  );
+                })()}
+
                 <div>
                   <div className="mb-3 flex items-center gap-2 text-sm font-medium text-[#0f1d32]">
                     <Calendar size={16} className="text-gray-400" />
@@ -862,6 +947,60 @@ function CircuitDetail() {
         </div>
       )}
 
+
+      {/* Cover picker overlay */}
+      {showCoverPicker && circuitMedia && (
+        <div
+          className="fixed inset-0 z-[60] flex flex-col bg-white"
+        >
+          <div className="flex items-center justify-between px-5 pt-[max(env(safe-area-inset-top),0.75rem)] pb-3">
+            <button
+              onClick={() => setShowCoverPicker(false)}
+              className="flex h-9 w-9 items-center justify-center"
+            >
+              <X size={20} className="text-gray-600" />
+            </button>
+            <h2 className="text-lg font-bold text-[#0f1d32]">Choose cover</h2>
+            <div className="w-9" />
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+            <div className="grid grid-cols-3 gap-2">
+              {circuitMedia.map((m: Media) => {
+                const selected = editCoverId === m.id;
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => {
+                      setEditCoverId(m.id);
+                      setShowCoverPicker(false);
+                    }}
+                    className={`relative aspect-square overflow-hidden rounded-xl ring-2 transition-all ${
+                      selected
+                        ? "ring-[#0f1d32] scale-[0.96]"
+                        : "ring-transparent"
+                    }`}
+                  >
+                    <img
+                      src={m.public_url ?? ""}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                    {selected && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white">
+                          <Check size={16} className="text-[#0f1d32]" />
+                        </div>
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Collaborators sheet */}
       {showCollaborators && (

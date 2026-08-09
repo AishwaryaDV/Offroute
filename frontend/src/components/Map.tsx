@@ -15,6 +15,7 @@ export interface MapMarker {
   lat: number;
   label?: string;
   category?: string;
+  photoUrl?: string;
   draggable?: boolean;
 }
 
@@ -89,8 +90,17 @@ function createPinElement(m: MapMarker, active = false): HTMLElement {
     "position:relative;display:flex;flex-direction:column;align-items:center;cursor:pointer;transition:transform 0.2s,filter 0.2s;transform-origin:bottom center";
 
   const circle = document.createElement("div");
-  circle.style.cssText = `width:${size}px;height:${size}px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,0.35);border:2.5px solid ${color}`;
-  circle.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${iconPaths}</svg>`;
+  if (m.photoUrl) {
+    circle.style.cssText = `width:${size}px;height:${size}px;border-radius:50%;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.35);border:2.5px solid #fff`;
+    const img = document.createElement("img");
+    img.src = m.photoUrl;
+    img.alt = "";
+    img.style.cssText = "width:100%;height:100%;object-fit:cover";
+    circle.appendChild(img);
+  } else {
+    circle.style.cssText = `width:${size}px;height:${size}px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,0.35);border:2.5px solid ${color}`;
+    circle.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${iconPaths}</svg>`;
+  }
   inner.appendChild(circle);
 
   const tail = document.createElement("div");

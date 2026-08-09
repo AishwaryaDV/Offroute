@@ -34,6 +34,10 @@ export async function uploadPhoto(
   return media;
 }
 
+export function getCircuitMedia(circuitId: string): Promise<Media[]> {
+  return apiFetch<Media[]>(`/circuits/${circuitId}/media`);
+}
+
 export function deleteMedia(mediaId: string): Promise<void> {
   return apiFetch<void>(`/media/${mediaId}`, { method: "DELETE" });
 }
