@@ -348,16 +348,16 @@ function Activity() {
           <div className="flex justify-center pt-3 pb-1">
             <div className="h-1 w-10 rounded-full bg-gray-300" />
           </div>
-          <header className="flex items-start justify-between px-5 pt-2 pb-4">
-            <h1 className="text-4xl font-bold tracking-tight text-[#0f1d32]">
+          <header className="flex items-center justify-between px-5 pt-2 pb-4">
+            <h1 className="text-2xl font-bold tracking-tight text-[#0f1d32]">
               Activity
             </h1>
             <button
               onClick={() => router.back()}
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-white active:bg-gray-100"
+              className="flex h-9 w-9 items-center justify-center rounded-full active:bg-gray-100"
               aria-label="Close"
             >
-              <X size={22} className="text-[#0f1d32]" strokeWidth={2.5} />
+              <X size={20} className="text-[#0f1d32]" strokeWidth={2.5} />
             </button>
           </header>
 

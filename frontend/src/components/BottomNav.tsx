@@ -1,9 +1,11 @@
 "use client";
 
 import { Search } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { getUnreadCount } from "@/lib/notifications";
 
 const NAV_ITEMS = [
   {
@@ -42,6 +44,16 @@ const NAV_ITEMS = [
     ),
   },
   {
+    href: "/notifications",
+    label: "Alerts",
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M5.85 3.5a.75.75 0 0 0-1.117-1 9.719 9.719 0 0 0-2.348 4.876.75.75 0 0 0 1.479.248A8.219 8.219 0 0 1 5.85 3.5ZM19.267 2.5a.75.75 0 1 0-1.118 1 8.22 8.22 0 0 1 1.987 4.124.75.75 0 0 0 1.48-.248A9.72 9.72 0 0 0 19.266 2.5Z" />
+        <path fillRule="evenodd" d="M12 2.25A6.75 6.75 0 0 0 5.25 9v.75a8.217 8.217 0 0 1-2.119 5.52.75.75 0 0 0 .298 1.206c1.544.57 3.16.99 4.831 1.243a3.75 3.75 0 1 0 7.48 0 24.583 24.583 0 0 0 4.83-1.244.75.75 0 0 0 .298-1.205 8.217 8.217 0 0 1-2.118-5.52V9A6.75 6.75 0 0 0 12 2.25ZM9.75 18c0-.034 0-.067.002-.1a25.05 25.05 0 0 0 4.496 0l.002.1a2.25 2.25 0 1 1-4.5 0Z" clipRule="evenodd" />
+      </svg>
+    ),
+  },
+  {
     href: "/settings",
     label: "Settings",
     icon: (
@@ -55,6 +67,11 @@ const NAV_ITEMS = [
 export function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
+  const { data: unread } = useQuery({
+    queryKey: ["unread-count"],
+    queryFn: getUnreadCount,
+    refetchInterval: 30000,
+  });
   const navRef = useRef<HTMLElement>(null);
   const itemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
   const [indicator, setIndicator] = useState({ left: 0, width: 0 });
@@ -78,7 +95,7 @@ export function BottomNav() {
   }, [activeIndex]);
 
   return (
-    <div className="absolute inset-x-0 bottom-0 z-20 flex items-center gap-2.5 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+    <div className="absolute inset-x-0 bottom-0 z-20 flex items-center gap-2 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
       {/* Main 4 nav items */}
       <nav
         ref={navRef}
@@ -105,12 +122,19 @@ export function BottomNav() {
               key={item.href}
               href={item.href}
               ref={(el) => { itemRefs.current[i] = el; }}
-              className={`relative z-10 flex flex-col items-center gap-0.5 rounded-full px-3 py-1.5 text-[#0f1d32] transition-colors duration-200 ${
+              className={`relative z-10 flex flex-col items-center gap-0.5 rounded-full px-2 py-1.5 text-[#0f1d32] transition-colors duration-200 ${
                 active ? "font-bold" : ""
               }`}
             >
-              {item.icon}
-              <span className="text-[10px] font-semibold">{item.label}</span>
+              <span className="relative">
+                {item.icon}
+                {item.href === "/notifications" && (unread?.count ?? 0) > 0 && (
+                  <span className="absolute -right-1 -top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-red-500 px-0.5 text-[8px] font-bold text-white">
+                    {unread!.count > 9 ? "9+" : unread!.count}
+                  </span>
+                )}
+              </span>
+              <span className="text-[9px] font-semibold">{item.label}</span>
             </Link>
           );
         })}
@@ -119,10 +143,10 @@ export function BottomNav() {
       {/* Separated search icon */}
       <button
         onClick={() => router.push("/search")}
-        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#0f1d32] shadow-lg text-white active:bg-[#162a46]"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#0f1d32] shadow-lg text-white active:bg-[#162a46]"
         aria-label="Search"
       >
-        <Search size={20} />
+        <Search size={18} />
       </button>
     </div>
   );

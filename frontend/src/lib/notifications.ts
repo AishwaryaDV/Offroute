@@ -12,3 +12,11 @@ export function getUnreadCount(): Promise<{ count: number }> {
 export function markAllRead(): Promise<void> {
   return apiFetch<void>("/me/notifications/read", { method: "POST" });
 }
+
+export function deleteNotification(id: string): Promise<void> {
+  return apiFetch<void>(`/me/notifications/${id}`, { method: "DELETE" });
+}
+
+export function clearAllNotifications(): Promise<void> {
+  return apiFetch<void>("/me/notifications", { method: "DELETE" });
+}

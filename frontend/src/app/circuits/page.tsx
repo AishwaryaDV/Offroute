@@ -212,15 +212,15 @@ function CircuitsList() {
           </div>
 
           <div className="flex items-center justify-between px-5 pb-2 pt-2">
-            <h1 className="text-4xl font-bold tracking-tight text-[#0f1d32]">
+            <h1 className="text-2xl font-bold tracking-tight text-[#0f1d32]">
               Trips
             </h1>
             <button
               onClick={() => setShowTrips(false)}
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-white active:bg-gray-100"
+              className="flex h-9 w-9 items-center justify-center rounded-full active:bg-gray-100"
               aria-label="Back"
             >
-              <X size={22} className="text-[#0f1d32]" strokeWidth={2.5} />
+              <X size={20} className="text-[#0f1d32]" strokeWidth={2.5} />
             </button>
           </div>
           <p className="px-5 pb-6 text-sm text-gray-400">
@@ -302,31 +302,31 @@ function CircuitsList() {
               <div className="h-1 w-10 rounded-full bg-gray-300" />
             </div>
             <header className="px-5 pb-4 pt-2">
-              <div className="flex items-start justify-between">
-                <h1 className="text-4xl font-bold tracking-tight text-[#0f1d32]">
+              <div className="flex items-center justify-between">
+                <h1 className="text-2xl font-bold tracking-tight text-[#0f1d32]">
                   Circuits
                 </h1>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setShowNewCircuit(true)}
-                    className="flex h-11 w-11 items-center justify-center rounded-full bg-[#0f1d32] active:bg-[#0f1d32]/80"
+                    className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0f1d32] active:bg-[#0f1d32]/80"
                     aria-label="New circuit"
                   >
-                    <Plus size={20} className="text-white" />
+                    <Plus size={18} className="text-white" />
                   </button>
                   <button
                     onClick={() => setShowTrips(true)}
-                    className="flex h-11 w-11 items-center justify-center rounded-full bg-white active:bg-gray-100"
+                    className="flex h-9 w-9 items-center justify-center rounded-full active:bg-gray-100"
                     aria-label="Manage trips"
                   >
-                    <FolderOpen size={20} className="text-[#0f1d32]" />
+                    <FolderOpen size={18} className="text-[#0f1d32]" />
                   </button>
                   <button
                     onClick={() => router.back()}
-                    className="flex h-11 w-11 items-center justify-center rounded-full bg-white active:bg-gray-100"
+                    className="flex h-9 w-9 items-center justify-center rounded-full active:bg-gray-100"
                     aria-label="Close"
                   >
-                    <X size={22} className="text-[#0f1d32]" strokeWidth={2.5} />
+                    <X size={20} className="text-[#0f1d32]" strokeWidth={2.5} />
                   </button>
                 </div>
               </div>
