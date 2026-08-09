@@ -40,7 +40,6 @@ interface LoginValues {
 }
 
 interface SignupValues {
-  display_name: string;
   email: string;
   password: string;
 }
@@ -220,11 +219,10 @@ function SignupForm({ onSwitch }: { onSwitch: () => void }) {
     if (error) toast.error(error.message);
   }
 
-  async function onSubmit({ email, password, display_name }: SignupValues) {
+  async function onSubmit({ email, password }: SignupValues) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: display_name } },
     });
     if (error) {
       toast.error(error.message);
@@ -245,27 +243,6 @@ function SignupForm({ onSwitch }: { onSwitch: () => void }) {
       <p className="mb-5 text-sm text-gray-400">Start logging your travels on Offroute</p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3">
-        <div>
-          <input
-            type="text"
-            placeholder="Display name"
-            autoComplete="name"
-            {...register("display_name", {
-              required: "Display name is required",
-              minLength: { value: 2, message: "At least 2 characters" },
-              maxLength: { value: 50, message: "50 characters max" },
-            })}
-            className={`w-full rounded-xl bg-gray-50 px-4 py-3.5 text-sm text-[#0f1d32] placeholder-gray-400 outline-none ring-1 ${
-              errors.display_name
-                ? "ring-red-400 focus:ring-red-500"
-                : "ring-gray-200 focus:ring-blue-500"
-            }`}
-          />
-          {errors.display_name && (
-            <p className="mt-1 text-xs text-red-500">{errors.display_name.message}</p>
-          )}
-        </div>
-
         <div>
           <input
             type="email"
