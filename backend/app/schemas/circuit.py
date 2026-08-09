@@ -34,6 +34,7 @@ class CircuitUpdate(BaseModel):
             raise ValueError("Title cannot be blank")
         return stripped
     description: str | None = None
+    cover_media_id: uuid.UUID | None = None
     visibility: str | None = None
     tags: list[str] | None = None
     start_date: date | None = None
