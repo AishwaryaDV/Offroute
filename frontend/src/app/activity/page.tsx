@@ -93,6 +93,7 @@ function Activity() {
         lng: p.longitude,
         lat: p.latitude,
         category: p.category ?? undefined,
+        photoUrl: p.photo_url ?? undefined,
       })),
     [points],
   );
@@ -310,12 +311,20 @@ function Activity() {
                         href={`/circuits/${p.circuit_slug ?? p.circuit_id}/points/${p.id}`}
                         className="flex min-w-[140px] shrink-0 gap-2.5 rounded-xl bg-white p-3 active:bg-gray-50"
                       >
-                        <div
-                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
-                          style={{ backgroundColor: `${selectedCircuit.color}15` }}
-                        >
-                          <Icon size={14} style={{ color: selectedCircuit.color }} />
-                        </div>
+                        {p.photo_url ? (
+                          <img
+                            src={p.photo_url}
+                            alt=""
+                            className="h-8 w-8 shrink-0 rounded-full object-cover ring-2 ring-white"
+                          />
+                        ) : (
+                          <div
+                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+                            style={{ backgroundColor: `${selectedCircuit.color}15` }}
+                          >
+                            <Icon size={14} style={{ color: selectedCircuit.color }} />
+                          </div>
+                        )}
                         <div className="min-w-0">
                           <p className="truncate text-xs font-semibold text-[#0f1d32]">
                             {p.title}
@@ -444,12 +453,20 @@ function Activity() {
                       className="w-full rounded-2xl border border-gray-200 bg-white p-3.5 active:bg-gray-50"
                     >
                       <div className="flex gap-3">
-                        <div
-                          className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
-                          style={{ backgroundColor: `${circuitColor}15` }}
-                        >
-                          <Icon size={16} className="shrink-0" style={{ color: circuitColor }} />
-                        </div>
+                        {point.photo_url ? (
+                          <img
+                            src={point.photo_url}
+                            alt=""
+                            className="mt-0.5 h-9 w-9 shrink-0 rounded-full object-cover ring-2 ring-white"
+                          />
+                        ) : (
+                          <div
+                            className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+                            style={{ backgroundColor: `${circuitColor}15` }}
+                          >
+                            <Icon size={16} className="shrink-0" style={{ color: circuitColor }} />
+                          </div>
+                        )}
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-semibold text-[#0f1d32]">
                             {point.title}
