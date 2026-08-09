@@ -22,9 +22,11 @@ export function useUnsplashCover(
       return;
     }
 
+    const query = title.split(/\s+/).slice(0, 3).join(" ");
+
     let cancelled = false;
     fetch(
-      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(title)}&per_page=1&orientation=landscape`,
+      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query + " travel")}&per_page=1&orientation=landscape`,
       { headers: { Authorization: `Client-ID ${ACCESS_KEY}` } },
     )
       .then((r) => r.json())
