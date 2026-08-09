@@ -2,6 +2,7 @@
 
 import {
   ArrowLeft,
+  Check,
   Compass,
   Copy,
   Gem,
@@ -113,6 +114,7 @@ export default function SharedCircuitPage() {
         lat: p.latitude,
         label: String(i + 1),
         category: p.category ?? undefined,
+        photoUrl: p.photo_url ?? undefined,
       })),
     [circuit?.points],
   );
@@ -165,7 +167,7 @@ export default function SharedCircuitPage() {
   }
 
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-[#0b1120]">
+    <div className="flex min-h-[100dvh] flex-col overflow-x-hidden bg-[#0b1120]">
       {/* Map */}
       <div className="relative">
         <MapDynamic
@@ -217,13 +219,10 @@ export default function SharedCircuitPage() {
           </div>
           <div className="mt-4 flex gap-2">
             {clonedSlug ? (
-              <Link
-                href={`/circuits/${clonedSlug}`}
-                className="flex items-center gap-2 rounded-full bg-emerald-500 px-4 py-2 text-sm font-medium text-white active:bg-emerald-600"
-              >
-                <Copy size={14} />
-                Cloned! View in my circuits →
-              </Link>
+              <div className="flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-600 ring-1 ring-emerald-200">
+                <Check size={14} />
+                Cloned
+              </div>
             ) : (
               <button
                 onClick={handleClone}
@@ -231,7 +230,7 @@ export default function SharedCircuitPage() {
                 className="flex items-center gap-2 rounded-full bg-[#0f1d32] px-4 py-2 text-sm font-medium text-white active:bg-[#162a46] disabled:opacity-50"
               >
                 <Copy size={14} />
-                {cloneMutation.isPending ? "Cloning…" : "Clone to my circuits"}
+                {cloneMutation.isPending ? "Cloning…" : "Clone"}
               </button>
             )}
             <button
@@ -242,10 +241,15 @@ export default function SharedCircuitPage() {
               Share
             </button>
           </div>
+          {clonedSlug && (
+            <p className="mt-2 text-xs text-gray-400">
+              Find it in your circuits on the dashboard
+            </p>
+          )}
         </div>
 
         {/* Points list */}
-        <div className="border-t border-gray-100 px-5 pb-10 pt-4">
+        <div className="border-t border-gray-100 px-5 pb-4 pt-4">
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
             Points
           </h2>
@@ -260,12 +264,20 @@ export default function SharedCircuitPage() {
                   key={point.id}
                   className="flex items-start gap-3 rounded-2xl border border-gray-200 bg-white p-4"
                 >
-                  <div
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
-                    style={{ background: `${color}15` }}
-                  >
-                    <Icon size={18} style={{ color }} />
-                  </div>
+                  {point.photo_url ? (
+                    <img
+                      src={point.photo_url}
+                      alt=""
+                      className="h-10 w-10 shrink-0 rounded-xl object-cover"
+                    />
+                  ) : (
+                    <div
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+                      style={{ background: `${color}15` }}
+                    >
+                      <Icon size={18} style={{ color }} />
+                    </div>
+                  )}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold text-gray-300">
@@ -276,7 +288,7 @@ export default function SharedCircuitPage() {
                       </p>
                     </div>
                     {point.notes && (
-                      <p className="mt-1 text-xs leading-relaxed text-gray-500">
+                      <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-gray-500">
                         {point.notes}
                       </p>
                     )}
@@ -300,12 +312,12 @@ export default function SharedCircuitPage() {
         </div>
 
         {/* Footer CTA */}
-        <div className="border-t border-gray-100 px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-4">
+        <div className="flex justify-center px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-2">
           <Link
             href="/login"
-            className="block rounded-xl bg-[#0f1d32] py-3.5 text-center text-sm font-semibold text-white active:bg-[#162a46]"
+            className="inline-flex items-center justify-center rounded-full bg-[#0f1d32] px-6 py-3 text-sm font-semibold text-white active:bg-[#162a46]"
           >
-            Create your own circuits on Offroute
+            Create your own on Offroute
           </Link>
         </div>
       </div>

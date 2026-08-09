@@ -80,6 +80,7 @@ export interface SharedPoint {
   visited_at: string | null;
   category: PointCategory | null;
   rating: number | null;
+  photo_url: string | null;
 }
 
 export interface SharedCircuit {
