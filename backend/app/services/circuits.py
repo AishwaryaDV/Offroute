@@ -266,6 +266,20 @@ async def get_circuit_by_token(db: AsyncSession, token: str) -> dict:
     if circuit is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Shared circuit not found")
     owner = await db.get(User, circuit.owner_id)
+    settings = get_settings()
+    point_ids = [p.id for p in circuit.points]
+    photo_map: dict = {}
+    if point_ids:
+        photo_sub = (
+            select(
+                Media.point_id,
+                func.min(Media.storage_path).label("first_photo"),
+            )
+            .where(Media.type == "photo", Media.point_id.in_(point_ids))
+            .group_by(Media.point_id)
+        )
+        for row in (await db.execute(photo_sub)).all():
+            photo_map[row.point_id] = f"{settings.storage_public_url}/{row.first_photo}"
     return {
         "id": circuit.id,
         "title": circuit.title,
@@ -286,6 +300,7 @@ async def get_circuit_by_token(db: AsyncSession, token: str) -> dict:
                 "visited_at": p.visited_at,
                 "category": p.category,
                 "rating": p.rating,
+                "photo_url": photo_map.get(p.id),
             }
             for p in sorted(circuit.points, key=lambda p: p.order_index)
         ],
