@@ -10,7 +10,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base
 
 NotifTypeEnum = Enum(
-    "star", "clone", "invite", "invite_accepted",
+    "star", "clone", "invite", "invite_accepted", "point_added", "point_deleted",
     name="notif_type",
     create_type=False,
 )

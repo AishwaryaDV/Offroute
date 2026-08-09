@@ -13,6 +13,8 @@ PUSH_TITLES = {
     "clone": "Circuit cloned",
     "invite": "Collaboration invite",
     "invite_accepted": "Invite accepted",
+    "point_added": "New point added",
+    "point_deleted": "Point removed",
 }
 
 
@@ -84,3 +86,58 @@ async def mark_all_read(db: AsyncSession, user_id: uuid.UUID) -> None:
         .values(read=True)
     )
     await db.commit()
+
+
+async def delete_one(db: AsyncSession, user_id: uuid.UUID, notif_id: uuid.UUID) -> bool:
+    from sqlalchemy import delete as sa_delete
+
+    result = await db.execute(
+        sa_delete(Notification).where(
+            Notification.id == notif_id, Notification.user_id == user_id
+        )
+    )
+    await db.commit()
+    return result.rowcount > 0
+
+
+async def delete_all(db: AsyncSession, user_id: uuid.UUID) -> None:
+    from sqlalchemy import delete as sa_delete
+
+    await db.execute(
+        sa_delete(Notification).where(Notification.user_id == user_id)
+    )
+    await db.commit()
+
+
+async def notify_circuit_members(
+    db: AsyncSession,
+    circuit_id: uuid.UUID,
+    actor_id: uuid.UUID,
+    type: str,
+    message: str,
+) -> None:
+    from app.models.circuit import Circuit
+    from app.models.collaborator import Collaborator
+
+    circuit = await db.get(Circuit, circuit_id)
+    if not circuit:
+        return
+
+    recipient_ids: set[uuid.UUID] = set()
+
+    if circuit.owner_id != actor_id:
+        recipient_ids.add(circuit.owner_id)
+
+    collabs = (
+        await db.execute(
+            select(Collaborator.user_id).where(
+                Collaborator.circuit_id == circuit_id,
+                Collaborator.status == "accepted",
+                Collaborator.user_id != actor_id,
+            )
+        )
+    ).scalars().all()
+    recipient_ids.update(collabs)
+
+    for uid in recipient_ids:
+        await create(db, uid, type, message, circuit_id=circuit_id, actor_id=actor_id)

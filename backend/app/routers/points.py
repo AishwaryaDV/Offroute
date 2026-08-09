@@ -9,6 +9,7 @@ from app.dependencies import get_current_user
 from app.models.user import User
 from app.schemas.point import PointCreate, PointResponse, PointUpdate, ReorderRequest, WorldPointResponse
 from app.services import circuits as circuits_service
+from app.services import notifications as notif_service
 from app.services import points as points_service
 
 router = APIRouter(tags=["points"])
@@ -42,7 +43,13 @@ async def create_point(
 ):
     circuit = await circuits_service.resolve_circuit(db, circuit_id)
     circuits_service.assert_owner(circuit, user.id)
-    return await points_service.create_point(db, circuit.id, data)
+    result = await points_service.create_point(db, circuit.id, data)
+    actor_name = user.display_name or user.email
+    await notif_service.notify_circuit_members(
+        db, circuit.id, user.id, "point_added",
+        f'{actor_name} added "{data.title}" to {circuit.title}',
+    )
+    return result
 
 
 @router.get("/points/{point_id}", response_model=PointResponse)
@@ -79,7 +86,13 @@ async def delete_point(
     point = await points_service.get_point(db, point_id)
     circuit = await circuits_service.get_circuit(db, point.circuit_id)
     circuits_service.assert_owner(circuit, user.id)
+    point_title = point.title
     await points_service.delete_point(db, point)
+    actor_name = user.display_name or user.email
+    await notif_service.notify_circuit_members(
+        db, circuit.id, user.id, "point_deleted",
+        f'{actor_name} removed "{point_title}" from {circuit.title}',
+    )
 
 
 @router.patch("/circuits/{circuit_id}/points/reorder", response_model=list[PointResponse])

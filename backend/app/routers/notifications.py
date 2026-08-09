@@ -1,6 +1,7 @@
+import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -34,3 +35,22 @@ async def mark_all_read(
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     await notif_service.mark_all_read(db, user.id)
+
+
+@router.delete("", status_code=204)
+async def clear_all(
+    user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    await notif_service.delete_all(db, user.id)
+
+
+@router.delete("/{notif_id}", status_code=204)
+async def delete_notification(
+    notif_id: uuid.UUID,
+    user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    deleted = await notif_service.delete_one(db, user.id, notif_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Notification not found")
