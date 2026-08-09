@@ -97,8 +97,9 @@ const CATEGORY_COLORS: Record<string, string> = {
   other: "#3b82f6",
 };
 
-function PointThumb({ title, className, style }: { title: string; className?: string; style?: React.CSSProperties }) {
-  const url = useUnsplashCover(title, false);
+function PointThumb({ photoUrl, title, className, style }: { photoUrl?: string | null; title: string; className?: string; style?: React.CSSProperties }) {
+  const unsplashUrl = useUnsplashCover(title, !!photoUrl);
+  const url = photoUrl ?? unsplashUrl;
   return url ? (
     <img src={url} alt="" className={className} style={style} />
   ) : (
@@ -138,7 +139,7 @@ function SortablePointCard({
           {...listeners}
           className="relative h-[72px] w-[72px] overflow-hidden rounded-xl ring-1 ring-white/20 touch-none"
         >
-          <PointThumb title={point.title} className="absolute inset-0 h-full w-full object-cover" />
+          <PointThumb photoUrl={point.photo_url} title={point.title} className="absolute inset-0 h-full w-full object-cover" />
           <div className="absolute inset-0 bg-black/40" />
           <div className="relative z-10 flex h-full flex-col items-center justify-center">
             <Icon size={16} className="text-white/80" />
@@ -659,6 +660,7 @@ function CircuitDetail() {
                       }`}
                     >
                       <PointThumb
+                        photoUrl={point.photo_url}
                         title={point.title}
                         className="h-14 w-14 shrink-0 rounded-xl object-cover"
                       />

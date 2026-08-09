@@ -40,6 +40,15 @@ async def list_media(db: AsyncSession, point_id: uuid.UUID) -> list[Media]:
     return list((await db.execute(stmt)).scalars().all())
 
 
+async def list_circuit_media(db: AsyncSession, circuit_id: uuid.UUID) -> list[Media]:
+    stmt = (
+        select(Media)
+        .where(Media.circuit_id == circuit_id, Media.type == "photo")
+        .order_by(Media.created_at)
+    )
+    return list((await db.execute(stmt)).scalars().all())
+
+
 async def create_media(
     db: AsyncSession,
     point_id: uuid.UUID,

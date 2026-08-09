@@ -137,6 +137,7 @@ export interface Point {
   category: PointCategory | null;
   rating: number | null;
   created_at: string;
+  photo_url: string | null;
 }
 
 export interface PointCreate {

@@ -6,7 +6,9 @@ from shapely.geometry import Point as ShapelyPoint
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import get_settings
 from app.models.circuit import Circuit
+from app.models.media import Media
 from app.models.point import Point
 from app.schemas.point import PointCreate, PointUpdate, ReorderRequest
 
@@ -20,13 +22,29 @@ def _point_to_dict(point: Point) -> dict:
 
 
 async def list_points(db: AsyncSession, circuit_id: uuid.UUID) -> list[dict]:
+    photo_sub = (
+        select(
+            Media.point_id,
+            func.min(Media.storage_path).label("first_photo"),
+        )
+        .where(Media.type == "photo")
+        .group_by(Media.point_id)
+        .subquery()
+    )
     stmt = (
-        select(Point)
+        select(Point, photo_sub.c.first_photo)
+        .outerjoin(photo_sub, photo_sub.c.point_id == Point.id)
         .where(Point.circuit_id == circuit_id)
         .order_by(Point.order_index)
     )
-    points = (await db.execute(stmt)).scalars().all()
-    return [_point_to_dict(p) for p in points]
+    rows = (await db.execute(stmt)).all()
+    settings = get_settings()
+    results = []
+    for point, first_photo in rows:
+        d = _point_to_dict(point)
+        d["photo_url"] = f"{settings.storage_public_url}/{first_photo}" if first_photo else None
+        results.append(d)
+    return results
 
 
 async def get_point(db: AsyncSession, point_id: uuid.UUID) -> Point:
@@ -83,18 +101,30 @@ async def delete_point(db: AsyncSession, point: Point) -> None:
 
 
 async def list_all_points(db: AsyncSession, owner_id: uuid.UUID) -> list[dict]:
+    photo_sub = (
+        select(
+            Media.point_id,
+            func.min(Media.storage_path).label("first_photo"),
+        )
+        .where(Media.type == "photo")
+        .group_by(Media.point_id)
+        .subquery()
+    )
     stmt = (
-        select(Point, Circuit.title.label("circuit_title"), Circuit.slug.label("circuit_slug"))
+        select(Point, Circuit.title.label("circuit_title"), Circuit.slug.label("circuit_slug"), photo_sub.c.first_photo)
         .join(Circuit, Circuit.id == Point.circuit_id)
+        .outerjoin(photo_sub, photo_sub.c.point_id == Point.id)
         .where(Circuit.owner_id == owner_id)
         .order_by(Circuit.updated_at.desc(), Point.order_index)
     )
     rows = (await db.execute(stmt)).all()
+    settings = get_settings()
     results = []
-    for point, circuit_title, circuit_slug in rows:
+    for point, circuit_title, circuit_slug, first_photo in rows:
         d = _point_to_dict(point)
         d["circuit_title"] = circuit_title
         d["circuit_slug"] = circuit_slug
+        d["photo_url"] = f"{settings.storage_public_url}/{first_photo}" if first_photo else None
         results.append(d)
     return results
 

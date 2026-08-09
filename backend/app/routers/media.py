@@ -58,6 +58,24 @@ async def create_media(
     }
 
 
+@router.get("/circuits/{circuit_id}/media", response_model=list[MediaResponse])
+async def list_circuit_media(
+    circuit_id: str,
+    user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    circuit = await circuits_service.resolve_circuit(db, circuit_id)
+    circuits_service.assert_owner(circuit, user.id)
+    items = await media_service.list_circuit_media(db, circuit.id)
+    return [
+        {
+            **{c.key: getattr(m, c.key) for c in m.__table__.columns},
+            "public_url": media_service.get_public_url(m.storage_path),
+        }
+        for m in items
+    ]
+
+
 @router.delete("/media/{media_id}", status_code=204)
 async def delete_media(
     media_id: uuid.UUID,

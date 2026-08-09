@@ -65,6 +65,7 @@ class PointResponse(BaseModel):
     category: str | None
     rating: int | None
     created_at: datetime
+    photo_url: str | None = None
 
 
 class WorldPointResponse(PointResponse):
