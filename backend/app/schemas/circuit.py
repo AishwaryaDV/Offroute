@@ -53,6 +53,7 @@ class SharedPointResponse(BaseModel):
     visited_at: date | None
     category: str | None
     rating: int | None
+    photo_url: str | None = None
 
 
 class SharedCircuitResponse(BaseModel):
