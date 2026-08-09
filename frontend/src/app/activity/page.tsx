@@ -476,8 +476,8 @@ function Activity() {
               })}
               <div className="h-4 w-0.5 bg-gray-200" />
               <div className="h-2 w-2 rounded-full bg-gray-200" />
-              <p className="pt-8 pb-4 text-center text-[10px] text-gray-300">
-                Offroute &middot; {new Date().getFullYear()}
+              <p className="pt-8 pb-4 text-center text-[11px] text-gray-400">
+                Made for the ones who wander &middot; Offroute {new Date().getFullYear()}
               </p>
             </div>
           )}

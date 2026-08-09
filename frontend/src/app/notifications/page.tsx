@@ -4,6 +4,7 @@ import {
   Bell,
   BellOff,
   Check,
+  Clock,
   Copy,
   MapPin,
   Star,
@@ -106,8 +107,8 @@ function SwipeableNotification({
 
   return (
     <div className="relative overflow-hidden">
-      <div className="absolute inset-y-0 right-0 flex w-24 items-center justify-center bg-red-500">
-        <X size={20} className="text-white" />
+      <div className="absolute inset-y-0 right-0 flex w-16 items-center justify-center">
+        <X size={18} className="text-[#0f1d32]/40" />
       </div>
       <div
         ref={ref}
@@ -121,12 +122,15 @@ function SwipeableNotification({
             <Icon size={18} style={{ color }} />
           </div>
           <div className="min-w-0 flex-1">
-            <p className={`text-sm ${!notif.read ? "font-medium text-[#0f1d32]" : "text-[#0f1d32]/70"}`}>
+            <p className="text-sm text-[#0f1d32]">
               {notif.message}
             </p>
-            <p className="mt-0.5 text-[10px] text-gray-400">
-              {timeAgo(notif.created_at)}
-            </p>
+            <div className="mt-0.5 flex items-center gap-1">
+              <Clock size={10} className="text-gray-300" />
+              <p className="text-[10px] text-gray-400">
+                {timeAgo(notif.created_at)}
+              </p>
+            </div>
           </div>
           {!notif.read && (
             <div className="mt-2 h-2 w-2 shrink-0 rounded-full bg-blue-500" />
@@ -244,7 +248,7 @@ function NotificationsPage() {
                 <p className="mt-0.5 text-xs text-gray-400">
                   Turn on push notifications to know when someone stars or clones your circuits.
                 </p>
-                <button className="mt-2 rounded-full border border-blue-400 px-3 py-1 text-xs font-medium text-blue-500 active:bg-blue-50">
+                <button className="mt-2 rounded-full border border-[#0f1d32]/30 px-3 py-1 text-xs font-medium text-[#0f1d32] active:bg-[#0f1d32]/5">
                   Enable notifications
                 </button>
               </div>
@@ -274,9 +278,12 @@ function NotificationsPage() {
                         {invite.invited_by_name ?? "Someone"} invited you to{" "}
                         <span className="font-semibold">{invite.circuit_title}</span>
                       </p>
-                      <p className="mt-0.5 text-[10px] capitalize text-gray-400">
-                        as {invite.role} &middot; {timeAgo(invite.created_at)}
-                      </p>
+                      <div className="mt-0.5 flex items-center gap-1">
+                        <Clock size={10} className="text-gray-300" />
+                        <p className="text-[10px] capitalize text-gray-400">
+                          as {invite.role} &middot; {timeAgo(invite.created_at)}
+                        </p>
+                      </div>
                     </div>
                     <div className="flex shrink-0 gap-1.5">
                       <button
