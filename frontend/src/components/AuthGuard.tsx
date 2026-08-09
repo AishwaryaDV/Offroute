@@ -10,11 +10,12 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
+    supabase.auth.getUser().then(({ data: { user }, error }) => {
+      if (user && !error) {
         setReady(true);
         requestAnimationFrame(() => setShow(true));
       } else {
+        supabase.auth.signOut();
         router.replace("/login");
       }
     });
