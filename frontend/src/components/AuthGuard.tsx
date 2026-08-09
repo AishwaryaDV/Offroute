@@ -4,26 +4,37 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
+let cachedAuthValid = false;
+
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [ready, setReady] = useState(false);
-  const [show, setShow] = useState(false);
+  const [ready, setReady] = useState(cachedAuthValid);
+  const [show, setShow] = useState(cachedAuthValid);
 
   useEffect(() => {
+    if (cachedAuthValid) return;
+
     supabase.auth.getUser().then(({ data: { user }, error }) => {
       if (user && !error) {
+        cachedAuthValid = true;
         setReady(true);
         requestAnimationFrame(() => setShow(true));
       } else {
+        cachedAuthValid = false;
         supabase.auth.signOut();
         router.replace("/login");
       }
     });
+  }, [router]);
 
+  useEffect(() => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) router.replace("/login");
+      if (!session) {
+        cachedAuthValid = false;
+        router.replace("/login");
+      }
     });
 
     return () => subscription.unsubscribe();
