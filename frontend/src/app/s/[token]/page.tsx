@@ -18,7 +18,7 @@ import {
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import MapDynamic from "@/components/MapDynamic";
 import { StepLoader } from "@/components/StepLoader";
@@ -57,7 +57,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   other: "#3b82f6",
 };
 
-export default function SharedCircuitPage() {
+function SharedCircuitPageInner() {
   const { token } = useParams<{ token: string }>();
   const router = useRouter();
 
@@ -323,5 +323,13 @@ export default function SharedCircuitPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SharedCircuitPage() {
+  return (
+    <Suspense>
+      <SharedCircuitPageInner />
+    </Suspense>
   );
 }
