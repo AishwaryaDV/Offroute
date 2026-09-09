@@ -106,16 +106,31 @@ Tests marked **[MANUAL]** require human verification — justification included.
 - [ ] Updating title regenerates slug
 - [ ] Circuit accessible by both UUID and slug
 
+### [AUTO] Cover URL & Cover Picker
+
+- [ ] `GET /circuits` returns `cover_url` from manually chosen cover (`cover_media_id`) when set
+- [ ] `GET /circuits` falls back to auto-picked first photo when `cover_media_id` is null
+- [ ] `GET /circuits/{id}` returns correct `cover_url` for manual cover selection
+- [ ] `GET /circuits/{id}` returns auto-picked first photo when no manual cover
+- [ ] `PATCH /circuits/{id}` with `cover_media_id: <valid media id>` updates cover
+- [ ] `PATCH /circuits/{id}` with `cover_media_id: null` resets to auto-pick
+- [ ] Circuit with no photos returns `cover_url: null`
+
 ### [AUTO] Sharing
 
 - [ ] `POST /circuits/{id}/share` generates a random share token
 - [ ] `GET /shared/{token}` returns circuit data with points (no auth required)
+- [ ] `GET /shared/{token}` returns `photo_url` for each point that has photos
+- [ ] `GET /shared/{token}` returns `photo_url: null` for points without photos
+- [ ] `GET /shared/{token}` includes `owner_name` from circuit owner's display_name
 - [ ] `GET /shared/{token}` with invalid token returns 404
 - [ ] `POST /shared/{token}/clone` creates a copy owned by authenticated user
+- [ ] `POST /shared/{token}/clone` without auth returns 401
 - [ ] Cloned circuit has `cloned_from_token` set
 - [ ] Cloning increments `clone_count` on source circuit
 - [ ] Clone notification sent to original owner
 - [ ] Cloned points are independent copies (editing clone doesn't affect original)
+- [ ] Cloning own circuit returns 400
 
 ### [AUTO] Stars
 
@@ -454,9 +469,16 @@ Tests marked **[MANUAL]** require human verification — justification included.
 - [ ] Swiping less than threshold snaps back
 - [ ] X button clears all notifications
 - [ ] Empty state shows "No notifications yet" with BellOff icon
+- [ ] Push notification enable banner shown when browser permission not granted
 - [ ] Push banner dismisses and stays dismissed across page refreshes (localStorage)
 - [ ] Clock icon appears next to all timestamps
 - [ ] Unread notifications have blue dot, read ones do not
+- [ ] Opening notifications page marks all as read automatically
+- [ ] Unread count badge in bottom nav updates after mark-all-read
+- [ ] Pending invites section shows with Accept (check) and Decline (X) buttons
+- [ ] Accepting invite shows circuit in user's circuits list
+- [ ] Declining invite removes it from pending list
+- [ ] Each notification type shows correct icon and color (star=amber, clone=purple, invite=blue, etc.)
 
 ### [MANUAL] Map Rendering (why: WebGL/canvas rendering, interaction with map library)
 
@@ -466,6 +488,10 @@ Tests marked **[MANUAL]** require human verification — justification included.
 - [ ] Map zoom controls (+/-) work
 - [ ] Tapping a marker on world map shows circuit card
 - [ ] Map doesn't freeze or lag on devices with 50+ markers
+- [ ] Markers with photos show photo thumbnail with white border (no category color border)
+- [ ] Markers without photos show category icon with colored border
+- [ ] Photo marker thumbnails are circular and properly cropped (object-fit cover)
+- [ ] Photo markers render on circuit detail, activity page, and shared page
 
 ---
 
@@ -497,7 +523,7 @@ Tests marked **[MANUAL]** require human verification — justification included.
 
 - [ ] User A creates circuit with 3 points
 - [ ] User A generates share token: `POST /circuits/{id}/share`
-- [ ] Anyone can view: `GET /shared/{token}` -> circuit + points
+- [ ] Anyone can view: `GET /shared/{token}` -> circuit + points with photo_url
 - [ ] User B clones: `POST /shared/{token}/clone`
 - [ ] User B's clone has same points but different IDs
 - [ ] User B's clone has `cloned_from_token` set
@@ -505,6 +531,17 @@ Tests marked **[MANUAL]** require human verification — justification included.
 - [ ] User A gets notification: type `clone`
 - [ ] Editing clone does NOT affect original (independent copy)
 - [ ] Editing original does NOT affect clone
+- [ ] User A cloning own circuit returns 400
+
+### [MANUAL] Flow 3b: Share + Clone UI (why: auth redirect + browser navigation)
+
+- [ ] Unauthenticated user opens `/s/{token}` — sees shared page with Clone + Share buttons
+- [ ] Tapping Clone redirects to `/login?redirect=/s/{token}?clone=1`
+- [ ] After login, auto-redirects back to shared page with `?clone=1`
+- [ ] Auto-clone triggers and redirects to cloned circuit detail page
+- [ ] Green "Cloned" pill shown after successful clone (if staying on page)
+- [ ] Share button produces clean URL (no extra text concatenated)
+- [ ] Login page `redirect` param works for signup and Google OAuth too
 
 ### [AUTO] Flow 4: Star / Unstar Cycle
 
@@ -565,6 +602,59 @@ Tests marked **[MANUAL]** require human verification — justification included.
 - [ ] All 401s trigger frontend redirect to `/login`
 - [ ] CORS headers present on all responses for allowed origins
 
+### [MANUAL] Shared Page `/s/[token]` (why: visual layout + auth redirect + interaction)
+
+- [ ] Offroute branding (compass icon + "Offroute" text) shows top-left on map, links to `/`
+- [ ] Author name shown with icon, bolder than description text
+- [ ] Clone button visible for unauthenticated users
+- [ ] Tapping Clone when not logged in redirects to `/login?redirect=/s/{token}?clone=1`
+- [ ] After login, auto-clones circuit and redirects to cloned circuit detail page
+- [ ] After cloning, Clone button replaced by green "Cloned" pill with check icon
+- [ ] "Find it in your circuits on the dashboard" helper text shown after cloning
+- [ ] Cloning own circuit shows "You can't clone your own circuit" error toast
+- [ ] Share button uses `navigator.share` (no `text` field — clean URL only)
+- [ ] Share button falls back to clipboard copy on desktop
+- [ ] Point cards show photo thumbnail when `photo_url` exists
+- [ ] Point cards show category icon when no photo
+- [ ] Point notes truncated to 2 lines (`line-clamp-2`)
+- [ ] Page doesn't overflow horizontally (`overflow-x-hidden`)
+- [ ] CTA button centered, rounded-full, not full width
+- [ ] Error state shows "Looks like this trail went cold" with link back to Offroute
+
+### [MANUAL] Circuit Cover Picker (why: visual overlay + image selection UX)
+
+- [ ] Cover picker appears in edit circuit sheet
+- [ ] Circuits with 0 photos show no cover picker section
+- [ ] Circuits with 1-4 photos show inline grid of thumbnails
+- [ ] Circuits with >4 photos show first 3 + "+N" button to open fullscreen overlay
+- [ ] Fullscreen overlay shows all photos in 3-column grid at z-[60]
+- [ ] Currently selected cover photo has checkmark/highlight
+- [ ] Tapping a photo selects it as cover
+- [ ] Reset button clears manual cover selection (reverts to auto-pick)
+- [ ] Saving edit sheet persists `cover_media_id` to backend
+- [ ] Cover change reflected on circuit card in circuits list
+
+### [MANUAL] Activity Page Photos (why: visual rendering of thumbnails)
+
+- [ ] Timeline tab: points with photos show circular photo thumbnail with white ring
+- [ ] Timeline tab: points without photos show category icon circle with colored bg
+- [ ] World map tab: bottom card points show same photo/icon logic
+- [ ] Map markers on activity page show photo thumbnails when available
+
+### [MANUAL] Dashboard Tweaks (why: visual sizing and interactions)
+
+- [ ] Stat icons (circuits, points, stars, clones) at 60% opacity (not too faint, not too bold)
+- [ ] Stat labels at 11px (readable on all devices)
+- [ ] Bottom nav labels at 10px
+- [ ] Travel stats button is clickable and shows "Coming soon" toast
+- [ ] Travel stats text is grey (text-gray-300) indicating disabled state
+
+### [MANUAL] Circuit Detail Dropdown (why: visual styling)
+
+- [ ] Three-dot menu dropdown has white background (not dark blue)
+- [ ] Dropdown text is dark colored for readability
+- [ ] Dropdown has subtle ring/shadow (`ring-1 ring-black/5`)
+
 ### [MANUAL] Performance & UX (why: subjective perception, real device timing)
 
 - [ ] First load after cold start < 3 seconds
@@ -621,4 +711,4 @@ These were found in earlier QA passes and have been fixed:
 ---
 
 *Last updated: 2026-08-09*
-*Total test cases: ~200 (automated: ~170, manual: ~30)*
+*Total test cases: ~260 (automated: ~180, manual: ~80)*
