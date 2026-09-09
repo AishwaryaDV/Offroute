@@ -1,8 +1,7 @@
-import whichCountry from "which-country";
-
-export function countUniqueCountries(
+export async function countUniqueCountries(
   points: { latitude: number; longitude: number }[]
-): number {
+): Promise<number> {
+  const { default: whichCountry } = await import("which-country");
   const countries = new Set<string>();
   for (const p of points) {
     const code = whichCountry([p.longitude, p.latitude]);

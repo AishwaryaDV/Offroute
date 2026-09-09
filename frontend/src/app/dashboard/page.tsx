@@ -20,7 +20,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AuthGuard } from "@/components/AuthGuard";
@@ -128,10 +128,11 @@ function Dashboard() {
     queryKey: ["allPoints"],
     queryFn: getAllPoints,
   });
-  const countryCount = useMemo(
-    () => (allPoints ? countUniqueCountries(allPoints) : 0),
-    [allPoints],
-  );
+  const { data: countryCount = 0 } = useQuery({
+    queryKey: ["countryCount", allPoints?.length],
+    queryFn: () => countUniqueCountries(allPoints!),
+    enabled: !!allPoints && allPoints.length > 0,
+  });
 
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const handleAvatarPick = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {

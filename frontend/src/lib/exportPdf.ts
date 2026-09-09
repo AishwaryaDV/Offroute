@@ -1,4 +1,3 @@
-import { jsPDF } from "jspdf";
 import type { Circuit, Point } from "@/types/api";
 
 const MARGIN = 20;
@@ -17,7 +16,8 @@ const CATEGORY_LABELS: Record<string, string> = {
   other: "Other",
 };
 
-export function exportCircuitPdf(circuit: Circuit, points: Point[]) {
+export async function exportCircuitPdf(circuit: Circuit, points: Point[]) {
+  const { jsPDF } = await import("jspdf");
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   let y = MARGIN;
 
