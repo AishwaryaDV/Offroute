@@ -4,7 +4,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.routers import circuits, collaborators, health, me, media, notifications, points, profiles, push, search, stats, trips
 
-app = FastAPI(title="Offroute API")
+# Hide interactive docs and the OpenAPI schema in production — they expose the
+# full API surface to unauthenticated callers with no functional benefit there.
+_is_prod = get_settings().env == "production"
+app = FastAPI(
+    title="Offroute API",
+    docs_url=None if _is_prod else "/docs",
+    redoc_url=None if _is_prod else "/redoc",
+    openapi_url=None if _is_prod else "/openapi.json",
+)
 
 app.add_middleware(
     CORSMiddleware,
