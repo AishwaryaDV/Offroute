@@ -22,7 +22,8 @@ Tests marked **[MANUAL]** require human verification — justification included.
 
 - [ ] Signup with valid email + password creates user in Supabase and syncs to `users` table
 - [ ] Signup with duplicate email returns appropriate error
-- [ ] Signup with weak password (< 6 chars) returns validation error
+- [ ] Signup rejects weak password — UI enforces 8+ chars with upper/lower/number/special (`PASSWORD_REGEX`); Supabase enforces its own server minimum
+- [ ] Email signup requires confirmation (`mailer_autoconfirm: false`) — no session until the emailed link is clicked
 - [ ] Login with valid credentials returns access + refresh tokens
 - [ ] Login with wrong password returns 400
 - [ ] Login with non-existent email returns 400
@@ -30,6 +31,34 @@ Tests marked **[MANUAL]** require human verification — justification included.
 - [ ] Expired JWT token returns 401 from backend
 - [ ] 401 response triggers frontend `signOut()` + redirect to `/login`
 - [ ] Refreshed token is used transparently by `getAccessToken()`
+
+### Google OAuth (provider enabled in Supabase: `google: true`)
+
+- [ ] **[MANUAL]** Login page Google button calls `signInWithOAuth({ provider: "google", redirectTo: origin + redirect })` and navigates to Google consent (why: Google blocks automation)
+- [ ] **[MANUAL]** Signup page Google button does the same (shared handler)
+- [ ] **[MANUAL]** After consenting, user lands back authenticated and is NOT bounced to `/login`
+- [ ] **[AUTO]** Supabase Auth → URL Configuration allow-list includes `http://localhost:3000/**` (local) and the prod origin (`https://offroute.app/**`) — OAuth errors with "redirect_to not allowed" otherwise
+- [ ] **[AUTO]** Google Cloud OAuth client lists the Supabase callback (`https://<ref>.supabase.co/auth/v1/callback`) as an authorized redirect URI
+- [ ] **[MANUAL]** `redirect` query param is honored through the Google round-trip (e.g. `/s/{token}?clone=1` auto-clones after Google login)
+
+#### PKCE callback (supabase-js v2 PKCE flow, no `/auth/callback` route) — VERIFIED SAFE
+
+Google redirects to `/dashboard?code=…` with `response_type=code`. There is no
+dedicated callback route, so session establishment relies on the dashboard's
+supabase client. Checked against the installed source (`@supabase/auth-js`
+`GoTrueClient.js`): `getUser()` (no JWT) `await`s `this.initializePromise`
+(line ~2592), and `_initialize()` performs the PKCE `exchangeCodeForSession`
+from the URL (line ~359 → ~3198). So `AuthGuard`'s `getUser()` waits for the
+code exchange before its auth check — **no race; the user is not bounced.**
+
+- [x] **[VERIFIED static]** No PKCE callback race — `getUser()` awaits init which does the code exchange
+- [ ] **[MANUAL]** Still confirm end-to-end with a real Google login per environment (localhost + prod)
+
+#### Production redirect allow-list (most likely real-world break point)
+
+- [ ] **[MANUAL]** Supabase Auth → URL Configuration: **Site URL** is the prod origin (`https://offroute.app`), not a leftover `localhost` — otherwise prod Google logins bounce to localhost
+- [ ] **[MANUAL]** Redirect allow-list includes `https://offroute.app/**` (localhost:3000 is already confirmed allowed)
+- Note: Supabase enforces `redirect_to` at the **callback** stage, not at `/authorize` — so it can't be probed without completing a real Google login
 
 ### [AUTO] AuthGuard Component
 
@@ -710,5 +739,6 @@ These were found in earlier QA passes and have been fixed:
 
 ---
 
-*Last updated: 2026-08-09*
-*Total test cases: ~260 (automated: ~180, manual: ~80)*
+*Last updated: 2026-10-14*
+*Total test cases: ~270 (automated: ~185, manual: ~85)*
+*Added: Google OAuth + PKCE callback-race coverage (§2); corrected password-policy note.*
