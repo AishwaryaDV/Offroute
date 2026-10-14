@@ -220,7 +220,7 @@ function Activity() {
             markers={mapMarkers}
             circuitRoutes={circuitRoutes}
             highlightCircuitId={selectedCircuitId ?? undefined}
-            fitToMarkers={false}
+            fitToMarkers
             interactive
             userLocation={userLoc ?? undefined}
             center={[0, 20]}
