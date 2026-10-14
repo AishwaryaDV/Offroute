@@ -507,24 +507,24 @@ function Activity() {
         <div className="flex overflow-hidden rounded-full bg-[#0f1d32]/90 p-1 shadow-lg backdrop-blur-xl ring-1 ring-white/10">
           <button
             onClick={() => setTab("timeline")}
-            className={`flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-colors ${
+            className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
               tab === "timeline"
                 ? "bg-white text-[#0f1d32]"
                 : "text-white/60 active:text-white"
             }`}
           >
-            <List size={16} />
+            <List size={14} />
             Timeline
           </button>
           <button
             onClick={() => setTab("map")}
-            className={`flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-colors ${
+            className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
               tab === "map"
                 ? "bg-white text-[#0f1d32]"
                 : "text-white/60 active:text-white"
             }`}
           >
-            <Globe size={16} />
+            <Globe size={14} />
             World Map
           </button>
         </div>
