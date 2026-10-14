@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { AuthGuard } from "@/components/AuthGuard";
 import { TagInput } from "@/components/TagInput";
 import { createCircuit } from "@/lib/circuits";
 
@@ -118,8 +117,6 @@ function NewCircuit() {
 
 export default function NewCircuitPage() {
   return (
-    <AuthGuard>
       <NewCircuit />
-    </AuthGuard>
   );
 }

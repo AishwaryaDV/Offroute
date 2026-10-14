@@ -7,7 +7,6 @@ import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { AuthGuard } from "@/components/AuthGuard";
 import { DatePicker } from "@/components/DatePicker";
 import MapDynamic from "@/components/MapDynamic";
 import { createPoint } from "@/lib/points";
@@ -534,8 +533,6 @@ function AddPoint() {
 
 export default function NewPointPage() {
   return (
-    <AuthGuard>
       <AddPoint />
-    </AuthGuard>
   );
 }

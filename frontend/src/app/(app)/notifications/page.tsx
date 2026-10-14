@@ -15,7 +15,6 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AuthGuard } from "@/components/AuthGuard";
 import { BottomNav } from "@/components/BottomNav";
 import MapDynamic from "@/components/MapDynamic";
 import { StepLoader } from "@/components/StepLoader";
@@ -214,7 +213,6 @@ function NotificationsPage() {
   );
 
   return (
-    <AuthGuard>
       <div className="relative h-[100dvh] overflow-hidden bg-[#0b1120]">
         {/* Map background */}
         <div className="pointer-events-none absolute inset-0">
@@ -347,7 +345,6 @@ function NotificationsPage() {
 
         <BottomNav />
       </div>
-    </AuthGuard>
   );
 }
 

@@ -56,7 +56,6 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { AuthGuard } from "@/components/AuthGuard";
 import { StepLoader } from "@/components/StepLoader";
 import MapDynamic from "@/components/MapDynamic";
 import type { MapMarker, MapHandle } from "@/components/MapDynamic";
@@ -1214,8 +1213,6 @@ function CircuitDetail() {
 
 export default function CircuitDetailPage() {
   return (
-    <AuthGuard>
       <CircuitDetail />
-    </AuthGuard>
   );
 }

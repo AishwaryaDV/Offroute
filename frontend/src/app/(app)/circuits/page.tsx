@@ -23,7 +23,6 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { AuthGuard } from "@/components/AuthGuard";
 import { BottomNav } from "@/components/BottomNav";
 import MapDynamic from "@/components/MapDynamic";
 import { StepLoader } from "@/components/StepLoader";
@@ -586,8 +585,6 @@ function CircuitsList() {
 
 export default function CircuitsPage() {
   return (
-    <AuthGuard>
       <CircuitsList />
-    </AuthGuard>
   );
 }

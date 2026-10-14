@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { AuthGuard } from "@/components/AuthGuard";
 import MapDynamic from "@/components/MapDynamic";
 import { deleteMe, getMe, updateMe } from "@/lib/me";
 import {
@@ -744,8 +743,6 @@ function Settings() {
 
 export default function SettingsPage() {
   return (
-    <AuthGuard>
       <Settings />
-    </AuthGuard>
   );
 }

@@ -25,7 +25,6 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AuthGuard } from "@/components/AuthGuard";
 import MapDynamic from "@/components/MapDynamic";
 import { StepLoader } from "@/components/StepLoader";
 import type { MapMarker, MapHandle, CircuitRoute } from "@/components/MapDynamic";
@@ -535,8 +534,6 @@ function Activity() {
 
 export default function ActivityPage() {
   return (
-    <AuthGuard>
       <Activity />
-    </AuthGuard>
   );
 }

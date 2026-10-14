@@ -23,7 +23,6 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { AuthGuard } from "@/components/AuthGuard";
 import { BottomNav } from "@/components/BottomNav";
 import MapDynamic from "@/components/MapDynamic";
 import { StepLoader } from "@/components/StepLoader";
@@ -713,8 +712,6 @@ function Dashboard() {
 
 export default function DashboardPage() {
   return (
-    <AuthGuard>
       <Dashboard />
-    </AuthGuard>
   );
 }

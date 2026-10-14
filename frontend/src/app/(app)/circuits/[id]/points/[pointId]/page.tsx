@@ -26,7 +26,6 @@ import { useParams, useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { AuthGuard } from "@/components/AuthGuard";
 import { DatePicker } from "@/components/DatePicker";
 import MapDynamic from "@/components/MapDynamic";
 import { StepLoader } from "@/components/StepLoader";
@@ -693,8 +692,6 @@ function PointDetail() {
 
 export default function PointDetailPage() {
   return (
-    <AuthGuard>
       <PointDetail />
-    </AuthGuard>
   );
 }

@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useUserLocation } from "@/hooks/useUserLocation";
-import { AuthGuard } from "@/components/AuthGuard";
 import MapDynamic from "@/components/MapDynamic";
 import { StepLoader } from "@/components/StepLoader";
 import { searchAll } from "@/lib/search";
@@ -284,8 +283,6 @@ function SearchPage() {
 
 export default function SearchPageWrapper() {
   return (
-    <AuthGuard>
       <SearchPage />
-    </AuthGuard>
   );
 }

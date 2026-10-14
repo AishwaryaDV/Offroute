@@ -4,7 +4,6 @@ import { ArrowLeft, Minus, Plus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AuthGuard } from "@/components/AuthGuard";
 import MapDynamic from "@/components/MapDynamic";
 import { StepLoader } from "@/components/StepLoader";
 import type { MapMarker, MapHandle, CircuitRoute } from "@/components/MapDynamic";
@@ -191,8 +190,6 @@ function WorldMap() {
 
 export default function WorldPage() {
   return (
-    <AuthGuard>
       <WorldMap />
-    </AuthGuard>
   );
 }
