@@ -51,6 +51,7 @@ export const test = base.extend<object, Fixtures>({
   apiA: [
     async ({ userA }, use) => {
       const ctx = await apiFor(userA.accessToken);
+      await ctx.get("/me"); // warm: auto-sync the backend users row from the JWT
       await use(ctx);
       await ctx.dispose();
     },
@@ -59,6 +60,7 @@ export const test = base.extend<object, Fixtures>({
   apiB: [
     async ({ userB }, use) => {
       const ctx = await apiFor(userB.accessToken);
+      await ctx.get("/me"); // ensure userB exists in the backend before invites/collab
       await use(ctx);
       await ctx.dispose();
     },
