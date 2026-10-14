@@ -54,6 +54,7 @@ function formatMonthYear(d: string) {
 function CircuitCard({ circuit, tripName }: { circuit: Circuit; tripName?: string }) {
   const unsplashCover = useUnsplashCover(circuit.title, !!circuit.cover_url);
   const coverUrl = circuit.cover_url ?? unsplashCover;
+  const [imgFailed, setImgFailed] = useState(false);
   const isActive = (() => {
     if (!circuit.start_date) return false;
     const now = new Date();
@@ -68,8 +69,13 @@ function CircuitCard({ circuit, tripName }: { circuit: Circuit; tripName?: strin
       href={`/circuits/${circuit.slug ?? circuit.id}`}
       className="relative aspect-[4/3] overflow-hidden rounded-2xl active:opacity-90"
     >
-      {coverUrl ? (
-        <img src={coverUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
+      {coverUrl && !imgFailed ? (
+        <img
+          src={coverUrl}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+          onError={() => setImgFailed(true)}
+        />
       ) : (
         <div className="absolute inset-0" style={{ background: FALLBACK_GRADIENT }} />
       )}
