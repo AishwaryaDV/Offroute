@@ -1,5 +1,6 @@
-const CACHE = "offroute-v1";
-const PRECACHE = ["/icons/icon-192.png", "/icons/icon-512.png"];
+const CACHE = "offroute-v2";
+const OFFLINE_URL = "/offline.html";
+const PRECACHE = ["/offline.html", "/icons/icon-192.png", "/icons/icon-512.png"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(PRECACHE)));
@@ -19,6 +20,25 @@ self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
   const url = new URL(e.request.url);
   if (url.pathname.startsWith("/api") || url.origin !== self.location.origin) return;
+
+  // Navigations: network-first, fall back to the cached page, then the offline
+  // shell. This is what lets the installed app open something sensible offline.
+  if (e.request.mode === "navigate") {
+    e.respondWith(
+      fetch(e.request)
+        .then((res) => {
+          const clone = res.clone();
+          caches.open(CACHE).then((c) => c.put(e.request, clone));
+          return res;
+        })
+        .catch(async () =>
+          (await caches.match(e.request)) || (await caches.match(OFFLINE_URL))
+        )
+    );
+    return;
+  }
+
+  // Static assets: network-first with runtime caching, cache fallback offline.
   e.respondWith(
     fetch(e.request)
       .then((res) => {
