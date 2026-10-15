@@ -6,7 +6,7 @@ from pathlib import Path
 
 from app.services.assistant.tools import CATEGORIES
 
-_TEMPLATE = (Path(__file__).parent / "prompts" / "v1.md").read_text()
+_TEMPLATE = (Path(__file__).parent / "prompts" / "v2.md").read_text()
 
 
 def _sanitize_title(title: str) -> str:
