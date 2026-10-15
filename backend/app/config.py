@@ -22,6 +22,22 @@ class Settings(BaseSettings):
     s3_region: str = "auto"
     storage_public_url: str = ""
 
+    # --- Chat assistant (per-circuit "Ask AI") ---
+    # Ships dark behind this flag until the feature is complete.
+    assistant_enabled: bool = False
+    # Claude via the Claude Code CLI subscription login (no ANTHROPIC_API_KEY on
+    # the host). Model is resolved by the CLI/plan; start on Haiku, bump to Opus
+    # only if tool-selection is weak.
+    assistant_model: str = "claude-haiku-4-5"
+    # Gemini free-tier fallback for when the Claude login lapses / hits limits.
+    gemini_api_key: str = ""
+    assistant_gemini_model: str = "gemini-flash-latest"
+    # Geocoding for find_place: Nominatim (free, no key) is the default; Stadia
+    # is used first when a key is present.
+    stadia_api_key: str = ""
+    # Per-user guardrail (spec: free-tier limits are shared across all users).
+    assistant_daily_message_cap: int = 100
+
     @property
     def cors_origins_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
