@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timezone
 
 from fastapi import HTTPException, status
 from geoalchemy2.shape import from_shape, to_shape
@@ -34,7 +35,7 @@ async def list_points(db: AsyncSession, circuit_id: uuid.UUID) -> list[dict]:
     stmt = (
         select(Point, photo_sub.c.first_photo)
         .outerjoin(photo_sub, photo_sub.c.point_id == Point.id)
-        .where(Point.circuit_id == circuit_id)
+        .where(Point.circuit_id == circuit_id, Point.deleted_at.is_(None))
         .order_by(Point.order_index)
     )
     rows = (await db.execute(stmt)).all()
@@ -49,7 +50,7 @@ async def list_points(db: AsyncSession, circuit_id: uuid.UUID) -> list[dict]:
 
 async def get_point(db: AsyncSession, point_id: uuid.UUID) -> Point:
     point = await db.get(Point, point_id)
-    if point is None:
+    if point is None or point.deleted_at is not None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Point not found")
     return point
 
@@ -59,7 +60,7 @@ async def create_point(
 ) -> dict:
     max_idx = await db.scalar(
         select(func.coalesce(func.max(Point.order_index), -1))
-        .where(Point.circuit_id == circuit_id)
+        .where(Point.circuit_id == circuit_id, Point.deleted_at.is_(None))
     )
     point = Point(
         circuit_id=circuit_id,
@@ -96,8 +97,21 @@ async def update_point(
 
 
 async def delete_point(db: AsyncSession, point: Point) -> None:
-    await db.delete(point)
+    """Soft-delete: hide the point everywhere but keep it (and its media) so the
+    assistant's undo can restore it. Hard removal still happens via FK cascade
+    when a circuit or account is deleted."""
+    point.deleted_at = datetime.now(timezone.utc)
     await db.commit()
+
+
+async def restore_point(db: AsyncSession, point_id: uuid.UUID) -> dict:
+    point = await db.get(Point, point_id)
+    if point is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Point not found")
+    point.deleted_at = None
+    await db.commit()
+    await db.refresh(point)
+    return _point_to_dict(point)
 
 
 async def list_all_points(db: AsyncSession, owner_id: uuid.UUID) -> list[dict]:
@@ -114,7 +128,7 @@ async def list_all_points(db: AsyncSession, owner_id: uuid.UUID) -> list[dict]:
         select(Point, Circuit.title.label("circuit_title"), Circuit.slug.label("circuit_slug"), photo_sub.c.first_photo)
         .join(Circuit, Circuit.id == Point.circuit_id)
         .outerjoin(photo_sub, photo_sub.c.point_id == Point.id)
-        .where(Circuit.owner_id == owner_id)
+        .where(Circuit.owner_id == owner_id, Point.deleted_at.is_(None))
         .order_by(Circuit.updated_at.desc(), Point.order_index)
     )
     rows = (await db.execute(stmt)).all()

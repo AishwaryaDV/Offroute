@@ -44,6 +44,7 @@ async def search(
         .join(Circuit, Circuit.id == Point.circuit_id)
         .where(
             Circuit.owner_id == owner_id,
+            Point.deleted_at.is_(None),
             or_(
                 Point.title.ilike(pattern),
                 Point.notes.ilike(pattern),
