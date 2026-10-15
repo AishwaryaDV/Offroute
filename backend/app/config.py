@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     assistant_model: str = "claude-haiku-4-5"
     # Gemini free-tier fallback for when the Claude login lapses / hits limits.
     gemini_api_key: str = ""
-    assistant_gemini_model: str = "gemini-flash-latest"
+    assistant_gemini_model: str = "gemini-3.6-flash"
     # Geocoding for find_place: Nominatim (free, no key) is the default; Stadia
     # is used first when a key is present.
     stadia_api_key: str = ""
