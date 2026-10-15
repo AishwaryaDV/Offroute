@@ -20,12 +20,10 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { BottomNav } from "@/components/BottomNav";
-import MapDynamic from "@/components/MapDynamic";
-import { StepLoader } from "@/components/StepLoader";
 import { getMe, updateMe } from "@/lib/me";
 import { useUnsplashCover } from "@/hooks/useUnsplashCover";
 import { getCircuits, createCircuit } from "@/lib/circuits";
@@ -34,7 +32,6 @@ import { getMyInvites, acceptInvite, declineInvite } from "@/lib/collaborators";
 import { getAllPoints } from "@/lib/points";
 import { countUniqueCountries } from "@/lib/countries";
 import { COUNTRY_CODES } from "@/lib/countryCodes";
-import { useUserLocation } from "@/hooks/useUserLocation";
 import type { Invite } from "@/types/api";
 
 interface NewCircuitValues {
@@ -109,7 +106,6 @@ function DashboardCircuitCard({ circuit, isActive }: { circuit: import("@/types/
 function Dashboard() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const userGeo = useUserLocation();
   const { data: me } = useQuery({ queryKey: ["me"], queryFn: getMe });
   const { data: circuits } = useQuery({
     queryKey: ["circuits"],
@@ -183,12 +179,6 @@ function Dashboard() {
   });
 
   const [showNewCircuit, setShowNewCircuit] = useState(false);
-  const [mapReady, setMapReady] = useState(() =>
-    typeof window !== "undefined" && sessionStorage.getItem("offroute-map-loaded") === "1"
-  );
-  const [userLoc, setUserLoc] = useState<{ lng: number; lat: number } | null>(
-    null
-  );
 
   // Draggable sheet state
   const [snap, setSnap] = useState<SheetSnap>("half");
@@ -238,15 +228,6 @@ function Dashboard() {
     setDragOffset(null);
   }, [dragOffset]);
 
-  useEffect(() => {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      (pos) =>
-        setUserLoc({ lng: pos.coords.longitude, lat: pos.coords.latitude }),
-      () => {},
-      { enableHighAccuracy: false, timeout: 8000 }
-    );
-  }, []);
 
   const {
     register,
@@ -292,26 +273,9 @@ function Dashboard() {
   }
 
   return (
-    <div className="relative h-[100dvh] overflow-hidden bg-[#0b1120]">
-      {/* Full-screen satellite map */}
-      <MapDynamic
-        className="absolute inset-0 h-full w-full"
-        center={userGeo.center}
-        zoom={Math.min(userGeo.zoom, 3)}
-        interactive
-        userLocation={userLoc ?? undefined}
-        onReady={() => { setMapReady(true); sessionStorage.setItem("offroute-map-loaded", "1"); }}
-      />
-
-      {/* Loading overlay — translucent with cycling icons */}
-      <div
-        className={`absolute inset-0 z-30 flex items-center justify-center bg-black/40 backdrop-blur-xl transition-opacity duration-700 ${
-          mapReady ? "pointer-events-none opacity-0" : "opacity-100"
-        }`}
-      >
-        <StepLoader variant="dark" />
-      </div>
-
+    <div className="relative h-[100dvh] overflow-hidden">
+      {/* Transparent over the layout's PersistentMapBackground: the satellite
+          map + loading overlay now live there so they survive navigation. */}
       {/* Header: Offroute branding */}
       <header className="absolute inset-x-0 top-0 z-10 px-5 pt-[max(env(safe-area-inset-top),1.25rem)]">
         <div className="flex items-center gap-2 [filter:drop-shadow(0_1px_4px_rgba(0,0,0,.7))]">
