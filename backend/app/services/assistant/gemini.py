@@ -17,6 +17,25 @@ from app.services.assistant.tools import Tool
 logger = logging.getLogger(__name__)
 
 _MAX_STEPS = 8
+_TRANSIENT = (429, 500, 502, 503, 504)
+
+
+async def _generate(client, models: list[str], contents, config):
+    """Try the model chain; roll over to a lighter model on 429/5xx."""
+    last_exc = None
+    for model in models:
+        try:
+            resp = await client.aio.models.generate_content(
+                model=model, contents=contents, config=config,
+            )
+            return resp, model
+        except Exception as exc:  # noqa: BLE001
+            if getattr(exc, "code", None) in _TRANSIENT:
+                logger.warning("gemini %s transient error, trying next model: %s", model, exc)
+                last_exc = exc
+                continue
+            raise
+    raise last_exc  # every model was rate-limited / overloaded
 
 
 def _gemini_schema(schema: dict) -> dict:
@@ -56,7 +75,7 @@ async def run(
             retry_options=types.HttpRetryOptions(attempts=1),
         ),
     )
-    model = settings.assistant_gemini_model
+    models = settings.assistant_gemini_models
     tool_map = {t.name: t for t in tools}
 
     config = types.GenerateContentConfig(
@@ -80,13 +99,12 @@ async def run(
     contents.append(types.Content(role="user", parts=[types.Part(text=user_message)]))
 
     steps: list[Step] = []
+    used = models[0]
     for _ in range(_MAX_STEPS):
-        resp = await client.aio.models.generate_content(
-            model=model, contents=contents, config=config,
-        )
+        resp, used = await _generate(client, models, contents, config)
         calls = resp.function_calls
         if not calls:
-            return TurnResult(reply=(resp.text or "").strip(), model=f"gemini:{model}", steps=steps)
+            return TurnResult(reply=(resp.text or "").strip(), model=f"gemini:{used}", steps=steps)
 
         # keep the model's function-call turn, then answer each call
         contents.append(resp.candidates[0].content)
@@ -113,7 +131,7 @@ async def run(
 
     return TurnResult(
         reply="I couldn't finish that — try rephrasing or breaking it into steps.",
-        model=f"gemini:{model}",
+        model=f"gemini:{used}",
         steps=steps,
         error="max_steps",
     )

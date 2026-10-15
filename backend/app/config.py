@@ -32,11 +32,18 @@ class Settings(BaseSettings):
     # Gemini free-tier fallback for when the Claude login lapses / hits limits.
     gemini_api_key: str = ""
     assistant_gemini_model: str = "gemini-3.6-flash"
+    # Lighter models to roll over to on 429 / 5xx (same pattern as the portfolio).
+    assistant_gemini_fallbacks: str = "gemini-3.5-flash-lite,gemini-3.1-flash-lite"
     # Geocoding for find_place: Nominatim (free, no key) is the default; Stadia
     # is used first when a key is present.
     stadia_api_key: str = ""
     # Per-user guardrail (spec: free-tier limits are shared across all users).
     assistant_daily_message_cap: int = 100
+
+    @property
+    def assistant_gemini_models(self) -> list[str]:
+        extra = [m.strip() for m in self.assistant_gemini_fallbacks.split(",") if m.strip()]
+        return [self.assistant_gemini_model, *extra]
 
     @property
     def cors_origins_list(self) -> list[str]:
