@@ -54,17 +54,29 @@ async def main() -> None:
             await c.post(f"{BACKEND}/circuits/{cid}/points", headers=auth,
                          json={"title": title, "category": cat, "rating": rating, "latitude": lat, "longitude": lng})
 
-        # 3. the chat call
-        resp = await c.post(
-            f"{BACKEND}/circuits/{cid}/chat", headers=auth,
-            json={"message": "How many points are in this circuit, and which are 5 stars?", "timezone": "Asia/Kolkata"},
-        )
-        print("status:", resp.status_code)
-        data = resp.json()
-        print("model:", data.get("model"))
-        print("steps:", [(s["tool"], s["is_error"]) for s in data.get("steps", [])])
-        print("reply:", data.get("reply"))
-        print("error:", data.get("error"))
+        # 3. chat turn 1
+        r1 = (await c.post(f"{BACKEND}/circuits/{cid}/chat", headers=auth,
+                           json={"message": "How many points are in this circuit?"})).json()
+        print("turn 1 reply:", r1.get("reply"))
+        print("turn 1 steps:", [(s["tool"], s["is_error"]) for s in r1.get("steps", [])])
+
+        # history persisted?
+        hist = (await c.get(f"{BACKEND}/circuits/{cid}/chat", headers=auth)).json()
+        print("history after turn 1:", [(m["role"], m["content"][:30]) for m in hist])
+        assert len(hist) == 2, f"expected 2 messages, got {len(hist)}"
+
+        # 4. turn 2 relies on prior context ("those")
+        r2 = (await c.post(f"{BACKEND}/circuits/{cid}/chat", headers=auth,
+                           json={"message": "Which of those is rated highest?"})).json()
+        print("turn 2 reply:", r2.get("reply"))
+        hist2 = (await c.get(f"{BACKEND}/circuits/{cid}/chat", headers=auth)).json()
+        assert len(hist2) == 4, f"expected 4 messages, got {len(hist2)}"
+
+        # 5. clear
+        await c.delete(f"{BACKEND}/circuits/{cid}/chat", headers=auth)
+        hist3 = (await c.get(f"{BACKEND}/circuits/{cid}/chat", headers=auth)).json()
+        assert hist3 == [], "history not cleared"
+        print("history persisted, context works, cleared ✓")
 
         # 4. cleanup
         await c.delete(f"{BACKEND}/me", headers=auth)

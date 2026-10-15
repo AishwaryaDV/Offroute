@@ -93,7 +93,10 @@ async def run(
     )
 
     contents: list[Any] = [
-        types.Content(role=h["role"], parts=[types.Part(text=h["text"])])
+        types.Content(
+            role="model" if h["role"] == "assistant" else "user",
+            parts=[types.Part(text=h["text"])],
+        )
         for h in history
     ]
     contents.append(types.Content(role="user", parts=[types.Part(text=user_message)]))

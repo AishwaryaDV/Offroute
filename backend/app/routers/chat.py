@@ -7,7 +7,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import get_settings
 from app.database import get_db
 from app.dependencies import get_current_user
+from app.models.circuit import Circuit
 from app.models.user import User
+from app.services import chat as chat_service
 from app.services import circuits as circuits_service
 from app.services.assistant.client import run_turn
 from app.services.assistant.prompt import build_system_prompt
@@ -15,16 +17,12 @@ from app.services.assistant.tools import build_read_tools
 
 router = APIRouter(tags=["assistant"])
 
-
-class ChatMessage(BaseModel):
-    role: str  # "user" | "assistant"
-    text: str = Field(max_length=4000)
+_HISTORY_FOR_MODEL = 20
 
 
 class ChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=2000)
     timezone: str | None = None
-    history: list[ChatMessage] = []
 
 
 class ChatStep(BaseModel):
@@ -33,11 +31,45 @@ class ChatStep(BaseModel):
 
 
 class ChatResponse(BaseModel):
+    message_id: str
     reply: str
     model: str
     steps: list[ChatStep]
     writes: bool = False  # true once a write is staged, so the UI can refresh
     error: str | None = None
+
+
+class ChatHistoryItem(BaseModel):
+    id: str
+    role: str
+    content: str
+    has_undo: bool
+    created_at: str
+
+
+async def _authorized_circuit(circuit_id: str, user: User, db: AsyncSession) -> Circuit:
+    if not get_settings().assistant_enabled:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+    circuit = await circuits_service.resolve_circuit(db, circuit_id)
+    circuits_service.assert_owner(circuit, user.id)
+    return circuit
+
+
+@router.get("/circuits/{circuit_id}/chat", response_model=list[ChatHistoryItem])
+async def get_history(
+    circuit_id: str,
+    user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> list[ChatHistoryItem]:
+    circuit = await _authorized_circuit(circuit_id, user, db)
+    msgs = await chat_service.list_messages(db, circuit.id)
+    return [
+        ChatHistoryItem(
+            id=str(m.id), role=m.role, content=m.content,
+            has_undo=m.undo is not None, created_at=m.created_at.isoformat(),
+        )
+        for m in msgs
+    ]
 
 
 @router.post("/circuits/{circuit_id}/chat", response_model=ChatResponse)
@@ -47,26 +79,37 @@ async def chat(
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> ChatResponse:
-    if not get_settings().assistant_enabled:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
-
-    # Resolve + authorize: the assistant acts only on a circuit the user owns.
-    circuit = await circuits_service.resolve_circuit(db, circuit_id)
-    circuits_service.assert_owner(circuit, user.id)
+    circuit = await _authorized_circuit(circuit_id, user, db)
 
     tools = build_read_tools(db, circuit, user)
     system = build_system_prompt(circuit_title=circuit.title, timezone=body.timezone or "UTC")
-    history = [{"role": m.role, "text": m.text} for m in body.history[-20:]]
+
+    # load prior turns for context (the new message is passed separately)
+    prior = await chat_service.list_messages(db, circuit.id, limit=_HISTORY_FOR_MODEL)
+    history = [{"role": m.role, "text": m.content} for m in prior]
 
     result = await run_turn(
         system=system, user_message=body.message, history=history, tools=tools,
     )
 
+    await chat_service.add_message(db, circuit.id, "user", body.message)
+    assistant_msg = await chat_service.add_message(db, circuit.id, "assistant", result.reply)
+
     return ChatResponse(
+        message_id=str(assistant_msg.id),
         reply=result.reply,
         model=result.model,
         steps=[ChatStep(tool=s.tool, is_error=s.is_error) for s in result.steps],
-        writes=False,  # phase 2 is read-only
-        # Never leak raw exception text to the client.
+        writes=False,  # phase 2/4 is read-only; write tools land in the next phase
         error="unavailable" if result.error else None,
     )
+
+
+@router.delete("/circuits/{circuit_id}/chat", status_code=status.HTTP_204_NO_CONTENT)
+async def clear_history(
+    circuit_id: str,
+    user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> None:
+    circuit = await _authorized_circuit(circuit_id, user, db)
+    await chat_service.clear_messages(db, circuit.id)
