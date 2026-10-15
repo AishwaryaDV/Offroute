@@ -1,0 +1,748 @@
+"use client";
+
+import { Bell, Camera, Check, ChevronRight, Eye, EyeOff, KeyRound, LogOut, Map, Shield, User, X } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import MapDynamic from "@/components/MapDynamic";
+import { deleteMe, getMe, updateMe } from "@/lib/me";
+import {
+  isPushSupported,
+  isSubscribedToPush,
+  subscribeToPush,
+  unsubscribeFromPush,
+} from "@/lib/push";
+import { supabase } from "@/lib/supabase";
+import { useUserLocation } from "@/hooks/useUserLocation";
+
+const MAX_AVATAR_SIZE = 2 * 1024 * 1024; // 2 MB
+const AVATAR_MAX_DIM = 512;
+
+function resizeImage(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      let w = img.width;
+      let h = img.height;
+      const scale = Math.min(AVATAR_MAX_DIM / w, AVATAR_MAX_DIM / h, 1);
+      w = Math.round(w * scale);
+      h = Math.round(h * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL("image/jpeg", 0.85));
+    };
+    img.onerror = () => reject(new Error("Could not read image"));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+interface ProfileValues {
+  display_name: string;
+  nationality: string;
+  profile_bio: string;
+}
+
+interface PasswordValues {
+  password: string;
+  confirm: string;
+}
+
+const COUNTRIES = [
+  "Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia","Australia",
+  "Austria","Azerbaijan","Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium",
+  "Belize","Benin","Bhutan","Bolivia","Bosnia and Herzegovina","Botswana","Brazil","Brunei",
+  "Bulgaria","Burkina Faso","Burundi","Cambodia","Cameroon","Canada","Cape Verde",
+  "Central African Republic","Chad","Chile","China","Colombia","Comoros","Congo","Costa Rica",
+  "Croatia","Cuba","Cyprus","Czech Republic","Denmark","Djibouti","Dominican Republic",
+  "East Timor","Ecuador","Egypt","El Salvador","Equatorial Guinea","Eritrea","Estonia",
+  "Eswatini","Ethiopia","Fiji","Finland","France","Gabon","Gambia","Georgia","Germany",
+  "Ghana","Greece","Grenada","Guatemala","Guinea","Guinea-Bissau","Guyana","Haiti","Honduras",
+  "Hungary","Iceland","India","Indonesia","Iran","Iraq","Ireland","Israel","Italy","Jamaica",
+  "Japan","Jordan","Kazakhstan","Kenya","Kiribati","Kuwait","Kyrgyzstan","Laos","Latvia",
+  "Lebanon","Lesotho","Liberia","Libya","Liechtenstein","Lithuania","Luxembourg","Madagascar",
+  "Malawi","Malaysia","Maldives","Mali","Malta","Marshall Islands","Mauritania","Mauritius",
+  "Mexico","Micronesia","Moldova","Monaco","Mongolia","Montenegro","Morocco","Mozambique",
+  "Myanmar","Namibia","Nauru","Nepal","Netherlands","New Zealand","Nicaragua","Niger",
+  "Nigeria","North Korea","North Macedonia","Norway","Oman","Pakistan","Palau","Palestine",
+  "Panama","Papua New Guinea","Paraguay","Peru","Philippines","Poland","Portugal","Qatar",
+  "Romania","Russia","Rwanda","Saint Kitts and Nevis","Saint Lucia",
+  "Saint Vincent and the Grenadines","Samoa","San Marino","São Tomé and Príncipe",
+  "Saudi Arabia","Senegal","Serbia","Seychelles","Sierra Leone","Singapore","Slovakia",
+  "Slovenia","Solomon Islands","Somalia","South Africa","South Korea","South Sudan","Spain",
+  "Sri Lanka","Sudan","Suriname","Sweden","Switzerland","Syria","Taiwan","Tajikistan",
+  "Tanzania","Thailand","Togo","Tonga","Trinidad and Tobago","Tunisia","Turkey","Turkmenistan",
+  "Tuvalu","Uganda","Ukraine","United Arab Emirates","United Kingdom","United States",
+  "Uruguay","Uzbekistan","Vanuatu","Vatican City","Venezuela","Vietnam","Yemen","Zambia",
+  "Zimbabwe",
+];
+
+const MAP_STYLE_KEY = "offroute-map-style";
+const MAP_STYLES = [
+  { id: "satellite", url: "/map-style-satellite.json", label: "Satellite", preview: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/3/3/4" },
+  { id: "streets", url: "/map-style-streets.json", label: "Streets", preview: "https://tile.openstreetmap.org/3/4/3.png" },
+  { id: "dark", url: "/map-style-dark.json", label: "Dark", preview: "https://basemaps.cartocdn.com/dark_all/3/4/3@2x.png" },
+  { id: "terrain", url: "/map-style-terrain.json", label: "Terrain", preview: "https://tile.opentopomap.org/3/4/3.png" },
+];
+
+type View = "menu" | "profile" | "account" | "mapstyle" | "notifications";
+
+function Settings() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const userGeo = useUserLocation();
+  const { data: me } = useQuery({ queryKey: ["me"], queryFn: getMe });
+
+  const [view, setView] = useState<View>("menu");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [natSearch, setNatSearch] = useState("");
+  const [natOpen, setNatOpen] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [mapStyle, setMapStyle] = useState(() =>
+    typeof window !== "undefined"
+      ? localStorage.getItem(MAP_STYLE_KEY) ?? "/map-style-satellite.json"
+      : "/map-style-satellite.json"
+  );
+
+  const [pushSupported, setPushSupported] = useState(false);
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushLoading, setPushLoading] = useState(false);
+
+  useEffect(() => {
+    const supported = isPushSupported();
+    setPushSupported(supported);
+    if (supported) {
+      isSubscribedToPush().then(setPushEnabled);
+    }
+  }, []);
+
+  async function togglePush() {
+    setPushLoading(true);
+    try {
+      if (pushEnabled) {
+        await unsubscribeFromPush();
+        setPushEnabled(false);
+        toast.success("Push notifications disabled");
+      } else {
+        const ok = await subscribeToPush();
+        if (ok) {
+          setPushEnabled(true);
+          toast.success("Push notifications enabled");
+        } else {
+          toast.error("Notification permission denied");
+        }
+      }
+    } catch {
+      toast.error("Could not update push settings");
+    } finally {
+      setPushLoading(false);
+    }
+  }
+
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (me?.avatar_url) setAvatarPreview(me.avatar_url);
+  }, [me?.avatar_url]);
+
+  const handleAvatarPick = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+    if (file.size > MAX_AVATAR_SIZE) {
+      toast.error("Image must be under 2 MB");
+      return;
+    }
+    try {
+      const dataUrl = await resizeImage(file);
+      setAvatarPreview(dataUrl);
+    } catch {
+      toast.error("Could not process image");
+    }
+  }, []);
+
+  const profileForm = useForm<ProfileValues>({
+    values: {
+      display_name: me?.display_name ?? "",
+      nationality: me?.nationality ?? "",
+      profile_bio: me?.profile_bio ?? "",
+    },
+  });
+
+  const pwForm = useForm<PasswordValues>();
+
+  const profileMutation = useMutation({
+    mutationFn: (data: Partial<ProfileValues> & { avatar_url?: string }) => updateMe(data),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(["me"], updated);
+      toast.success("Profile saved");
+      setView("menu");
+    },
+    onError: () => toast.error("Could not save — try again"),
+  });
+
+  const pwMutation = useMutation({
+    mutationFn: async (data: PasswordValues) => {
+      const { error } = await supabase.auth.updateUser({
+        password: data.password,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Password updated");
+      pwForm.reset();
+      setShowPasswordModal(false);
+      setShowPassword(false);
+    },
+    onError: (err: Error) =>
+      toast.error(err.message || "Could not update password"),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteMe,
+    onSuccess: async () => {
+      await supabase.auth.signOut();
+      queryClient.clear();
+      toast.success("Account deleted");
+      router.replace("/");
+    },
+    onError: () => toast.error("Could not delete account — try again"),
+  });
+
+  async function logout() {
+    await supabase.auth.signOut();
+    router.replace("/");
+  }
+
+  function submitPassword() {
+    pwForm.handleSubmit((data) => pwMutation.mutate(data))();
+  }
+
+  const filteredCountries = natSearch
+    ? COUNTRIES.filter((c) =>
+        c.toLowerCase().includes(natSearch.toLowerCase())
+      )
+    : COUNTRIES;
+
+  const permissionDenied =
+    typeof window !== "undefined" && "Notification" in window && Notification.permission === "denied";
+
+  const cardOpen = view !== "menu";
+
+  return (
+    <div className="relative h-[100dvh]">
+      <div className="pointer-events-none absolute inset-0">
+        <MapDynamic center={userGeo.center} zoom={Math.min(userGeo.zoom, 3)} />
+        <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
+      </div>
+      <div className="sheet-light absolute inset-x-0 bottom-0 top-[6dvh] overflow-hidden rounded-t-[28px] bg-white">
+        {/* Settings menu — always visible behind cards */}
+        <div className="flex h-full flex-col">
+          <div className="flex justify-center pt-3 pb-1">
+            <div className="h-1 w-10 rounded-full bg-gray-300" />
+          </div>
+
+          <div className="flex items-center justify-between px-5 pt-2 pb-4">
+            <h1 className="text-2xl font-bold tracking-tight text-[#0f1d32]">
+              Settings
+            </h1>
+            <button
+              onClick={() => router.back()}
+              className="flex h-9 w-9 items-center justify-center rounded-full active:bg-gray-100"
+              aria-label="Close"
+            >
+              <X size={20} className="text-[#0f1d32]" strokeWidth={2.5} />
+            </button>
+          </div>
+
+          <div className="px-5">
+            <button
+              onClick={() => setView("profile")}
+              className="flex w-full items-center gap-4 py-4 active:opacity-70"
+            >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f6f8]">
+                <User size={20} className="text-[#0f1d32]" />
+              </div>
+              <span className="flex-1 text-left text-base font-semibold text-[#0f1d32]">
+                Profile
+              </span>
+              <ChevronRight size={18} className="text-gray-300" />
+            </button>
+            <button
+              onClick={() => setView("account")}
+              className="flex w-full items-center gap-4 py-4 active:opacity-70"
+            >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f6f8]">
+                <Shield size={20} className="text-[#0f1d32]" />
+              </div>
+              <span className="flex-1 text-left text-base font-semibold text-[#0f1d32]">
+                Account
+              </span>
+              <ChevronRight size={18} className="text-gray-300" />
+            </button>
+            <button
+              onClick={() => setView("mapstyle")}
+              className="flex w-full items-center gap-4 py-4 active:opacity-70"
+            >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f6f8]">
+                <Map size={20} className="text-[#0f1d32]" />
+              </div>
+              <span className="flex-1 text-left text-base font-semibold text-[#0f1d32]">
+                Map style
+              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-400">
+                  {MAP_STYLES.find((s) => s.url === mapStyle)?.label ?? "Satellite"}
+                </span>
+                <ChevronRight size={18} className="text-gray-300" />
+              </div>
+            </button>
+            <button
+              onClick={() => setView("notifications")}
+              className="flex w-full items-center gap-4 py-4 active:opacity-70"
+            >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f6f8]">
+                <Bell size={20} className="text-[#0f1d32]" />
+              </div>
+              <span className="flex-1 text-left text-base font-semibold text-[#0f1d32]">
+                Notifications
+              </span>
+              <div className="flex items-center gap-2">
+                {pushSupported && (
+                  <span className="text-sm text-gray-400">
+                    {pushEnabled ? "On" : "Off"}
+                  </span>
+                )}
+                <ChevronRight size={18} className="text-gray-300" />
+              </div>
+            </button>
+            <button
+              onClick={logout}
+              className="flex w-full items-center gap-4 py-4 active:opacity-70"
+            >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-50">
+                <LogOut size={20} className="text-red-500" />
+              </div>
+              <span className="flex-1 text-left text-base font-semibold text-red-500">
+                Log out
+              </span>
+            </button>
+          </div>
+
+          <p className="mt-auto px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-8 text-center text-[10px] text-gray-300">
+            Offroute &middot; {new Date().getFullYear()}
+          </p>
+        </div>
+
+        {/* Dim overlay when card is open */}
+        <div
+          className={`absolute inset-0 bg-black/30 transition-opacity duration-300 ${
+            cardOpen ? "opacity-100" : "pointer-events-none opacity-0"
+          }`}
+          onClick={() => setView("menu")}
+        />
+
+        {/* Sub-view card — slides up from bottom */}
+        <div
+          className={`absolute inset-x-0 bottom-0 max-h-[85dvh] overflow-y-auto rounded-t-[20px] bg-white shadow-[0_-4px_30px_rgba(0,0,0,0.12)] transition-transform duration-300 ease-out ${
+            cardOpen ? "translate-y-0" : "translate-y-full"
+          }`}
+        >
+          <div className="sticky top-0 z-10 bg-white pb-1 pt-3">
+            <div className="flex justify-center">
+              <div className="h-1 w-10 rounded-full bg-gray-300" />
+            </div>
+          </div>
+
+          {/* Profile */}
+          {view === "profile" && (
+            <div className="px-5 pb-6">
+              <div className="flex items-center justify-between pt-2 pb-4">
+                <h2 className="text-2xl font-bold text-[#0f1d32]">Profile</h2>
+                <button
+                  onClick={profileForm.handleSubmit((data) =>
+                    profileMutation.mutate({
+                      display_name: data.display_name || undefined,
+                      nationality: data.nationality || undefined,
+                      profile_bio: data.profile_bio || undefined,
+                      avatar_url: avatarPreview || undefined,
+                    })
+                  )}
+                  disabled={profileMutation.isPending}
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0f1d32] active:bg-[#162a46] disabled:opacity-50"
+                  aria-label="Save"
+                >
+                  <Check size={20} className="text-white" strokeWidth={2.5} />
+                </button>
+              </div>
+
+              <div className="flex items-center gap-4 py-3">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="group relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#0f1d32]/10 active:opacity-80"
+                >
+                  {avatarPreview ? (
+                    <img src={avatarPreview} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-xl font-bold text-[#0f1d32]">
+                      {(me?.display_name?.[0] ?? me?.email[0] ?? "?").toUpperCase()}
+                    </span>
+                  )}
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-active:opacity-100">
+                    <Camera size={18} className="text-white" />
+                  </div>
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleAvatarPick}
+                  className="hidden"
+                />
+                <div>
+                  <p className="text-sm font-medium text-[#0f1d32]">Profile photo</p>
+                  <p className="text-xs text-gray-400">JPG, PNG, or WebP. Max 2 MB.</p>
+                </div>
+              </div>
+
+              <div className="mt-2">
+                <div className="flex items-center gap-4 py-3">
+                  <label htmlFor="display_name" className="w-24 shrink-0 text-sm text-gray-400">Name</label>
+                  <input
+                    id="display_name"
+                    placeholder="Your name"
+                    {...profileForm.register("display_name")}
+                    className="flex-1 bg-transparent text-base font-medium text-[#0f1d32] placeholder-gray-300 outline-none"
+                  />
+                </div>
+                <div className="h-px bg-gray-100" />
+                <div className="relative flex items-center gap-4 py-3">
+                  <label className="w-24 shrink-0 text-sm text-gray-400">Nationality</label>
+                  <input
+                    type="text"
+                    placeholder="Search country"
+                    value={natOpen ? natSearch : profileForm.watch("nationality")}
+                    onChange={(e) => { setNatSearch(e.target.value); setNatOpen(true); }}
+                    onFocus={() => { setNatSearch(""); setNatOpen(true); }}
+                    onBlur={() => setTimeout(() => setNatOpen(false), 150)}
+                    className="flex-1 bg-transparent text-base font-medium text-[#0f1d32] placeholder-gray-300 outline-none"
+                  />
+                  {natOpen && natSearch.length > 0 && filteredCountries.length > 0 && (
+                    <div className="absolute inset-x-0 top-full z-20 mt-1 max-h-40 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg">
+                      {filteredCountries.slice(0, 8).map((country) => (
+                        <button
+                          type="button"
+                          key={country}
+                          onClick={() => {
+                            profileForm.setValue("nationality", country);
+                            setNatSearch("");
+                            setNatOpen(false);
+                          }}
+                          className="w-full px-4 py-2.5 text-left text-sm text-[#0f1d32] active:bg-gray-50"
+                        >
+                          {country}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="h-px bg-gray-100" />
+                <div className="flex items-start gap-4 py-3">
+                  <label className="w-24 shrink-0 pt-1 text-sm text-gray-400">Bio</label>
+                  <textarea
+                    placeholder="A short bio"
+                    rows={2}
+                    maxLength={200}
+                    {...profileForm.register("profile_bio")}
+                    className="flex-1 resize-none bg-transparent text-base font-medium text-[#0f1d32] placeholder-gray-300 outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Account */}
+          {view === "account" && (
+            <div className="px-5 pb-6">
+              <div className="pt-2 pb-4">
+                <h2 className="text-2xl font-bold text-[#0f1d32]">Account</h2>
+              </div>
+
+              <div className="flex items-center gap-4 py-3">
+                <span className="w-24 shrink-0 text-sm text-gray-400">Email</span>
+                <span className="flex-1 truncate text-base font-medium text-[#0f1d32]">
+                  {me?.email}
+                </span>
+              </div>
+              <div className="h-px bg-gray-100" />
+
+              <button
+                onClick={() => {
+                  pwForm.reset();
+                  setShowPassword(false);
+                  setShowPasswordModal(true);
+                }}
+                className="flex w-full items-center gap-3 py-4 active:opacity-70"
+              >
+                <KeyRound size={18} className="text-gray-400" />
+                <span className="flex-1 text-left text-base font-medium text-[#0f1d32]">Change password</span>
+                <ChevronRight size={18} className="text-gray-300" />
+              </button>
+              <div className="h-px bg-gray-100" />
+
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                className="mt-6 w-full rounded-full border border-gray-200 py-3 text-sm font-semibold text-red-500 active:bg-red-50"
+              >
+                Delete my account
+              </button>
+            </div>
+          )}
+
+          {/* Map style */}
+          {view === "mapstyle" && (
+            <div className="px-5 pb-6">
+              <h2 className="pt-2 pb-1 text-2xl font-bold text-[#0f1d32]">Map style</h2>
+              <p className="pb-5 text-sm text-gray-400">
+                Choose your preferred map look.
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                {MAP_STYLES.map((s) => {
+                  const isActive = mapStyle === s.url;
+                  return (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => {
+                        setMapStyle(s.url);
+                        localStorage.setItem(MAP_STYLE_KEY, s.url);
+                        toast.success(`Map style set to ${s.label}`);
+                      }}
+                      className={`flex flex-col items-center gap-2 rounded-2xl p-3 transition-all ${
+                        isActive
+                          ? "bg-blue-50 ring-2 ring-blue-500"
+                          : "bg-[#f5f6f8] ring-1 ring-gray-200 active:bg-gray-100"
+                      }`}
+                    >
+                      <img src={s.preview} alt={s.label} className="h-16 w-full rounded-xl object-cover" />
+                      <span className={`text-sm font-semibold ${isActive ? "text-blue-600" : "text-[#0f1d32]"}`}>
+                        {s.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="pt-4 text-center text-[10px] text-gray-400">
+                Takes effect next time a map loads.
+              </p>
+            </div>
+          )}
+
+          {/* Notifications */}
+          {view === "notifications" && (
+            <div className="px-5 pb-6">
+              <h2 className="pt-2 pb-1 text-2xl font-bold text-[#0f1d32]">Notifications</h2>
+              <p className="pb-5 text-sm text-gray-400">
+                Get notified when someone stars, clones, or invites you.
+              </p>
+              {pushSupported ? (
+                <>
+                  <div className="flex items-center justify-between py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f6f8]">
+                        <Bell size={20} className="text-[#0f1d32]" />
+                      </div>
+                      <div>
+                        <p className="text-base font-semibold text-[#0f1d32]">Push notifications</p>
+                        <p className="text-xs text-gray-400">{pushEnabled ? "Enabled" : "Disabled"}</p>
+                      </div>
+                    </div>
+                    <label className="relative inline-flex cursor-pointer items-center">
+                      <input
+                        type="checkbox"
+                        checked={pushEnabled}
+                        onChange={togglePush}
+                        disabled={pushLoading || permissionDenied}
+                        className="peer sr-only"
+                      />
+                      <div className="h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-[#0f1d32] peer-checked:after:translate-x-full peer-disabled:opacity-50" />
+                    </label>
+                  </div>
+                  {permissionDenied && (
+                    <p className="pt-2 text-xs text-red-500">
+                      Notifications are blocked by your browser. Update your site permissions to enable them.
+                    </p>
+                  )}
+                </>
+              ) : (
+                <div className="py-6 text-center">
+                  <Bell size={28} className="mx-auto mb-2 text-gray-300" />
+                  <p className="text-sm text-gray-500">Push not supported on this browser.</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Change password modal */}
+      {showPasswordModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowPasswordModal(false);
+              setShowPassword(false);
+              pwForm.reset();
+            }
+          }}
+        >
+          <div className="sheet-light mx-5 w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+            <h3 className="text-xl font-bold text-[#0f1d32]">Change password</h3>
+            <p className="mt-1 text-sm text-gray-400">
+              Enter a new password for your account
+            </p>
+
+            <div className="mt-5">
+              <div className="mb-1 flex items-center gap-1.5 text-xs text-gray-400">
+                <KeyRound size={12} />
+                <span>New password</span>
+              </div>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="At least 6 characters"
+                  {...pwForm.register("password", {
+                    minLength: { value: 6, message: "At least 6 characters" },
+                    required: "Password is required",
+                  })}
+                  className="w-full rounded-xl border border-gray-200 bg-[#f5f6f8] px-4 py-3 pr-11 text-base text-[#0f1d32] placeholder-gray-300 outline-none focus:border-[#0f1d32]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 active:text-gray-600"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              {pwForm.formState.errors.password && (
+                <p className="mt-1 text-xs text-red-500">
+                  {pwForm.formState.errors.password.message}
+                </p>
+              )}
+            </div>
+
+            <div className="mt-3">
+              <div className="mb-1 flex items-center gap-1.5 text-xs text-gray-400">
+                <KeyRound size={12} />
+                <span>Confirm password</span>
+              </div>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Re-enter your password"
+                  {...pwForm.register("confirm", {
+                    required: "Please confirm your password",
+                    validate: (val) =>
+                      val === pwForm.watch("password") || "Passwords don't match",
+                  })}
+                  className="w-full rounded-xl border border-gray-200 bg-[#f5f6f8] px-4 py-3 pr-11 text-base text-[#0f1d32] placeholder-gray-300 outline-none focus:border-[#0f1d32]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 active:text-gray-600"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              {pwForm.formState.errors.confirm && (
+                <p className="mt-1 text-xs text-red-500">
+                  {pwForm.formState.errors.confirm.message}
+                </p>
+              )}
+            </div>
+
+            <button
+              onClick={submitPassword}
+              disabled={pwMutation.isPending}
+              className="mt-5 w-full rounded-full bg-[#0f1d32] py-3.5 text-base font-semibold text-white active:bg-[#162a46] disabled:opacity-50"
+            >
+              {pwMutation.isPending ? "Updating…" : "Update password"}
+            </button>
+            <button
+              onClick={() => {
+                setShowPasswordModal(false);
+                setShowPassword(false);
+                pwForm.reset();
+              }}
+              className="mt-2 w-full rounded-full py-3 text-base font-semibold text-gray-500 active:bg-gray-50"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Delete confirmation modal */}
+      {showDeleteModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowDeleteModal(false);
+              setDeleteConfirm("");
+            }
+          }}
+        >
+          <div className="mx-5 w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+            <h3 className="text-xl font-bold text-[#0f1d32]">Delete account?</h3>
+            <p className="mt-2 text-base text-gray-500">
+              This permanently deletes your account and all circuits. This action cannot be undone.
+            </p>
+            <label className="mb-1 mt-5 block text-sm text-gray-500">
+              Type <span className="font-mono font-bold text-red-500">DELETE</span> to confirm
+            </label>
+            <input
+              type="text"
+              value={deleteConfirm}
+              onChange={(e) => setDeleteConfirm(e.target.value)}
+              className="w-full rounded-xl border border-gray-200 bg-[#f5f6f8] px-4 py-3 text-base text-[#0f1d32] outline-none focus:border-red-400"
+              placeholder="DELETE"
+            />
+            <button
+              onClick={() => deleteMutation.mutate()}
+              disabled={deleteConfirm !== "DELETE" || deleteMutation.isPending}
+              className="mt-4 w-full rounded-full bg-red-600 py-3.5 text-base font-semibold text-white disabled:opacity-30"
+            >
+              {deleteMutation.isPending ? "Deleting…" : "Permanently delete"}
+            </button>
+            <button
+              onClick={() => { setShowDeleteModal(false); setDeleteConfirm(""); }}
+              className="mt-2 w-full rounded-full py-3 text-base font-semibold text-gray-500 active:bg-gray-50"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+      <Settings />
+  );
+}

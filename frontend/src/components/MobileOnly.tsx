@@ -22,7 +22,7 @@ export function MobileOnly({ children }: { children: React.ReactNode }) {
           Offroute is designed for phones. Open this link on your mobile browser to get started.
         </p>
         <p className="mt-6 text-xs text-white/20">
-          offroute.app
+          offroute.aishwaryadv.space
         </p>
       </div>
     </>

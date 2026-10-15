@@ -18,3 +18,11 @@ __pycache__/
 
 # OS
 .DS_Store
+
+# local env backups (contain secrets)
+.env*.bak
+backend/.env*.bak
+
+# playwright outputs
+frontend/e2e-report/
+frontend/test-results/
