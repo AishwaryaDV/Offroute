@@ -17,7 +17,7 @@ from app.services.assistant.tools import Tool
 logger = logging.getLogger(__name__)
 
 _MAX_STEPS = 8
-_TRANSIENT = (429, 500, 502, 503, 504)
+_TRANSIENT = (429, 499, 500, 502, 503, 504)
 
 
 async def _generate(client, models: list[str], contents, config):
@@ -71,7 +71,7 @@ async def run(
     client = genai.Client(
         api_key=settings.gemini_api_key,
         http_options=types.HttpOptions(
-            timeout=20_000,
+            timeout=40_000,
             retry_options=types.HttpRetryOptions(attempts=1),
         ),
     )
