@@ -40,6 +40,7 @@ class Point(Base):
     visited_at: Mapped[date | None] = mapped_column(Date)
     category: Mapped[str | None] = mapped_column(CategoryEnum)
     rating: Mapped[int | None] = mapped_column(Integer)
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
