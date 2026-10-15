@@ -14,6 +14,8 @@ from app.services import circuits as circuits_service
 from app.services.assistant.client import run_turn
 from app.services.assistant.prompt import build_system_prompt
 from app.services.assistant.tools import build_read_tools
+from app.services.assistant.tools_write import build_write_tools
+from app.services.assistant.undo import apply_undo
 
 router = APIRouter(tags=["assistant"])
 
@@ -81,7 +83,11 @@ async def chat(
 ) -> ChatResponse:
     circuit = await _authorized_circuit(circuit_id, user, db)
 
-    tools = build_read_tools(db, circuit, user)
+    undo_sink: list[dict] = []
+    tools = (
+        build_read_tools(db, circuit, user)
+        + build_write_tools(db, circuit, user, undo_sink)
+    )
     system = build_system_prompt(circuit_title=circuit.title, timezone=body.timezone or "UTC")
 
     # load prior turns for context (the new message is passed separately)
@@ -93,16 +99,33 @@ async def chat(
     )
 
     await chat_service.add_message(db, circuit.id, "user", body.message)
-    assistant_msg = await chat_service.add_message(db, circuit.id, "assistant", result.reply)
+    undo = {"ops": undo_sink} if undo_sink else None
+    assistant_msg = await chat_service.add_message(db, circuit.id, "assistant", result.reply, undo=undo)
 
     return ChatResponse(
         message_id=str(assistant_msg.id),
         reply=result.reply,
         model=result.model,
         steps=[ChatStep(tool=s.tool, is_error=s.is_error) for s in result.steps],
-        writes=False,  # phase 2/4 is read-only; write tools land in the next phase
+        writes=bool(undo_sink),  # tell the UI to refresh the circuit if anything changed
         error="unavailable" if result.error else None,
     )
+
+
+@router.post("/circuits/{circuit_id}/chat/undo")
+async def undo_last(
+    circuit_id: str,
+    user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> dict:
+    circuit = await _authorized_circuit(circuit_id, user, db)
+    msg = await chat_service.latest_undoable(db, circuit.id)
+    if msg is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Nothing to undo")
+    await apply_undo(db, circuit.id, msg.undo)
+    msg.undo = None  # consumed — can't undo twice
+    await db.commit()
+    return {"undone": True}
 
 
 @router.delete("/circuits/{circuit_id}/chat", status_code=status.HTTP_204_NO_CONTENT)
