@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     # the host). Model is resolved by the CLI/plan; start on Haiku, bump to Opus
     # only if tool-selection is weak.
     assistant_model: str = "claude-haiku-4-5"
+    # Which driver leads; the other is the fallback. Set to "gemini" for local
+    # dev before the Claude Code CLI is provisioned on the host.
+    assistant_primary: str = "claude"
     # Gemini free-tier fallback for when the Claude login lapses / hits limits.
     gemini_api_key: str = ""
     assistant_gemini_model: str = "gemini-3.6-flash"
