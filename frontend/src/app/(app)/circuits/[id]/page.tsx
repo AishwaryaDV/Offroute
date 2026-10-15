@@ -26,6 +26,7 @@ import {
   Pencil,
   Plus,
   Share2,
+  Sparkles,
   Star,
   Trash2,
   UserPlus,
@@ -57,6 +58,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { StepLoader } from "@/components/StepLoader";
+import { ChatSheet } from "@/components/ChatSheet";
 import MapDynamic from "@/components/MapDynamic";
 import type { MapMarker, MapHandle } from "@/components/MapDynamic";
 import { getCircuit, deleteCircuit, shareCircuit, updateCircuit, starCircuit, unstarCircuit } from "@/lib/circuits";
@@ -68,6 +70,8 @@ import { getTrips, addCircuitToTrip, removeCircuitFromTrip } from "@/lib/trips";
 import { useUnsplashCover } from "@/hooks/useUnsplashCover";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import type { Collaborator, Media, Point, Trip } from "@/types/api";
+
+const ASSISTANT_ENABLED = process.env.NEXT_PUBLIC_ASSISTANT_ENABLED === "true";
 
 type IconComponent = React.ComponentType<{
   size?: number;
@@ -163,6 +167,7 @@ function CircuitDetail() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const [chatOpen, setChatOpen] = useState(false);
   const userGeo = useUserLocation();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(
     null,
@@ -410,6 +415,18 @@ function CircuitDetail() {
 
   return (
     <div className="relative h-[100dvh] overflow-hidden bg-[#0b1120]">
+      {ASSISTANT_ENABLED && (
+        <ChatSheet
+          circuitId={id}
+          circuitTitle={circuit?.title ?? "this circuit"}
+          open={chatOpen}
+          onClose={() => setChatOpen(false)}
+          onWrite={() => {
+            queryClient.invalidateQueries({ queryKey: ["circuit", id] });
+            queryClient.invalidateQueries({ queryKey: ["points", id] });
+          }}
+        />
+      )}
       {/* Full-screen map — wait for points so we don't flash the user's location */}
       {pointsLoading && (
         <div className="absolute inset-0 flex items-center justify-center">
@@ -481,6 +498,15 @@ function CircuitDetail() {
         </div>
 
         <div className="flex items-center gap-2">
+          {ASSISTANT_ENABLED && (
+            <button
+              onClick={() => setChatOpen(true)}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-black/50 backdrop-blur-md active:bg-black/70"
+              aria-label="Ask AI"
+            >
+              <Sparkles size={18} className="text-white" />
+            </button>
+          )}
           {(circuit?.clone_count ?? 0) > 0 && (
             <div className="flex h-10 items-center gap-1 rounded-full bg-black/50 px-3 backdrop-blur-md">
               <Copy size={14} className="text-white/70" />
