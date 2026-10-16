@@ -331,6 +331,7 @@ function Dashboard() {
                   <img
                     src={me.avatar_url}
                     alt=""
+                    referrerPolicy="no-referrer"
                     className="h-full w-full object-cover"
                     onError={() => setAvatarFailed(true)}
                   />
