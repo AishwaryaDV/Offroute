@@ -11,6 +11,7 @@ from app.schemas.media import MediaCreate, MediaResponse
 from app.services import audit as audit_service
 from app.services import circuits as circuits_service
 from app.services import media as media_service
+from app.services import notifications as notif_service
 from app.services import points as points_service
 from app.services.ratelimit import rate_limit
 
@@ -92,6 +93,7 @@ async def delete_media(
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     media = await media_service.get_media(db, media_id)
+    circuit = None
     if media.circuit_id:
         circuit = await circuits_service.get_circuit(db, media.circuit_id)
         circuits_service.assert_owner(circuit, user.id)
@@ -101,3 +103,9 @@ async def delete_media(
         db, user.id, "media.delete", "media", media_id_,
         {"point_id": str(point_id_) if point_id_ else None, "circuit_id": str(circuit_id_) if circuit_id_ else None},
     )
+    if circuit_id_:
+        actor_name = user.display_name or user.email
+        await notif_service.notify_circuit_members(
+            db, circuit_id_, user.id, "media_deleted",
+            f'{actor_name} removed a photo from {circuit.title if circuit else "a circuit"}',
+        )
