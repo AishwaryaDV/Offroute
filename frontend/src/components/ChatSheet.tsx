@@ -41,10 +41,17 @@ export function ChatSheet({ circuitId, circuitTitle, open, onClose, onWrite }: C
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const threadEndRef = useRef<HTMLDivElement>(null);
+  // Guards the initial history fetch below from clobbering state with a
+  // stale snapshot if it resolves after the user has already sent a message
+  // (the fetch can take a while over the tunnel; sending doesn't wait for it).
+  const sentRef = useRef(false);
 
   useEffect(() => {
     if (!open) return;
-    getChatHistory(circuitId).then(setMessages).catch(() => {});
+    sentRef.current = false;
+    getChatHistory(circuitId).then((h) => {
+      if (!sentRef.current) setMessages(h);
+    }).catch(() => {});
   }, [open, circuitId]);
 
   useEffect(() => {
@@ -54,6 +61,7 @@ export function ChatSheet({ circuitId, circuitTitle, open, onClose, onWrite }: C
   async function send() {
     const text = input.trim();
     if (!text || sending) return;
+    sentRef.current = true;
     setInput("");
     setSending(true);
     const optimistic: ChatHistoryMessage = {
