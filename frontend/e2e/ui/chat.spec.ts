@@ -18,9 +18,13 @@ test.describe("Ask AI chat", () => {
     await input.fill("Add Toit in Indiranagar Bangalore, drinks, 5 stars.");
     await page.getByRole("button", { name: "Send" }).click();
 
+    // the user's own bubble must survive the round-trip, not just the reply
+    await expect(page.getByText("Add Toit in Indiranagar Bangalore, drinks, 5 stars.")).toBeVisible();
+
     // typing indicator appears, then a reply bubble lands
     await expect(page.locator("text=Added").or(page.locator('[role="log"]'))).toBeVisible();
     await expect(page.getByRole("button", { name: "Undo last change" })).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText("Add Toit in Indiranagar Bangalore, drinks, 5 stars.")).toBeVisible();
 
     await page.getByRole("button", { name: "Undo last change" }).click();
     await expect(page.getByRole("button", { name: "Undo last change" })).toBeHidden();
