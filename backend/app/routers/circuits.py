@@ -7,9 +7,11 @@ from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.user import User
 from app.schemas.circuit import CircuitCreate, CircuitResponse, CircuitUpdate, SharedCircuitResponse
+from app.services import audit as audit_service
 from app.services import circuits as circuits_service
 from app.services import notifications as notif_service
 from app.services import stars as stars_service
+from app.services.ratelimit import rate_limit
 
 
 router = APIRouter(prefix="/circuits", tags=["circuits"])
@@ -23,7 +25,12 @@ async def list_circuits(
     return await circuits_service.list_circuits(db, user.id)
 
 
-@router.post("", response_model=CircuitResponse, status_code=201)
+@router.post(
+    "",
+    response_model=CircuitResponse,
+    status_code=201,
+    dependencies=[Depends(rate_limit("circuits:create", limit=20, window_seconds=60))],
+)
 async def create_circuit(
     data: CircuitCreate,
     user: Annotated[User, Depends(get_current_user)],
@@ -65,7 +72,11 @@ async def delete_circuit(
 ):
     circuit = await circuits_service.resolve_circuit(db, circuit_id)
     circuits_service.assert_owner(circuit, user.id)
+    circuit_id_, circuit_title = circuit.id, circuit.title
     await circuits_service.delete_circuit(db, circuit)
+    await audit_service.record(
+        db, user.id, "circuit.delete", "circuit", circuit_id_, {"title": circuit_title},
+    )
 
 
 @router.post("/{circuit_id}/star", status_code=201)
