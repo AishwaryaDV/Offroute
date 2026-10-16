@@ -74,15 +74,15 @@ function SearchPage() {
         </div>
 
         <div className="flex items-center gap-3 px-5 pt-2 pb-4">
-          <h1 className="flex-1 text-4xl font-bold tracking-tight text-[#0f1d32]">
+          <h1 className="flex-1 text-lg font-bold text-[#0f1d32]">
             Search
           </h1>
           <button
             onClick={() => router.back()}
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f5f6f8] active:bg-gray-200"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f6f8] active:bg-gray-200"
             aria-label="Close"
           >
-            <X size={22} className="text-[#0f1d32]" strokeWidth={2.5} />
+            <X size={18} className="text-gray-600" />
           </button>
         </div>
 
