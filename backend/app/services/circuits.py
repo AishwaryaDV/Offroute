@@ -193,6 +193,11 @@ async def update_circuit(
 
 
 async def delete_circuit(db: AsyncSession, circuit: Circuit) -> None:
+    from app.services import media as media_service
+
+    # The DB rows for this circuit's media cascade away with it either way —
+    # this is purely about not leaving the actual files orphaned in storage.
+    await media_service.delete_objects_for_circuit(db, circuit.id)
     await db.delete(circuit)
     await db.commit()
 

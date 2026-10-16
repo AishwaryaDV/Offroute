@@ -84,6 +84,25 @@ async def create_media(
     return media
 
 
+async def delete_objects_for_circuit(db: AsyncSession, circuit_id: uuid.UUID) -> None:
+    """Best-effort S3 cleanup for every photo on a circuit, called before the
+    circuit row is deleted. The DB rows cascade away with the circuit either
+    way — this only exists because that cascade doesn't touch storage, and
+    without it every deleted circuit leaves its files behind forever."""
+    settings = get_settings()
+    paths = (
+        await db.execute(select(Media.storage_path).where(Media.circuit_id == circuit_id))
+    ).scalars().all()
+    if not paths:
+        return
+    client = _get_s3_client()
+    for path in paths:
+        try:
+            client.delete_object(Bucket=settings.s3_bucket, Key=path)
+        except (ClientError, BotoCoreError):
+            logger.warning("Storage delete failed for %s", path, exc_info=True)
+
+
 async def get_media(db: AsyncSession, media_id: uuid.UUID) -> Media:
     media = await db.get(Media, media_id)
     if media is None:
