@@ -26,8 +26,8 @@ class Settings(BaseSettings):
     # Ships dark behind this flag until the feature is complete.
     assistant_enabled: bool = False
     # Claude via the Claude Code CLI subscription login (no ANTHROPIC_API_KEY on
-    # the host). Model is resolved by the CLI/plan; start on Haiku, bump to Opus
-    # only if tool-selection is weak.
+    # the host). Haiku is plenty for a tool-calling bot, and Gemini is already
+    # the fallback if Claude has a bad day.
     assistant_model: str = "claude-haiku-4-5"
     # Which driver leads; the other is the fallback. Set to "gemini" for local
     # dev before the Claude Code CLI is provisioned on the host.
@@ -40,8 +40,10 @@ class Settings(BaseSettings):
     # Geocoding for find_place: Nominatim (free, no key) is the default; Stadia
     # is used first when a key is present.
     stadia_api_key: str = ""
-    # Per-user guardrail (spec: free-tier limits are shared across all users).
+    # Per-user guardrails — Claude rides on the subscription login (shared
+    # quota across both users), Gemini is the free tier, so both need caps.
     assistant_daily_message_cap: int = 100
+    assistant_rate_limit_per_minute: int = 10
 
     @property
     def assistant_gemini_models(self) -> list[str]:

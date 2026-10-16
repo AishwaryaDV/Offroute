@@ -1,3 +1,4 @@
+from datetime import datetime, time, timedelta, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -57,6 +58,29 @@ async def _authorized_circuit(circuit_id: str, user: User, db: AsyncSession) -> 
     return circuit
 
 
+async def _enforce_rate_limit(db: AsyncSession, user: User) -> None:
+    """Both drivers ride on shared quota (Claude = subscription login, Gemini =
+    free tier) across just two users, so a burst or a runaway loop from one
+    person can starve the other. Cap both a short burst and the daily total."""
+    settings = get_settings()
+    now = datetime.now(timezone.utc)
+
+    per_minute = await chat_service.count_user_messages_since(db, user.id, now - timedelta(minutes=1))
+    if per_minute >= settings.assistant_rate_limit_per_minute:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Slow down — try again in a moment.",
+        )
+
+    start_of_day = datetime.combine(now.date(), time.min, tzinfo=timezone.utc)
+    today = await chat_service.count_user_messages_since(db, user.id, start_of_day)
+    if today >= settings.assistant_daily_message_cap:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Daily chat limit reached — try again tomorrow.",
+        )
+
+
 @router.get("/circuits/{circuit_id}/chat", response_model=list[ChatHistoryItem])
 async def get_history(
     circuit_id: str,
@@ -82,6 +106,7 @@ async def chat(
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> ChatResponse:
     circuit = await _authorized_circuit(circuit_id, user, db)
+    await _enforce_rate_limit(db, user)
 
     undo_sink: list[dict] = []
     tools = (

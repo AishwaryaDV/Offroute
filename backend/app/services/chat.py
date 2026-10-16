@@ -1,12 +1,14 @@
 """Persistence for a circuit's assistant thread."""
 
 import uuid
+from datetime import datetime
 from typing import Any
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.chat_message import ChatMessage
+from app.models.circuit import Circuit
 
 
 async def list_messages(db: AsyncSession, circuit_id: uuid.UUID, limit: int = 50) -> list[ChatMessage]:
@@ -38,6 +40,22 @@ async def add_message(
 async def clear_messages(db: AsyncSession, circuit_id: uuid.UUID) -> None:
     await db.execute(delete(ChatMessage).where(ChatMessage.circuit_id == circuit_id))
     await db.commit()
+
+
+async def count_user_messages_since(db: AsyncSession, user_id: uuid.UUID, since: datetime) -> int:
+    """How many prompts this user has sent (across all their circuits) since `since`.
+    Used for rate limiting — joins through circuit ownership rather than adding
+    a user_id column, since chat threads are already scoped to a circuit."""
+    stmt = (
+        select(func.count(ChatMessage.id))
+        .join(Circuit, Circuit.id == ChatMessage.circuit_id)
+        .where(
+            Circuit.owner_id == user_id,
+            ChatMessage.role == "user",
+            ChatMessage.created_at >= since,
+        )
+    )
+    return (await db.execute(stmt)).scalar_one()
 
 
 async def latest_undoable(db: AsyncSession, circuit_id: uuid.UUID) -> ChatMessage | None:
