@@ -11,6 +11,7 @@ from app.models.base import Base
 
 NotifTypeEnum = Enum(
     "star", "clone", "invite", "invite_accepted", "point_added", "point_deleted",
+    "circuit_deleted", "media_deleted", "collaborator_removed", "assistant_write",
     name="notif_type",
     create_type=False,
 )
