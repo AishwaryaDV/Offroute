@@ -16,7 +16,7 @@ const PNG_1x1 = Buffer.from(
 );
 
 test.describe("Media", () => {
-  test("create media → presigned upload_url + public_url; upload round-trips", async ({ apiA, request }) => {
+  test("create media → presigned POST + public_url; upload round-trips", async ({ apiA, request }) => {
     const { c, p } = await circuitWithPoint(apiA);
 
     const res = await apiA.post(`/points/${p.id}/media`, {
@@ -25,23 +25,25 @@ test.describe("Media", () => {
     expect(res.status(), await res.text()).toBe(201);
     const media = await res.json();
     expect(media.upload_url).toBeTruthy();
+    expect(media.upload_fields).toBeTruthy();
     expect(media.public_url).toBeTruthy();
 
-    // Best-effort PUT to the presigned URL. The self-hosted MinIO endpoint is
-    // firewalled from outside the server network, so an unreachable upload is
-    // an environment limit, not an app defect — annotate rather than fail.
+    // Best-effort POST to the presigned URL (S3 POST policy, not a bare PUT —
+    // this is what lets the server enforce a content-length-range cap). The
+    // self-hosted MinIO endpoint is firewalled from outside the server
+    // network, so an unreachable upload is an environment limit, not an app
+    // defect — annotate rather than fail.
     try {
       const put = await request.fetch(media.upload_url, {
-        method: "PUT",
-        headers: { "Content-Type": "image/png" },
-        data: PNG_1x1,
+        method: "POST",
+        multipart: { ...media.upload_fields, file: { name: "photo.jpg", mimeType: "image/jpeg", buffer: PNG_1x1 } },
         timeout: 8000,
       });
-      expect(put.status(), "presigned PUT").toBeLessThan(400);
+      expect(put.status(), "presigned POST").toBeLessThan(400);
     } catch (e) {
       test.info().annotations.push({
         type: "skip-reason",
-        description: `presigned PUT unreachable from local (MinIO firewalled): ${(e as Error).message.split("\n")[0]}`,
+        description: `presigned POST unreachable from local (MinIO firewalled): ${(e as Error).message.split("\n")[0]}`,
       });
     }
 
