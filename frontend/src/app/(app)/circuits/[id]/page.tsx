@@ -502,7 +502,7 @@ function CircuitDetail() {
             <button
               onClick={() => setChatOpen(true)}
               className="flex h-10 w-10 items-center justify-center rounded-full bg-black/50 backdrop-blur-md active:bg-black/70"
-              aria-label="Ask AI"
+              aria-label="Ask Astra"
             >
               <Sparkles size={18} className="text-white" />
             </button>
@@ -735,13 +735,10 @@ function CircuitDetail() {
           ) : (
             <div className="px-5">
               <div className="rounded-2xl bg-white/10 px-5 py-5 text-center ring-1 ring-white/10 backdrop-blur-xl">
-                <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-rose-500 shadow-lg shadow-pink-500/25">
-                  <Plus size={28} strokeWidth={2.5} className="text-white" />
-                </div>
                 <p className="text-base font-bold text-white">
                   Add your first point
                 </p>
-                <p className="mx-auto mt-1 max-w-[220px] text-xs text-zinc-400">
+                <p className="mx-auto mt-1.5 max-w-[240px] text-sm leading-snug text-zinc-300">
                   Mark a location on the map and bring it to life with notes and details.
                 </p>
                 <Link
