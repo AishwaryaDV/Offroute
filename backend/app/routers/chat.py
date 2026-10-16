@@ -108,6 +108,13 @@ async def chat(
     circuit = await _authorized_circuit(circuit_id, user, db)
     await _enforce_rate_limit(db, user)
 
+    # Load prior turns for context, then record the new message *before* the
+    # (slow, several-second) model call — not after — so rate-limit counts
+    # reflect messages as they arrive rather than as turns finish.
+    prior = await chat_service.list_messages(db, circuit.id, limit=_HISTORY_FOR_MODEL)
+    history = [{"role": m.role, "text": m.content} for m in prior]
+    await chat_service.add_message(db, circuit.id, "user", body.message)
+
     undo_sink: list[dict] = []
     tools = (
         build_read_tools(db, circuit, user)
@@ -115,15 +122,10 @@ async def chat(
     )
     system = build_system_prompt(circuit_title=circuit.title, timezone=body.timezone or "UTC")
 
-    # load prior turns for context (the new message is passed separately)
-    prior = await chat_service.list_messages(db, circuit.id, limit=_HISTORY_FOR_MODEL)
-    history = [{"role": m.role, "text": m.content} for m in prior]
-
     result = await run_turn(
         system=system, user_message=body.message, history=history, tools=tools,
     )
 
-    await chat_service.add_message(db, circuit.id, "user", body.message)
     undo = {"ops": undo_sink} if undo_sink else None
     assistant_msg = await chat_service.add_message(db, circuit.id, "assistant", result.reply, undo=undo)
 
