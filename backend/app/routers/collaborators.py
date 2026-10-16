@@ -70,6 +70,13 @@ async def remove_collaborator(
         db, user.id, "collaborator.remove", "collaborator", collab_id,
         {"circuit_id": str(circuit.id), "removed_user_id": str(removed_user_id) if removed_user_id else None, "role": removed_role},
     )
+    if removed_user_id:
+        actor_name = user.display_name or user.email
+        await notif_service.create(
+            db, removed_user_id, "collaborator_removed",
+            f'{actor_name} removed you from "{circuit.title}"',
+            circuit_id=circuit.id, actor_id=user.id,
+        )
 
 
 @router.get("/me/invites", response_model=list[InviteResponse])
