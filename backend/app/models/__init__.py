@@ -1,3 +1,4 @@
+from app.models.audit_log import AuditLog
 from app.models.base import Base
 from app.models.chat_message import ChatMessage
 from app.models.circuit import Circuit
@@ -10,4 +11,4 @@ from app.models.star import Star
 from app.models.trip import Trip
 from app.models.user import User
 
-__all__ = ["Base", "ChatMessage", "Circuit", "Collaborator", "Media", "Notification", "Point", "PushSubscription", "Star", "Trip", "User"]
+__all__ = ["AuditLog", "Base", "ChatMessage", "Circuit", "Collaborator", "Media", "Notification", "Point", "PushSubscription", "Star", "Trip", "User"]
