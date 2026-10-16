@@ -4,7 +4,7 @@ import uuid
 
 from fastapi import HTTPException, status
 from geoalchemy2.shape import to_shape
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -88,7 +88,7 @@ async def list_circuits(db: AsyncSession, owner_id: uuid.UUID) -> list[dict]:
             auto_cover_sub.c.cover_path,
             chosen_cover_sub.c.chosen_path,
         )
-        .outerjoin(Point, Point.circuit_id == Circuit.id)
+        .outerjoin(Point, and_(Point.circuit_id == Circuit.id, Point.deleted_at.is_(None)))
         .outerjoin(star_sub, star_sub.c.circuit_id == Circuit.id)
         .outerjoin(my_star, my_star.c.circuit_id == Circuit.id)
         .outerjoin(auto_cover_sub, auto_cover_sub.c.circuit_id == Circuit.id)
@@ -124,7 +124,7 @@ async def get_circuit_with_count(
     ).scalar_subquery()
     stmt = (
         select(Circuit, func.count(Point.id).label("point_count"), star_sub.label("star_count"))
-        .outerjoin(Point, Point.circuit_id == Circuit.id)
+        .outerjoin(Point, and_(Point.circuit_id == Circuit.id, Point.deleted_at.is_(None)))
         .where(Circuit.id == circuit_id)
         .group_by(Circuit.id)
     )
