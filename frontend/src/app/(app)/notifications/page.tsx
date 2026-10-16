@@ -7,7 +7,10 @@ import {
   Clock,
   Copy,
   MapPin,
+  Sparkles,
   Star,
+  Trash2,
+  UserMinus,
   UserPlus,
   Users,
   X,
@@ -35,6 +38,10 @@ const NOTIF_ICON: Record<string, typeof Star> = {
   invite_accepted: Users,
   point_added: MapPin,
   point_deleted: MapPin,
+  circuit_deleted: Trash2,
+  media_deleted: Trash2,
+  collaborator_removed: UserMinus,
+  assistant_write: Sparkles,
 };
 
 const NOTIF_COLORS: Record<string, string> = {
@@ -44,6 +51,10 @@ const NOTIF_COLORS: Record<string, string> = {
   invite_accepted: "#10b981",
   point_added: "#22c55e",
   point_deleted: "#ef4444",
+  circuit_deleted: "#ef4444",
+  media_deleted: "#ef4444",
+  collaborator_removed: "#ef4444",
+  assistant_write: "#0f1d32",
 };
 
 function timeAgo(dateStr: string): string {

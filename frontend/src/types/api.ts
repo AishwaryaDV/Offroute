@@ -208,7 +208,9 @@ export interface Trip {
 
 export interface Notification {
   id: string;
-  type: "star" | "clone" | "invite" | "invite_accepted" | "point_added" | "point_deleted";
+  type:
+    | "star" | "clone" | "invite" | "invite_accepted" | "point_added" | "point_deleted"
+    | "circuit_deleted" | "media_deleted" | "collaborator_removed" | "assistant_write";
   message: string;
   circuit_id: string | null;
   actor_name: string | null;
