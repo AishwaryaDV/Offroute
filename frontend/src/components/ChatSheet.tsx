@@ -4,6 +4,7 @@ import { Send, Sparkles, Trash2, Undo2, X } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { ApiError } from "@/lib/api";
 import {
   ChatHistoryMessage,
   clearChat,
@@ -67,8 +68,12 @@ export function ChatSheet({ circuitId, circuitTitle, open, onClose, onWrite }: C
         { id: res.message_id, role: "assistant", content: res.reply, has_undo: res.writes, created_at: new Date().toISOString() },
       ]);
       if (res.writes) onWrite();
-    } catch {
-      toast.error("Assistant couldn't respond — try again.");
+    } catch (err) {
+      toast.error(
+        err instanceof ApiError && err.status === 429
+          ? "Too many messages — slow down a bit."
+          : "Assistant couldn't respond — try again.",
+      );
       setMessages((m) => m.filter((x) => x.id !== optimistic.id));
       setInput(text);
     } finally {
