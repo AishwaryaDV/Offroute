@@ -73,6 +73,15 @@ async def delete_circuit(
     circuit = await circuits_service.resolve_circuit(db, circuit_id)
     circuits_service.assert_owner(circuit, user.id)
     circuit_id_, circuit_title = circuit.id, circuit.title
+    actor_name = user.display_name or user.email
+    # Notify before deleting — the owner/collaborator lookup needs the
+    # circuit row to still exist; link_circuit=False keeps the notification
+    # itself from being cascade-deleted the instant the circuit is gone.
+    await notif_service.notify_circuit_members(
+        db, circuit.id, user.id, "circuit_deleted",
+        f'{actor_name} deleted "{circuit_title}"',
+        link_circuit=False,
+    )
     await circuits_service.delete_circuit(db, circuit)
     await audit_service.record(
         db, user.id, "circuit.delete", "circuit", circuit_id_, {"title": circuit_title},
