@@ -91,18 +91,6 @@ const CATEGORY_ICONS: Record<string, IconComponent> = {
   other: MapPin,
 };
 
-const CATEGORY_COLORS: Record<string, string> = {
-  food: "#ef4444",
-  drink: "#f59e0b",
-  stay: "#8b5cf6",
-  viewpoint: "#10b981",
-  activity: "#f97316",
-  nature: "#22c55e",
-  culture: "#6366f1",
-  hidden_gem: "#ec4899",
-  other: "#3b82f6",
-};
-
 function PointThumb({ photoUrl, title, className, style }: { photoUrl?: string | null; title: string; className?: string; style?: React.CSSProperties }) {
   const unsplashUrl = useUnsplashCover(title, !!photoUrl);
   const url = photoUrl ?? unsplashUrl;
