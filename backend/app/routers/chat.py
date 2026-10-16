@@ -10,6 +10,7 @@ from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.circuit import Circuit
 from app.models.user import User
+from app.services import audit as audit_service
 from app.services import chat as chat_service
 from app.services import circuits as circuits_service
 from app.services.assistant.client import run_turn
@@ -128,6 +129,12 @@ async def chat(
 
     undo = {"ops": undo_sink} if undo_sink else None
     assistant_msg = await chat_service.add_message(db, circuit.id, "assistant", result.reply, undo=undo)
+
+    if undo_sink:
+        await audit_service.record(
+            db, user.id, "assistant.write", "circuit", circuit.id,
+            {"tools": [s.tool for s in result.steps if not s.is_error], "message": body.message},
+        )
 
     return ChatResponse(
         message_id=str(assistant_msg.id),
