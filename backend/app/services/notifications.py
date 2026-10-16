@@ -15,6 +15,10 @@ PUSH_TITLES = {
     "invite_accepted": "Invite accepted",
     "point_added": "New point added",
     "point_deleted": "Point removed",
+    "circuit_deleted": "Circuit deleted",
+    "media_deleted": "Photo removed",
+    "collaborator_removed": "Collaborator removed",
+    "assistant_write": "Astra made a change",
 }
 
 
@@ -115,7 +119,16 @@ async def notify_circuit_members(
     actor_id: uuid.UUID,
     type: str,
     message: str,
+    link_circuit: bool = True,
 ) -> None:
+    """Notify the owner + accepted collaborators (excluding the actor).
+
+    `link_circuit=False` for actions that delete the circuit itself: call
+    this *before* the delete so the owner/collaborator lookup still works,
+    but omit circuit_id on the notification — it has ondelete="CASCADE",
+    so a linked notification would vanish the instant the circuit is gone,
+    before anyone could read it.
+    """
     from app.models.circuit import Circuit
     from app.models.collaborator import Collaborator
 
@@ -140,4 +153,8 @@ async def notify_circuit_members(
     recipient_ids.update(collabs)
 
     for uid in recipient_ids:
-        await create(db, uid, type, message, circuit_id=circuit_id, actor_id=actor_id)
+        await create(
+            db, uid, type, message,
+            circuit_id=circuit_id if link_circuit else None,
+            actor_id=actor_id,
+        )
