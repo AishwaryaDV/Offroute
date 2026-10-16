@@ -37,6 +37,7 @@ async def main() -> None:
         r = (await c.post(f"{BACKEND}/circuits/{cid}/chat", headers=auth, json={
             "message": "Add Toit in Indiranagar Bangalore to this circuit — it's a drinks spot, 5 stars.",
         })).json()
+        print("model:", r.get("model"))
         print("reply:", r.get("reply"))
         print("steps:", [(s["tool"], s["is_error"]) for s in r.get("steps", [])])
         print("writes:", r.get("writes"))
