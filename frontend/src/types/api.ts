@@ -208,7 +208,9 @@ export interface Trip {
 
 export interface Notification {
   id: string;
-  type: "star" | "clone" | "invite" | "invite_accepted" | "point_added" | "point_deleted";
+  type:
+    | "star" | "clone" | "invite" | "invite_accepted" | "point_added" | "point_deleted"
+    | "circuit_deleted" | "media_deleted" | "collaborator_removed" | "assistant_write";
   message: string;
   circuit_id: string | null;
   actor_name: string | null;
@@ -261,5 +263,6 @@ export interface Media {
   caption: string | null;
   created_at: string;
   upload_url: string | null;
+  upload_fields: Record<string, string> | null;
   public_url: string | null;
 }

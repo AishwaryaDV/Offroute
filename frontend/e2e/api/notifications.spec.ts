@@ -1,4 +1,5 @@
 import { test, expect } from "../helpers/fixtures";
+import { adminContext, adminDeleteUser, apiFor, createTestUser } from "../helpers/auth";
 
 // Generate a real notification for A by having B star A's public circuit.
 async function seedNotification(apiA: import("@playwright/test").APIRequestContext, apiB: import("@playwright/test").APIRequestContext) {
@@ -8,10 +9,24 @@ async function seedNotification(apiA: import("@playwright/test").APIRequestConte
 }
 
 test.describe("Notifications", () => {
-  test("empty state: list [] and unread count 0", async ({ apiB }) => {
-    // userB starts clean (no incoming notifications)
-    expect(await (await apiB.get("/me/notifications")).json()).toEqual([]);
-    expect((await (await apiB.get("/me/notifications/unread-count")).json()).count).toBe(0);
+  test("empty state: list [] and unread count 0", async () => {
+    // Needs a genuinely fresh user, not the shared worker-scoped apiB — other
+    // spec files running earlier in this same worker can legitimately
+    // generate notifications for apiB (e.g. collaborators.spec.ts deleting a
+    // shared circuit), so "empty" can't be asserted against a user whose
+    // history spans the whole suite run.
+    const admin = await adminContext();
+    const user = await createTestUser(admin, "notif-empty");
+    const api = await apiFor(user.accessToken);
+    await api.get("/me");
+
+    expect(await (await api.get("/me/notifications")).json()).toEqual([]);
+    expect((await (await api.get("/me/notifications/unread-count")).json()).count).toBe(0);
+
+    await api.delete("/me");
+    await api.dispose();
+    await adminDeleteUser(admin, user.id);
+    await admin.dispose();
   });
 
   test("new notification is unread → mark read → count 0", async ({ apiA, apiB }) => {

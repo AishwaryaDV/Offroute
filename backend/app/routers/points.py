@@ -8,9 +8,11 @@ from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.user import User
 from app.schemas.point import PointCreate, PointResponse, PointUpdate, ReorderRequest, WorldPointResponse
+from app.services import audit as audit_service
 from app.services import circuits as circuits_service
 from app.services import notifications as notif_service
 from app.services import points as points_service
+from app.services.ratelimit import rate_limit
 
 router = APIRouter(tags=["points"])
 
@@ -34,7 +36,12 @@ async def list_points(
     return await points_service.list_points(db, circuit.id)
 
 
-@router.post("/circuits/{circuit_id}/points", response_model=PointResponse, status_code=201)
+@router.post(
+    "/circuits/{circuit_id}/points",
+    response_model=PointResponse,
+    status_code=201,
+    dependencies=[Depends(rate_limit("points:create", limit=40, window_seconds=60))],
+)
 async def create_point(
     circuit_id: str,
     data: PointCreate,
@@ -86,8 +93,12 @@ async def delete_point(
     point = await points_service.get_point(db, point_id)
     circuit = await circuits_service.get_circuit(db, point.circuit_id)
     circuits_service.assert_owner(circuit, user.id)
-    point_title = point.title
+    point_id_, point_title = point.id, point.title
     await points_service.delete_point(db, point)
+    await audit_service.record(
+        db, user.id, "point.delete", "point", point_id_,
+        {"title": point_title, "circuit_id": str(circuit.id)},
+    )
     actor_name = user.display_name or user.email
     await notif_service.notify_circuit_members(
         db, circuit.id, user.id, "point_deleted",

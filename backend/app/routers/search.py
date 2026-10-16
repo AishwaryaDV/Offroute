@@ -7,11 +7,12 @@ from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.user import User
 from app.services import search as search_service
+from app.services.ratelimit import rate_limit
 
 router = APIRouter(prefix="/search", tags=["search"])
 
 
-@router.get("")
+@router.get("", dependencies=[Depends(rate_limit("search", limit=60, window_seconds=60))])
 async def search(
     q: Annotated[str, Query(min_length=1, max_length=200)],
     user: Annotated[User, Depends(get_current_user)],

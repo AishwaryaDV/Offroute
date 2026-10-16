@@ -10,8 +10,10 @@ from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.circuit import Circuit
 from app.models.user import User
+from app.services import audit as audit_service
 from app.services import chat as chat_service
 from app.services import circuits as circuits_service
+from app.services import notifications as notif_service
 from app.services.assistant.client import run_turn
 from app.services.assistant.prompt import build_system_prompt
 from app.services.assistant.tools import build_read_tools
@@ -128,6 +130,17 @@ async def chat(
 
     undo = {"ops": undo_sink} if undo_sink else None
     assistant_msg = await chat_service.add_message(db, circuit.id, "assistant", result.reply, undo=undo)
+
+    if undo_sink:
+        await audit_service.record(
+            db, user.id, "assistant.write", "circuit", circuit.id,
+            {"tools": [s.tool for s in result.steps if not s.is_error], "message": body.message},
+        )
+        actor_name = user.display_name or user.email
+        await notif_service.notify_circuit_members(
+            db, circuit.id, user.id, "assistant_write",
+            f'{actor_name} used Astra to update {circuit.title}',
+        )
 
     return ChatResponse(
         message_id=str(assistant_msg.id),

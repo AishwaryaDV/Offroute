@@ -21,15 +21,17 @@ export async function uploadPhoto(
     body: JSON.stringify({ point_id: pointId, type: "photo" }),
   });
 
-  if (!media.upload_url) {
+  if (!media.upload_url || !media.upload_fields) {
     throw new Error("Storage not configured — no upload URL returned");
   }
 
-  await fetch(media.upload_url, {
-    method: "PUT",
-    headers: { "Content-Type": "image/jpeg" },
-    body: compressed,
-  });
+  // Presigned POST (not PUT) — the server signs a content-length-range
+  // condition into the policy fields, which S3 enforces. A plain PUT URL
+  // has no way to cap the upload size.
+  const form = new FormData();
+  Object.entries(media.upload_fields).forEach(([key, value]) => form.append(key, value));
+  form.append("file", compressed);
+  await fetch(media.upload_url, { method: "POST", body: form });
 
   return media;
 }
