@@ -129,6 +129,7 @@ function Dashboard() {
     enabled: !!allPoints && allPoints.length > 0,
   });
 
+  const [avatarFailed, setAvatarFailed] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const handleAvatarPick = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -153,6 +154,7 @@ function Dashboard() {
       });
       const updated = await updateMe({ avatar_url: dataUrl });
       queryClient.setQueryData(["me"], updated);
+      setAvatarFailed(false);
       toast.success("Profile photo updated");
     } catch {
       toast.error("Could not update photo");
@@ -323,13 +325,14 @@ function Dashboard() {
               onClick={() => avatarInputRef.current?.click()}
               className="relative h-14 w-14 shrink-0 rounded-full"
             >
-              {me.avatar_url ? (
+              {me.avatar_url && !avatarFailed ? (
                 <div className="h-14 w-14 overflow-hidden rounded-full ring-2 ring-[#0f1d32]/10">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={me.avatar_url}
                     alt=""
                     className="h-full w-full object-cover"
+                    onError={() => setAvatarFailed(true)}
                   />
                 </div>
               ) : (
