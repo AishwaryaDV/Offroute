@@ -74,7 +74,7 @@ function SearchPage() {
         </div>
 
         <div className="flex items-center gap-3 px-5 pt-2 pb-4">
-          <h1 className="flex-1 text-lg font-bold text-[#0f1d32]">
+          <h1 className="flex-1 text-2xl font-bold tracking-tight text-[#0f1d32]">
             Search
           </h1>
           <button
