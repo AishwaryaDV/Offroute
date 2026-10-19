@@ -337,7 +337,7 @@ function Dashboard() {
                   />
                 </div>
               ) : (
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#0f1d32]/10 text-xl font-bold text-[#0f1d32]">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#0f1d32] text-xl font-bold text-white">
                   {(me.display_name?.[0] ?? me.email[0]).toUpperCase()}
                 </div>
               )}
