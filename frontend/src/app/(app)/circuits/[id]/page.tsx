@@ -679,7 +679,7 @@ function CircuitDetail() {
                       onKeyDown={(e) => {
                         if (e.key === "Enter") handleSelectPoint(point);
                       }}
-                      className={`flex min-w-[160px] max-w-[180px] shrink-0 gap-2.5 overflow-hidden rounded-2xl bg-black/60 p-2.5 text-left backdrop-blur-xl transition-all border ${
+                      className={`flex min-w-[176px] max-w-[196px] shrink-0 gap-2.5 overflow-hidden rounded-2xl bg-black/60 p-2.5 text-left backdrop-blur-xl transition-all border ${
                         isActive
                           ? "border-white/50 ring-2 ring-white/30 scale-[1.02]"
                           : "border-white/20"
@@ -697,7 +697,7 @@ function CircuitDetail() {
                             {i + 1}
                           </span>
                         </div>
-                        <p className="mt-1 truncate text-xs font-bold text-white">
+                        <p className="mt-1 line-clamp-2 text-xs font-bold leading-tight text-white">
                           {point.title}
                         </p>
                         {point.category && (
