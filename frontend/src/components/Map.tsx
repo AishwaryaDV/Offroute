@@ -355,6 +355,11 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
       hasInitialFit.current = true;
       const lngs = markers.map((m) => m.lng);
       const lats = markers.map((m) => m.lat);
+      // Cancel any in-flight camera animation first — adding points in quick
+      // succession re-triggers this effect before the previous flyTo/
+      // fitBounds finishes, and MapLibre's internal task queue throws
+      // ("Attempting to run(), but is already running") on the overlap.
+      map.stop();
       if (markers.length === 1) {
         map.flyTo({ center: [lngs[0], lats[0]], zoom: 14, duration: animate ? 800 : 0 });
       } else {
@@ -429,6 +434,13 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
       markerEls.current.clear();
       mapRef.current = null;
       svgRef.current = null;
+      // Cancel any in-flight ease/fitBounds animation before tearing down —
+      // otherwise its already-scheduled animation frame can still fire on
+      // the next tick against a now-removed map, crashing on null internal
+      // state. This is the real fix for the vec4/task-queue errors; the
+      // map.stop() added to the fitBounds effect alone wasn't enough
+      // because the race is at unmount, not just at re-trigger.
+      map.stop();
       map.remove();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
