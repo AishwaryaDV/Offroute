@@ -35,6 +35,16 @@ select {
   color-scheme: dark;
 }
 
+/* Without this, touch browsers wait ~300ms after a tap to rule out a
+   double-tap-to-zoom gesture before firing click — on custom tap targets
+   (a <Link> wrapping a <div>, a role="button" div) this can read as a
+   missed or "needs two taps" interaction instead of just a delay. */
+a,
+button,
+[role="button"] {
+  touch-action: manipulation;
+}
+
 ::-webkit-scrollbar {
   display: none;
 }
