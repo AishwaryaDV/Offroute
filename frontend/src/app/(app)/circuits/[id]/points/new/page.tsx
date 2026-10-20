@@ -69,7 +69,7 @@ function AddPoint() {
     debounceRef.current = setTimeout(async () => {
       try {
         const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(q)}`,
+          `https://nominatim.openstreetmap.org/search?format=json&limit=5&accept-language=en&q=${encodeURIComponent(q)}`,
           { headers: { "User-Agent": "Offroute/1.0" } },
         );
         if (res.ok) setSearchResults(await res.json());
