@@ -244,12 +244,9 @@ function Settings() {
         <MapDynamic center={userGeo.center} zoom={Math.min(userGeo.zoom, 3)} />
         <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
       </div>
-      <div className="sheet-light absolute inset-x-0 bottom-0 top-[6dvh] overflow-hidden">
-        {/* Settings menu — always visible behind cards. Content-sized (not
-            h-full) so the menu doesn't leave a wall of empty white below it;
-            the outer div stays full-height as the positioning context the
-            sub-view cards and dim overlay below need. */}
-        <div className="flex flex-col rounded-t-[28px] bg-white">
+      <div className="sheet-light absolute inset-x-0 bottom-0 top-[6dvh] overflow-hidden rounded-t-[28px] bg-white">
+        {/* Settings menu — always visible behind cards */}
+        <div className="flex h-full flex-col">
           <div className="flex justify-center pt-3 pb-1">
             <div className="h-1 w-10 rounded-full bg-gray-300" />
           </div>
