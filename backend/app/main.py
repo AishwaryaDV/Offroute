@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
-from app.routers import chat, circuits, collaborators, health, me, media, notifications, points, profiles, push, search, stats, trips
+from app.routers import chat, circuits, collaborators, health, me, media, notifications, places, points, profiles, push, search, stats, trips
 
 # Hide interactive docs and the OpenAPI schema in production — they expose the
 # full API surface to unauthenticated callers with no functional benefit there.
@@ -39,6 +39,7 @@ app.include_router(points.router)
 app.include_router(collaborators.router)
 app.include_router(media.router)
 app.include_router(notifications.router)
+app.include_router(places.router)
 app.include_router(profiles.router)
 app.include_router(push.router)
 app.include_router(search.router)

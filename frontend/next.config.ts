@@ -9,6 +9,12 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const CSP = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+  // MapLibre GL spawns its own tile-processing web workers from blob: URLs.
+  // Without this, it falls back to script-src (no blob:) and the browser
+  // silently blocks worker creation — degrading MapLibre into a broken
+  // state that can throw unrelated-looking errors elsewhere (e.g. null
+  // geometry reads) once tile data never gets decoded.
+  "worker-src 'self' blob:",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://lh3.googleusercontent.com https://*.googleusercontent.com https://images.unsplash.com https://server.arcgisonline.com http://129.225.94.95:9000 https://129.225.94.95:9000",
   `connect-src 'self' ${API_URL} ${SUPABASE_URL} https://api.unsplash.com https://server.arcgisonline.com`,

@@ -73,7 +73,7 @@ async def _stadia(query: str, api_key: str, near, limit: int) -> list[dict]:
 
 
 async def _nominatim(query: str, near, limit: int) -> list[dict]:
-    params = {"q": query, "format": "jsonv2", "limit": limit, "addressdetails": 1}
+    params = {"q": query, "format": "jsonv2", "limit": limit, "addressdetails": 1, "accept-language": "en"}
     if near:
         lat, lng = near
         # a small viewbox around `near` biases but does not restrict results

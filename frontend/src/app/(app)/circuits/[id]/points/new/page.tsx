@@ -10,14 +10,8 @@ import { toast } from "sonner";
 import { DatePicker } from "@/components/DatePicker";
 import MapDynamic from "@/components/MapDynamic";
 import { createPoint } from "@/lib/points";
+import { searchPlaces, type PlaceResult } from "@/lib/places";
 import type { PointCategory } from "@/types/api";
-
-interface NominatimResult {
-  place_id: number;
-  display_name: string;
-  lat: string;
-  lon: string;
-}
 
 const LOCATION_SEEN_KEY = "offroute-location-seen";
 
@@ -53,7 +47,7 @@ function AddPoint() {
 
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<NominatimResult[]>([]);
+  const [searchResults, setSearchResults] = useState<PlaceResult[]>([]);
   const [searching, setSearching] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
 
@@ -68,11 +62,7 @@ function AddPoint() {
     setSearching(true);
     debounceRef.current = setTimeout(async () => {
       try {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(q)}`,
-          { headers: { "User-Agent": "Offroute/1.0" } },
-        );
-        if (res.ok) setSearchResults(await res.json());
+        setSearchResults(await searchPlaces(q));
       } catch {
         /* network error — silently skip */
       } finally {
@@ -242,12 +232,12 @@ function AddPoint() {
 
             {searchResults.length > 0 && (
               <div className="absolute inset-x-0 top-full z-20 mt-1 max-h-48 overflow-y-auto rounded-xl bg-white py-1 shadow-xl ring-1 ring-black/5">
-                {searchResults.map((r) => (
+                {searchResults.map((r, i) => (
                   <button
-                    key={r.place_id}
+                    key={`${r.latitude},${r.longitude},${i}`}
                     type="button"
                     onClick={() => {
-                      const loc = { lat: parseFloat(r.lat), lng: parseFloat(r.lon) };
+                      const loc = { lat: r.latitude, lng: r.longitude };
                       setLocation(loc);
                       setSearchQuery("");
                       setSearchResults([]);
@@ -257,7 +247,7 @@ function AddPoint() {
                   >
                     <MapPin size={14} className="mt-0.5 shrink-0 text-gray-400" />
                     <span className="line-clamp-2 text-sm text-gray-700">
-                      {r.display_name}
+                      {r.address || r.name}
                     </span>
                   </button>
                 ))}
