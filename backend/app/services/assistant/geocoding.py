@@ -50,7 +50,7 @@ async def find_place(
 
 
 async def _stadia(query: str, api_key: str, near, limit: int) -> list[dict]:
-    params = {"text": query, "size": limit, "api_key": api_key}
+    params = {"text": query, "size": limit, "api_key": api_key, "lang": "en"}
     if near:
         params["focus.point.lat"], params["focus.point.lon"] = near
     async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
