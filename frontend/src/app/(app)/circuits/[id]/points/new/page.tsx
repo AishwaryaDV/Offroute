@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowLeft, Calendar, ChevronDown, Crosshair, FileText, MapPin, Navigation, Search, Settings, Star, Tag, Type, X } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -9,7 +9,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { DatePicker } from "@/components/DatePicker";
 import MapDynamic from "@/components/MapDynamic";
-import { createPoint } from "@/lib/points";
+import { createPoint, getPoints } from "@/lib/points";
 import { searchPlaces, type PlaceResult } from "@/lib/places";
 import type { PointCategory } from "@/types/api";
 
@@ -39,6 +39,18 @@ function AddPoint() {
   const { id: circuitId } = useParams<{ id: string }>();
   const router = useRouter();
   const queryClient = useQueryClient();
+
+  // So the map has somewhere sensible to open on — without this it falls
+  // back to Map's hardcoded default center (open ocean off West Africa),
+  // which makes "tap the map to set a location" meaningless on first load.
+  const { data: existingPoints } = useQuery({
+    queryKey: ["points", circuitId],
+    queryFn: () => getPoints(circuitId),
+  });
+  const lastPoint = existingPoints?.[existingPoints.length - 1];
+  const defaultCenter: [number, number] | undefined = lastPoint
+    ? [lastPoint.longitude, lastPoint.latitude]
+    : undefined;
 
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locatingGps, setLocatingGps] = useState(false);
@@ -155,8 +167,8 @@ function AddPoint() {
         <MapDynamic
           className="h-52 w-full"
           markers={mapMarkers}
-          center={location ? [location.lng, location.lat] : undefined}
-          zoom={location ? 15 : 12}
+          center={location ? [location.lng, location.lat] : defaultCenter}
+          zoom={location ? 15 : defaultCenter ? 13 : 2}
           interactive
           onMapClick={(lngLat) => setLocation({ lat: lngLat.lat, lng: lngLat.lng })}
           onMarkerDragEnd={(_id, lngLat) => setLocation({ lat: lngLat.lat, lng: lngLat.lng })}
